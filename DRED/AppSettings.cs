@@ -16,6 +16,7 @@ namespace DRED
             Path.Combine(SettingsDirectory, "settings.json");
 
         public static string DatabasePath { get; set; } = string.Empty;
+        public static int AutoRefreshInterval { get; set; } = 60;
 
         public static void Load()
         {
@@ -28,6 +29,7 @@ namespace DRED
                     if (data != null)
                     {
                         DatabasePath = data.DatabasePath ?? string.Empty;
+                        AutoRefreshInterval = data.AutoRefreshInterval;
                     }
                 }
             }
@@ -42,7 +44,11 @@ namespace DRED
             try
             {
                 Directory.CreateDirectory(SettingsDirectory);
-                var data = new SettingsData { DatabasePath = DatabasePath };
+                var data = new SettingsData
+                {
+                    DatabasePath = DatabasePath,
+                    AutoRefreshInterval = AutoRefreshInterval,
+                };
                 string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(SettingsFilePath, json);
             }
@@ -59,6 +65,7 @@ namespace DRED
         private class SettingsData
         {
             public string? DatabasePath { get; set; }
+            public int AutoRefreshInterval { get; set; } = 60;
         }
     }
 }

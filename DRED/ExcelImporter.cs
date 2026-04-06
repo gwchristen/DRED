@@ -77,7 +77,6 @@ namespace DRED
 
                 var data = new RecordData
                 {
-                    Key      = GetText(row, colMap, "Key"),
                     OpCo2    = GetText(row, colMap, "OpCo2"),
                     Status   = GetText(row, colMap, "Status"),
                     MFR      = GetText(row, colMap, "MFR"),
