@@ -9,7 +9,9 @@ namespace DRED
         public SettingsForm()
         {
             InitializeComponent();
+            ThemeManager.Apply(this);
             txtDatabasePath.Text = AppSettings.DatabasePath;
+            nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -50,6 +52,7 @@ namespace DRED
             }
 
             AppSettings.DatabasePath = path;
+            AppSettings.AutoRefreshInterval = (int)nudAutoRefresh.Value;
             AppSettings.Save();
 
             try
@@ -77,3 +80,4 @@ namespace DRED
         }
     }
 }
+
