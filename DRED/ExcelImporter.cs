@@ -115,7 +115,19 @@ namespace DRED
             if (!colMap.TryGetValue(colName, out int col)) return null;
             var cell = row.Cell(col);
             if (cell.IsEmpty()) return null;
-            if (int.TryParse(cell.GetString().Trim(), out int val)) return val;
+
+            // Try reading as number first (Excel stores all numbers as doubles)
+            if (cell.DataType == XLDataType.Number)
+            {
+                try { return (int)Math.Round(cell.GetDouble()); }
+                catch (OverflowException) { /* value out of int range — fall through */ }
+            }
+
+            // Fallback: parse string, handling "5.0" format
+            string s = cell.GetString().Trim();
+            if (int.TryParse(s, out int val)) return val;
+            if (double.TryParse(s, System.Globalization.NumberStyles.Any,
+                System.Globalization.CultureInfo.InvariantCulture, out double dval)) return (int)Math.Round(dval);
             return null;
         }
 

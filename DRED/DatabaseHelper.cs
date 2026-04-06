@@ -213,7 +213,20 @@ CREATE TABLE [RecordLocks] (
 
             using var cmd = new OleDbCommand(sql, conn);
             for (int i = 0; i < paramValues.Count; i++)
-                cmd.Parameters.AddWithValue($"@p{i}", paramValues[i] ?? DBNull.Value);
+            {
+                object val = paramValues[i] ?? DBNull.Value;
+                OleDbParameter p;
+                if (val is DateTime dtVal)
+                    p = new OleDbParameter { OleDbType = OleDbType.Date, Value = dtVal };
+                else if (val is decimal dec)
+                    p = new OleDbParameter { OleDbType = OleDbType.Currency, Value = dec };
+                else if (val is int iv)
+                    p = new OleDbParameter { OleDbType = OleDbType.Integer, Value = iv };
+                else
+                    // Text filter values and LIKE pattern strings are always VarWChar
+                    p = new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = val };
+                cmd.Parameters.Add(p);
+            }
 
             using var adapter = new OleDbDataAdapter(cmd);
             var dt = new DataTable();
@@ -234,8 +247,8 @@ VALUES
 
             using var cmd = new OleDbCommand(sql, conn);
             AddParameters(cmd, data);
-            cmd.Parameters.AddWithValue("@CreatedBy", Environment.UserName);
-            cmd.Parameters.AddWithValue("@CreatedDate", DateTime.Now);
+            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
+            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
             cmd.ExecuteNonQuery();
         }
 
@@ -254,9 +267,9 @@ WHERE [Id]=?";
 
             using var cmd = new OleDbCommand(sql, conn);
             AddParameters(cmd, data);
-            cmd.Parameters.AddWithValue("@ModifiedBy", Environment.UserName);
-            cmd.Parameters.AddWithValue("@ModifiedDate", DateTime.Now);
-            cmd.Parameters.AddWithValue("@Id", id);
+            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
+            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
+            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
             cmd.ExecuteNonQuery();
         }
 
@@ -265,29 +278,64 @@ WHERE [Id]=?";
             using var conn = OpenConnection();
             string sql = $"DELETE FROM [{tableName}] WHERE [Id]=?";
             using var cmd = new OleDbCommand(sql, conn);
-            cmd.Parameters.AddWithValue("@Id", id);
+            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
             cmd.ExecuteNonQuery();
         }
 
         private static void AddParameters(OleDbCommand cmd, RecordData data)
         {
-            cmd.Parameters.AddWithValue("@OpCo2",    (object?)data.OpCo2    ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Status",   (object?)data.Status   ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@MFR",      (object?)data.MFR      ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@DevCode",  (object?)data.DevCode  ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@BegSer",   (object?)data.BegSer   ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@EndSer",   (object?)data.EndSer   ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Qty",      (object?)data.Qty      ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@PODate",   (object?)data.PODate   ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Vintage",  (object?)data.Vintage  ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@PONumber", (object?)data.PONumber ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@RecvDate", (object?)data.RecvDate ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@UnitCost", (object?)data.UnitCost ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@CID",      (object?)data.CID      ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@MENumber", (object?)data.MENumber ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@PurCode",  (object?)data.PurCode  ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Est",      (object?)data.Est      ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@Comments", (object?)data.Comments ?? DBNull.Value);
+            AddTextParam(cmd, data.OpCo2);
+            AddTextParam(cmd, data.Status);
+            AddTextParam(cmd, data.MFR);
+            AddTextParam(cmd, data.DevCode);
+            AddTextParam(cmd, data.BegSer);
+            AddTextParam(cmd, data.EndSer);
+            AddIntParam(cmd, data.Qty);
+            AddDateParam(cmd, data.PODate);
+            AddTextParam(cmd, data.Vintage);
+            AddTextParam(cmd, data.PONumber);
+            AddDateParam(cmd, data.RecvDate);
+            AddCurrencyParam(cmd, data.UnitCost);
+            AddTextParam(cmd, data.CID);
+            AddTextParam(cmd, data.MENumber);
+            AddTextParam(cmd, data.PurCode);
+            AddTextParam(cmd, data.Est);
+            AddMemoParam(cmd, data.Comments);
+        }
+
+        private static void AddTextParam(OleDbCommand cmd, string? value)
+        {
+            var p = new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255 };
+            p.Value = (object?)value ?? DBNull.Value;
+            cmd.Parameters.Add(p);
+        }
+
+        private static void AddMemoParam(OleDbCommand cmd, string? value)
+        {
+            var p = new OleDbParameter { OleDbType = OleDbType.LongVarWChar };
+            p.Value = (object?)value ?? DBNull.Value;
+            cmd.Parameters.Add(p);
+        }
+
+        private static void AddIntParam(OleDbCommand cmd, int? value)
+        {
+            var p = new OleDbParameter { OleDbType = OleDbType.Integer };
+            p.Value = value.HasValue ? (object)value.Value : DBNull.Value;
+            cmd.Parameters.Add(p);
+        }
+
+        private static void AddDateParam(OleDbCommand cmd, DateTime? value)
+        {
+            var p = new OleDbParameter { OleDbType = OleDbType.Date };
+            p.Value = value.HasValue ? (object)value.Value : DBNull.Value;
+            cmd.Parameters.Add(p);
+        }
+
+        private static void AddCurrencyParam(OleDbCommand cmd, decimal? value)
+        {
+            var p = new OleDbParameter { OleDbType = OleDbType.Currency };
+            p.Value = value.HasValue ? (object)value.Value : DBNull.Value;
+            cmd.Parameters.Add(p);
         }
 
         public static bool TryLockRecord(string tableName, int recordId, out string lockedBy)
@@ -297,7 +345,7 @@ WHERE [Id]=?";
             // Clean stale locks (>30 min)
             using (var cleanCmd = new OleDbCommand("DELETE FROM [RecordLocks] WHERE [LockedAt] < ?", conn))
             {
-                cleanCmd.Parameters.AddWithValue("@cutoff", DateTime.Now.AddMinutes(-RecordLockTimeoutMinutes));
+                cleanCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now.AddMinutes(-RecordLockTimeoutMinutes) });
                 cleanCmd.ExecuteNonQuery();
             }
 
@@ -306,8 +354,8 @@ WHERE [Id]=?";
             using (var checkCmd = new OleDbCommand(
                 "SELECT [LockedBy] FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
             {
-                checkCmd.Parameters.AddWithValue("@t", tableName);
-                checkCmd.Parameters.AddWithValue("@id", recordId);
+                checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
                 existing = checkCmd.ExecuteScalar() as string;
             }
 
@@ -321,8 +369,8 @@ WHERE [Id]=?";
             using (var removeCmd = new OleDbCommand(
                 "DELETE FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
             {
-                removeCmd.Parameters.AddWithValue("@t", tableName);
-                removeCmd.Parameters.AddWithValue("@id", recordId);
+                removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
                 removeCmd.ExecuteNonQuery();
             }
 
@@ -330,10 +378,10 @@ WHERE [Id]=?";
             using (var insertCmd = new OleDbCommand(
                 "INSERT INTO [RecordLocks] ([TableName],[RecordId],[LockedBy],[LockedAt]) VALUES (?,?,?,?)", conn))
             {
-                insertCmd.Parameters.AddWithValue("@t", tableName);
-                insertCmd.Parameters.AddWithValue("@id", recordId);
-                insertCmd.Parameters.AddWithValue("@by", Environment.UserName);
-                insertCmd.Parameters.AddWithValue("@at", DateTime.Now);
+                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
+                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
+                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
                 insertCmd.ExecuteNonQuery();
             }
 
@@ -348,9 +396,9 @@ WHERE [Id]=?";
                 using var conn = OpenConnection();
                 using var cmd = new OleDbCommand(
                     "DELETE FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=? AND [LockedBy]=?", conn);
-                cmd.Parameters.AddWithValue("@t", tableName);
-                cmd.Parameters.AddWithValue("@id", recordId);
-                cmd.Parameters.AddWithValue("@by", Environment.UserName);
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
                 cmd.ExecuteNonQuery();
             }
             catch { /* Best effort */ }
