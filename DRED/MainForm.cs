@@ -12,8 +12,15 @@ namespace DRED
 
         private const string CurrencyFormat = "$#,##0.00";
 
-        private DataGridView CurrentGrid =>
-            (DataGridView)tabControl.SelectedTab!.Controls[0];
+        private DataGridView? CurrentGrid
+        {
+            get
+            {
+                var tab = tabControl?.SelectedTab;
+                if (tab == null || tab.Controls.Count == 0) return null;
+                return tab.Controls[0] as DataGridView;
+            }
+        }
 
         private string CurrentTable =>
             TabTableNames[tabControl.SelectedIndex];
@@ -21,6 +28,7 @@ namespace DRED
         private AdvancedSearchCriteria? _advancedCriteria;
         private bool _dialogOpen = false;
         private System.Windows.Forms.Timer _refreshTimer = null!;
+        private bool _initialized = false;
 
         public MainForm()
         {
@@ -40,6 +48,7 @@ namespace DRED
             _refreshTimer.Tick += (s, e) => { if (!_dialogOpen) RefreshCurrentTab(); };
             UpdateRefreshTimer();
 
+            _initialized = true;
             RefreshCurrentTab();
         }
 
@@ -56,6 +65,7 @@ namespace DRED
 
         private void RefreshCurrentTab()
         {
+            if (!_initialized || CurrentGrid == null) return;
             try
             {
                 int tabIndex = tabControl.SelectedIndex;
@@ -74,9 +84,13 @@ namespace DRED
         private void LoadTable(int tabIndex, string filter, string filterColumn = "",
             AdvancedSearchCriteria? advancedCriteria = null)
         {
+            if (tabIndex < 0 || tabIndex >= tabControl.TabPages.Count) return;
+            var tab = tabControl.TabPages[tabIndex];
+            if (tab.Controls.Count == 0) return;
+            var grid = tab.Controls[0] as DataGridView;
+            if (grid == null) return;
             string table = TabTableNames[tabIndex];
             DataTable dt = DatabaseHelper.GetTableData(table, filter, filterColumn, advancedCriteria);
-            var grid = (DataGridView)tabControl.TabPages[tabIndex].Controls[0];
             grid.DataSource = dt;
             ApplyGridFormatting(grid);
             grid.AutoResizeColumns(DataGridViewAutoSizeColumnsMode.AllCells);
@@ -148,6 +162,7 @@ namespace DRED
 
         private void btnEdit_Click(object sender, EventArgs e)
         {
+            if (CurrentGrid == null) return;
             if (CurrentGrid.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Please select a row to edit.", "Edit Record",
@@ -196,6 +211,7 @@ namespace DRED
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
+            if (CurrentGrid == null) return;
             if (CurrentGrid.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Please select a row to delete.", "Delete Record",
