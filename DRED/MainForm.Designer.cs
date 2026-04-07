@@ -16,25 +16,21 @@ namespace DRED
 
         private void InitializeComponent()
         {
-            this.toolStrip           = new System.Windows.Forms.ToolStrip();
-            this.tsbAdd              = new System.Windows.Forms.ToolStripButton();
-            this.tsbEdit             = new System.Windows.Forms.ToolStripButton();
-            this.tsbDelete           = new System.Windows.Forms.ToolStripButton();
-            this.tsSep1              = new System.Windows.Forms.ToolStripSeparator();
-            this.tsbRefresh          = new System.Windows.Forms.ToolStripButton();
-            this.tsSep2              = new System.Windows.Forms.ToolStripSeparator();
-            this.tsbImport           = new System.Windows.Forms.ToolStripButton();
-            this.tsbExport           = new System.Windows.Forms.ToolStripButton();
-            this.tsbExportAll        = new System.Windows.Forms.ToolStripButton();
-            this.tsSep3              = new System.Windows.Forms.ToolStripSeparator();
-            this.tsbAdvancedSearch   = new System.Windows.Forms.ToolStripButton();
-            this.tsSep4              = new System.Windows.Forms.ToolStripSeparator();
-            this.tsbSettings         = new System.Windows.Forms.ToolStripButton();
+            this.pnlToolbar          = new System.Windows.Forms.FlowLayoutPanel();
+            this.btnAdd              = new MaterialSkin.Controls.MaterialButton();
+            this.btnEdit             = new MaterialSkin.Controls.MaterialButton();
+            this.btnDelete           = new MaterialSkin.Controls.MaterialButton();
+            this.btnRefresh          = new MaterialSkin.Controls.MaterialButton();
+            this.btnImport           = new MaterialSkin.Controls.MaterialButton();
+            this.btnExport           = new MaterialSkin.Controls.MaterialButton();
+            this.btnExportAll        = new MaterialSkin.Controls.MaterialButton();
+            this.btnAdvancedSearch   = new MaterialSkin.Controls.MaterialButton();
+            this.btnSettings         = new MaterialSkin.Controls.MaterialButton();
             this.pnlSearch           = new System.Windows.Forms.Panel();
-            this.lblSearch           = new System.Windows.Forms.Label();
-            this.txtSearch           = new System.Windows.Forms.TextBox();
-            this.cboFilterColumn     = new System.Windows.Forms.ComboBox();
-            this.tabControl          = new System.Windows.Forms.TabControl();
+            this.txtSearch           = new MaterialSkin.Controls.MaterialTextBox2();
+            this.cboFilterColumn     = new MaterialSkin.Controls.MaterialComboBox();
+            this.tabControl          = new MaterialSkin.Controls.MaterialTabControl();
+            this.tabSelector         = new MaterialSkin.Controls.MaterialTabSelector();
             this.tabOHMeters         = new System.Windows.Forms.TabPage();
             this.tabIMMeters         = new System.Windows.Forms.TabPage();
             this.tabOHTransformers   = new System.Windows.Forms.TabPage();
@@ -43,10 +39,10 @@ namespace DRED
             this.gridIMMeters        = CreateGrid();
             this.gridOHTransformers  = CreateGrid();
             this.gridIMTransformers  = CreateGrid();
-            this.statusStrip         = new System.Windows.Forms.StatusStrip();
-            this.lblStatusRecords    = new System.Windows.Forms.ToolStripStatusLabel();
-            this.lblStatusConnection = new System.Windows.Forms.ToolStripStatusLabel();
-            this.lblStatusUser       = new System.Windows.Forms.ToolStripStatusLabel();
+            this.pnlStatus           = new System.Windows.Forms.Panel();
+            this.lblStatusRecords    = new System.Windows.Forms.Label();
+            this.lblStatusConnection = new System.Windows.Forms.Label();
+            this.lblStatusUser       = new System.Windows.Forms.Label();
 
             // Wire CellDoubleClick for all grids
             this.gridOHMeters.CellDoubleClick       += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellDoubleClick);
@@ -54,54 +50,61 @@ namespace DRED
             this.gridOHTransformers.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellDoubleClick);
             this.gridIMTransformers.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellDoubleClick);
 
-            this.toolStrip.SuspendLayout();
+            this.pnlToolbar.SuspendLayout();
             this.pnlSearch.SuspendLayout();
             this.tabControl.SuspendLayout();
-            this.statusStrip.SuspendLayout();
+            this.pnlStatus.SuspendLayout();
             this.SuspendLayout();
 
-            // toolStrip
-            this.toolStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                tsbAdd, tsbEdit, tsbDelete, tsSep1, tsbRefresh, tsSep2,
-                tsbImport, tsbExport, tsbExportAll, tsSep3, tsbAdvancedSearch, tsSep4, tsbSettings });
-            this.toolStrip.Location = new System.Drawing.Point(0, 0);
-            this.toolStrip.TabIndex = 0;
+            // pnlToolbar
+            this.pnlToolbar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlToolbar.Height = 54;
+            this.pnlToolbar.Padding = new System.Windows.Forms.Padding(4, 8, 4, 4);
+            this.pnlToolbar.WrapContents = false;
+            this.pnlToolbar.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
 
-            SetToolButton(tsbAdd,            "Add (Ctrl+N)",         "➕", this.btnAdd_Click);
-            SetToolButton(tsbEdit,           "Edit (Ctrl+E)",         "✏",  this.btnEdit_Click);
-            SetToolButton(tsbDelete,         "Delete (Del)",          "🗑", this.btnDelete_Click);
-            SetToolButton(tsbRefresh,        "Refresh (F5)",          "🔄", this.btnRefresh_Click);
-            SetToolButton(tsbImport,         "Import (Ctrl+I)",       "📥", this.btnImport_Click);
-            SetToolButton(tsbExport,         "Export (Ctrl+S)",       "📤", this.btnExport_Click);
-            SetToolButton(tsbExportAll,      "Export All (Ctrl+Shift+S)", "📦", this.btnExportAll_Click);
-            SetToolButton(tsbAdvancedSearch, "Advanced Search (Ctrl+Shift+F)", "🔍", this.btnAdvancedSearch_Click);
-            SetToolButton(tsbSettings,       "Settings (Ctrl+,)",     "⚙",  this.btnSettings_Click);
+            SetMaterialButton(btnAdd,            "Add (Ctrl+N)",              MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained, true,  this.btnAdd_Click);
+            SetMaterialButton(btnEdit,           "Edit (Ctrl+E)",             MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnEdit_Click);
+            SetMaterialButton(btnDelete,         "Delete (Del)",              MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnDelete_Click);
+            SetMaterialButton(btnRefresh,        "Refresh (F5)",              MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnRefresh_Click);
+            SetMaterialButton(btnImport,         "Import (Ctrl+I)",           MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnImport_Click);
+            SetMaterialButton(btnExport,         "Export (Ctrl+S)",           MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnExport_Click);
+            SetMaterialButton(btnExportAll,      "Export All (Ctrl+Shift+S)", MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnExportAll_Click);
+            SetMaterialButton(btnAdvancedSearch, "Advanced Search (Ctrl+Shift+F)", MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnAdvancedSearch_Click);
+            SetMaterialButton(btnSettings,       "Settings (Ctrl+,)",         MaterialSkin.Controls.MaterialButton.MaterialButtonType.Text,      false, this.btnSettings_Click);
+
+            this.pnlToolbar.Controls.AddRange(new System.Windows.Forms.Control[] {
+                btnAdd, btnEdit, btnDelete, btnRefresh,
+                btnImport, btnExport, btnExportAll, btnAdvancedSearch, btnSettings });
 
             // pnlSearch
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlSearch.Height = 36;
+            this.pnlSearch.Height = 60;
             this.pnlSearch.Padding = new System.Windows.Forms.Padding(6, 4, 6, 4);
-            this.lblSearch.Text = "Search:";
-            this.lblSearch.AutoSize = true;
-            this.lblSearch.Location = new System.Drawing.Point(6, 8);
-            this.txtSearch.Location = new System.Drawing.Point(60, 6);
-            this.txtSearch.Size = new System.Drawing.Size(280, 23);
+            this.pnlSearch.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+
+            // txtSearch (MaterialTextBox2)
+            this.txtSearch.Hint = "Search...";
+            this.txtSearch.UseTallSize = false;
+            this.txtSearch.Location = new System.Drawing.Point(6, 6);
+            this.txtSearch.Size = new System.Drawing.Size(300, 48);
             this.txtSearch.TabIndex = 1;
-            this.txtSearch.PlaceholderText = "Filter across all text columns…";
             this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
-            this.cboFilterColumn.Location = new System.Drawing.Point(348, 6);
-            this.cboFilterColumn.Size = new System.Drawing.Size(150, 23);
+
+            // cboFilterColumn (MaterialComboBox)
+            this.cboFilterColumn.Location = new System.Drawing.Point(314, 14);
+            this.cboFilterColumn.Size = new System.Drawing.Size(180, 36);
             this.cboFilterColumn.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboFilterColumn.TabIndex = 2;
-            this.pnlSearch.Controls.Add(this.lblSearch);
+
             this.pnlSearch.Controls.Add(this.txtSearch);
             this.pnlSearch.Controls.Add(this.cboFilterColumn);
 
-            // tabControl
+            // tabControl (MaterialTabControl)
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.TabPages.AddRange(new System.Windows.Forms.TabPage[] {
                 tabOHMeters, tabIMMeters, tabOHTransformers, tabIMTransformers });
-            this.tabControl.TabIndex = 2;
+            this.tabControl.TabIndex = 3;
             this.tabControl.SelectedIndexChanged += new System.EventHandler(this.tabControl_SelectedIndexChanged);
 
             SetupTab(tabOHMeters,       "OH - Meters",        gridOHMeters);
@@ -109,36 +112,63 @@ namespace DRED
             SetupTab(tabOHTransformers, "OH - Transformers",  gridOHTransformers);
             SetupTab(tabIMTransformers, "I&M - Transformers", gridIMTransformers);
 
-            // statusStrip
-            this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                lblStatusRecords, lblStatusConnection, lblStatusUser });
-            this.statusStrip.SizingGrip = false;
+            // tabSelector (MaterialTabSelector)
+            this.tabSelector.BaseTabControl = this.tabControl;
+            this.tabSelector.Dock = System.Windows.Forms.DockStyle.Top;
+            this.tabSelector.Depth = 0;
+            this.tabSelector.MouseState = MaterialSkin.MouseState.HOVER;
+            this.tabSelector.TabIndex = 4;
+
+            // pnlStatus
+            this.pnlStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.pnlStatus.Height = 26;
+            this.pnlStatus.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
+            this.pnlStatus.Padding = new System.Windows.Forms.Padding(6, 4, 6, 4);
+
+            this.lblStatusRecords.AutoSize = true;
+            this.lblStatusRecords.Location = new System.Drawing.Point(6, 5);
+            this.lblStatusRecords.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblStatusRecords.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.lblStatusRecords.Text = "Records: 0";
-            this.lblStatusRecords.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+
+            this.lblStatusConnection.AutoSize = true;
+            this.lblStatusConnection.Location = new System.Drawing.Point(120, 5);
+            this.lblStatusConnection.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblStatusConnection.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.lblStatusConnection.Text = "Connected: (none)";
-            this.lblStatusConnection.Spring = true;
-            this.lblStatusConnection.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblStatusConnection.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+
+            this.lblStatusUser.AutoSize = true;
+            this.lblStatusUser.Dock = System.Windows.Forms.DockStyle.Right;
+            this.lblStatusUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblStatusUser.Padding = new System.Windows.Forms.Padding(0, 0, 6, 0);
+            this.lblStatusUser.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblStatusUser.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.lblStatusUser.Text = "User: ";
 
+            // Add right-docked label first so it anchors correctly
+            this.pnlStatus.Controls.Add(this.lblStatusUser);
+            this.pnlStatus.Controls.Add(this.lblStatusRecords);
+            this.pnlStatus.Controls.Add(this.lblStatusConnection);
+
             // MainForm
-            this.ClientSize = new System.Drawing.Size(1200, 700);
+            this.ClientSize = new System.Drawing.Size(1200, 764);
             this.Controls.Add(this.tabControl);
-            this.Controls.Add(this.statusStrip);
+            this.Controls.Add(this.tabSelector);
+            this.Controls.Add(this.pnlStatus);
             this.Controls.Add(this.pnlSearch);
-            this.Controls.Add(this.toolStrip);
+            this.Controls.Add(this.pnlToolbar);
             this.Text = "DRED – Device Record Established Database";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.MinimumSize = new System.Drawing.Size(800, 500);
+            this.MinimumSize = new System.Drawing.Size(800, 564);
             this.KeyPreview = true;
 
-            this.toolStrip.ResumeLayout(false);
-            this.toolStrip.PerformLayout();
+            this.pnlToolbar.ResumeLayout(false);
+            this.pnlToolbar.PerformLayout();
             this.pnlSearch.ResumeLayout(false);
             this.pnlSearch.PerformLayout();
             this.tabControl.ResumeLayout(false);
-            this.statusStrip.ResumeLayout(false);
-            this.statusStrip.PerformLayout();
+            this.pnlStatus.ResumeLayout(false);
+            this.pnlStatus.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -154,8 +184,32 @@ namespace DRED
                 SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells,
-                RowHeadersWidth = 30,
+                RowHeadersVisible = false,
+                RowTemplate = { Height = 32 },
+                BorderStyle = System.Windows.Forms.BorderStyle.None,
+                CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal,
+                BackgroundColor = System.Drawing.Color.FromArgb(30, 30, 30),
+                GridColor = System.Drawing.Color.FromArgb(60, 60, 60),
+                EnableHeadersVisualStyles = false,
             };
+
+            g.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            g.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            g.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI Semibold", 10F);
+            g.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            g.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
+
+            g.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            g.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
+            g.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(25, 118, 210);
+            g.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            g.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+
+            g.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
+            g.AlternatingRowsDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
+            g.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(25, 118, 210);
+            g.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+
             return g;
         }
 
@@ -166,33 +220,33 @@ namespace DRED
             tab.Controls.Add(grid);
         }
 
-        private static void SetToolButton(System.Windows.Forms.ToolStripButton btn,
-            string text, string icon, System.EventHandler handler)
+        private static void SetMaterialButton(MaterialSkin.Controls.MaterialButton btn,
+            string text, MaterialSkin.Controls.MaterialButton.MaterialButtonType type,
+            bool highEmphasis, System.EventHandler handler)
         {
-            btn.Text = $"{icon} {text}";
-            btn.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            btn.Text = text;
+            btn.Type = type;
+            btn.HighEmphasis = highEmphasis;
+            btn.AutoSize = true;
+            btn.UseAccentColor = false;
             btn.Click += handler;
         }
 
-        private System.Windows.Forms.ToolStrip toolStrip = null!;
-        private System.Windows.Forms.ToolStripButton tsbAdd = null!;
-        private System.Windows.Forms.ToolStripButton tsbEdit = null!;
-        private System.Windows.Forms.ToolStripButton tsbDelete = null!;
-        private System.Windows.Forms.ToolStripSeparator tsSep1 = null!;
-        private System.Windows.Forms.ToolStripButton tsbRefresh = null!;
-        private System.Windows.Forms.ToolStripSeparator tsSep2 = null!;
-        private System.Windows.Forms.ToolStripButton tsbImport = null!;
-        private System.Windows.Forms.ToolStripButton tsbExport = null!;
-        private System.Windows.Forms.ToolStripButton tsbExportAll = null!;
-        private System.Windows.Forms.ToolStripSeparator tsSep3 = null!;
-        private System.Windows.Forms.ToolStripButton tsbAdvancedSearch = null!;
-        private System.Windows.Forms.ToolStripSeparator tsSep4 = null!;
-        private System.Windows.Forms.ToolStripButton tsbSettings = null!;
+        private System.Windows.Forms.FlowLayoutPanel pnlToolbar = null!;
+        private MaterialSkin.Controls.MaterialButton btnAdd = null!;
+        private MaterialSkin.Controls.MaterialButton btnEdit = null!;
+        private MaterialSkin.Controls.MaterialButton btnDelete = null!;
+        private MaterialSkin.Controls.MaterialButton btnRefresh = null!;
+        private MaterialSkin.Controls.MaterialButton btnImport = null!;
+        private MaterialSkin.Controls.MaterialButton btnExport = null!;
+        private MaterialSkin.Controls.MaterialButton btnExportAll = null!;
+        private MaterialSkin.Controls.MaterialButton btnAdvancedSearch = null!;
+        private MaterialSkin.Controls.MaterialButton btnSettings = null!;
         private System.Windows.Forms.Panel pnlSearch = null!;
-        private System.Windows.Forms.Label lblSearch = null!;
-        private System.Windows.Forms.TextBox txtSearch = null!;
-        private System.Windows.Forms.ComboBox cboFilterColumn = null!;
-        private System.Windows.Forms.TabControl tabControl = null!;
+        private MaterialSkin.Controls.MaterialTextBox2 txtSearch = null!;
+        private MaterialSkin.Controls.MaterialComboBox cboFilterColumn = null!;
+        private MaterialSkin.Controls.MaterialTabControl tabControl = null!;
+        private MaterialSkin.Controls.MaterialTabSelector tabSelector = null!;
         private System.Windows.Forms.TabPage tabOHMeters = null!;
         private System.Windows.Forms.TabPage tabIMMeters = null!;
         private System.Windows.Forms.TabPage tabOHTransformers = null!;
@@ -201,10 +255,10 @@ namespace DRED
         private System.Windows.Forms.DataGridView gridIMMeters = null!;
         private System.Windows.Forms.DataGridView gridOHTransformers = null!;
         private System.Windows.Forms.DataGridView gridIMTransformers = null!;
-        private System.Windows.Forms.StatusStrip statusStrip = null!;
-        private System.Windows.Forms.ToolStripStatusLabel lblStatusRecords = null!;
-        private System.Windows.Forms.ToolStripStatusLabel lblStatusConnection = null!;
-        private System.Windows.Forms.ToolStripStatusLabel lblStatusUser = null!;
+        private System.Windows.Forms.Panel pnlStatus = null!;
+        private System.Windows.Forms.Label lblStatusRecords = null!;
+        private System.Windows.Forms.Label lblStatusConnection = null!;
+        private System.Windows.Forms.Label lblStatusUser = null!;
     }
 }
 

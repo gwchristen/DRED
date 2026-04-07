@@ -2,10 +2,12 @@ using System;
 using System.Data;
 using System.IO;
 using System.Windows.Forms;
+using MaterialSkin;
+using MaterialSkin.Controls;
 
 namespace DRED
 {
-    public partial class MainForm : Form
+    public partial class MainForm : MaterialForm
     {
         private static readonly string[] TabTableNames =
             { "OH_Meters", "IM_Meters", "OH_Transformers", "IM_Transformers" };
@@ -34,6 +36,8 @@ namespace DRED
         {
             InitializeComponent();
 
+            MaterialSkinManager.Instance.AddFormToManage(this);
+
             // Populate filter column combo — wire event AFTER setting SelectedIndex
             cboFilterColumn.Items.AddRange(new object[] {
                 "All Columns", "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer",
@@ -41,8 +45,6 @@ namespace DRED
             });
             cboFilterColumn.SelectedIndex = 0;
             cboFilterColumn.SelectedIndexChanged += cboFilterColumn_SelectedIndexChanged;
-
-            ThemeManager.Apply(this);
 
             _refreshTimer = new System.Windows.Forms.Timer();
             _refreshTimer.Tick += (s, e) => { if (!_dialogOpen) RefreshCurrentTab(); };

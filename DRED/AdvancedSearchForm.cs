@@ -2,59 +2,61 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
+using MaterialSkin;
+using MaterialSkin.Controls;
 
 namespace DRED
 {
-    public class AdvancedSearchForm : Form
+    public class AdvancedSearchForm : MaterialForm
     {
         public AdvancedSearchCriteria? Criteria { get; private set; }
 
-        private TextBox txtOpCo2 = null!;
-        private TextBox txtStatus = null!;
-        private TextBox txtMFR = null!;
-        private TextBox txtDevCode = null!;
-        private TextBox txtBegSer = null!;
-        private TextBox txtEndSer = null!;
-        private TextBox txtPONumber = null!;
-        private TextBox txtVintage = null!;
-        private TextBox txtCID = null!;
-        private TextBox txtMENumber = null!;
-        private TextBox txtPurCode = null!;
-        private TextBox txtEst = null!;
-        private TextBox txtComments = null!;
+        private MaterialTextBox2 txtOpCo2 = null!;
+        private MaterialTextBox2 txtStatus = null!;
+        private MaterialTextBox2 txtMFR = null!;
+        private MaterialTextBox2 txtDevCode = null!;
+        private MaterialTextBox2 txtBegSer = null!;
+        private MaterialTextBox2 txtEndSer = null!;
+        private MaterialTextBox2 txtPONumber = null!;
+        private MaterialTextBox2 txtVintage = null!;
+        private MaterialTextBox2 txtCID = null!;
+        private MaterialTextBox2 txtMENumber = null!;
+        private MaterialTextBox2 txtPurCode = null!;
+        private MaterialTextBox2 txtEst = null!;
+        private RichTextBox txtComments = null!;
         private DateTimePicker dtpPODateFrom = null!;
         private DateTimePicker dtpPODateTo = null!;
         private DateTimePicker dtpRecvDateFrom = null!;
         private DateTimePicker dtpRecvDateTo = null!;
-        private CheckBox chkPODateFrom = null!;
-        private CheckBox chkPODateTo = null!;
-        private CheckBox chkRecvDateFrom = null!;
-        private CheckBox chkRecvDateTo = null!;
+        private MaterialCheckbox chkPODateFrom = null!;
+        private MaterialCheckbox chkPODateTo = null!;
+        private MaterialCheckbox chkRecvDateFrom = null!;
+        private MaterialCheckbox chkRecvDateTo = null!;
         private NumericUpDown nudCostMin = null!;
         private NumericUpDown nudCostMax = null!;
         private NumericUpDown nudQtyMin = null!;
         private NumericUpDown nudQtyMax = null!;
-        private CheckBox chkCostRange = null!;
-        private CheckBox chkQtyRange = null!;
-        private Button btnApply = null!;
-        private Button btnClear = null!;
-        private Button btnClose = null!;
+        private MaterialCheckbox chkCostRange = null!;
+        private MaterialCheckbox chkQtyRange = null!;
+        private MaterialButton btnApply = null!;
+        private MaterialButton btnClear = null!;
+        private MaterialButton btnClose = null!;
 
         public AdvancedSearchForm()
         {
+            MaterialSkinManager.Instance.AddFormToManage(this);
             InitializeAdvancedForm();
-            ThemeManager.Apply(this);
         }
 
         private void InitializeAdvancedForm()
         {
             this.Text = "Advanced Search";
-            this.Size = new Size(700, 600);
+            this.Size = new Size(700, 664);
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.StartPosition = FormStartPosition.CenterParent;
-            this.MinimumSize = new Size(600, 550);
+            this.MinimumSize = new Size(600, 614);
 
-            var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true };
+            var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(45, 45, 48) };
             var tlp = new TableLayoutPanel
             {
                 ColumnCount = 4,
@@ -62,10 +64,11 @@ namespace DRED
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Dock = DockStyle.Top,
                 Padding = new Padding(10),
+                BackColor = Color.FromArgb(45, 45, 48),
             };
-            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
             int row = 0;
@@ -78,18 +81,26 @@ namespace DRED
             AddSearchRow(tlp, row++, "Pur. Code:", out txtPurCode, "Est.:", out txtEst);
 
             // Comments spans full width
-            var lblComments = new Label { Text = "Comments:", AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Top, Margin = new Padding(0, 6, 0, 0) };
-            txtComments = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 6, 4) };
+            var lblComments = MakeLabel("Comments:");
+            txtComments = new RichTextBox
+            {
+                Dock = DockStyle.Fill,
+                Margin = new Padding(0, 4, 6, 4),
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.FromArgb(241, 241, 241),
+                BorderStyle = BorderStyle.None,
+                Height = 50,
+            };
             tlp.Controls.Add(lblComments, 0, row);
             tlp.Controls.Add(txtComments, 1, row);
             tlp.SetColumnSpan(txtComments, 3);
             row++;
 
             // PO Date range
-            chkPODateFrom = new CheckBox { Text = "PO Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpPODateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill };
-            chkPODateTo = new CheckBox { Text = "PO Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpPODateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill };
+            chkPODateFrom = new MaterialCheckbox { Text = "PO Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
+            dtpPODateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
+            chkPODateTo = new MaterialCheckbox { Text = "PO Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
+            dtpPODateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
             chkPODateFrom.CheckedChanged += (s, e) => dtpPODateFrom.Enabled = chkPODateFrom.Checked;
             chkPODateTo.CheckedChanged += (s, e) => dtpPODateTo.Enabled = chkPODateTo.Checked;
             tlp.Controls.Add(chkPODateFrom, 0, row); tlp.Controls.Add(dtpPODateFrom, 1, row);
@@ -97,10 +108,10 @@ namespace DRED
             row++;
 
             // Recv Date range
-            chkRecvDateFrom = new CheckBox { Text = "Recv Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpRecvDateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill };
-            chkRecvDateTo = new CheckBox { Text = "Recv Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpRecvDateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill };
+            chkRecvDateFrom = new MaterialCheckbox { Text = "Recv Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
+            dtpRecvDateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
+            chkRecvDateTo = new MaterialCheckbox { Text = "Recv Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
+            dtpRecvDateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
             chkRecvDateFrom.CheckedChanged += (s, e) => dtpRecvDateFrom.Enabled = chkRecvDateFrom.Checked;
             chkRecvDateTo.CheckedChanged += (s, e) => dtpRecvDateTo.Enabled = chkRecvDateTo.Checked;
             tlp.Controls.Add(chkRecvDateFrom, 0, row); tlp.Controls.Add(dtpRecvDateFrom, 1, row);
@@ -108,20 +119,20 @@ namespace DRED
             row++;
 
             // Cost range
-            chkCostRange = new CheckBox { Text = "Cost Min:", AutoSize = true, Anchor = AnchorStyles.Left };
-            nudCostMin = new NumericUpDown { Minimum = 0, Maximum = 9999999, DecimalPlaces = 2, Dock = DockStyle.Fill, Enabled = false };
-            var lblCostMax = new Label { Text = "Cost Max:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 0, 0) };
-            nudCostMax = new NumericUpDown { Minimum = 0, Maximum = 9999999, DecimalPlaces = 2, Dock = DockStyle.Fill, Enabled = false };
+            chkCostRange = new MaterialCheckbox { Text = "Cost Min:", AutoSize = true, Anchor = AnchorStyles.Left };
+            nudCostMin = MakeNud(9999999, 2, false);
+            var lblCostMax = MakeLabel("Cost Max:");
+            nudCostMax = MakeNud(9999999, 2, false);
             chkCostRange.CheckedChanged += (s, e) => { nudCostMin.Enabled = chkCostRange.Checked; nudCostMax.Enabled = chkCostRange.Checked; };
             tlp.Controls.Add(chkCostRange, 0, row); tlp.Controls.Add(nudCostMin, 1, row);
             tlp.Controls.Add(lblCostMax, 2, row); tlp.Controls.Add(nudCostMax, 3, row);
             row++;
 
             // Qty range
-            chkQtyRange = new CheckBox { Text = "Qty Min:", AutoSize = true, Anchor = AnchorStyles.Left };
-            nudQtyMin = new NumericUpDown { Minimum = 0, Maximum = 999999, Dock = DockStyle.Fill, Enabled = false };
-            var lblQtyMax = new Label { Text = "Qty Max:", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 6, 0, 0) };
-            nudQtyMax = new NumericUpDown { Minimum = 0, Maximum = 999999, Dock = DockStyle.Fill, Enabled = false };
+            chkQtyRange = new MaterialCheckbox { Text = "Qty Min:", AutoSize = true, Anchor = AnchorStyles.Left };
+            nudQtyMin = MakeNud(999999, 0, false);
+            var lblQtyMax = MakeLabel("Qty Max:");
+            nudQtyMax = MakeNud(999999, 0, false);
             chkQtyRange.CheckedChanged += (s, e) => { nudQtyMin.Enabled = chkQtyRange.Checked; nudQtyMax.Enabled = chkQtyRange.Checked; };
             tlp.Controls.Add(chkQtyRange, 0, row); tlp.Controls.Add(nudQtyMin, 1, row);
             tlp.Controls.Add(lblQtyMax, 2, row); tlp.Controls.Add(nudQtyMax, 3, row);
@@ -129,10 +140,10 @@ namespace DRED
             scroll.Controls.Add(tlp);
 
             // Button panel
-            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 45 };
-            btnApply = new Button { Text = "Apply", Location = new Point(8, 8), Size = new Size(90, 28) };
-            btnClear = new Button { Text = "Clear All", Location = new Point(106, 8), Size = new Size(90, 28) };
-            btnClose = new Button { Text = "Close", Location = new Point(204, 8), Size = new Size(90, 28) };
+            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 54, BackColor = Color.FromArgb(37, 37, 40) };
+            btnApply = new MaterialButton { Text = "Apply", Location = new Point(8, 8), Type = MaterialButton.MaterialButtonType.Contained, HighEmphasis = true, AutoSize = true };
+            btnClear = new MaterialButton { Text = "Clear All", Location = new Point(120, 8), Type = MaterialButton.MaterialButtonType.Outlined, AutoSize = true };
+            btnClose = new MaterialButton { Text = "Close", Location = new Point(230, 8), Type = MaterialButton.MaterialButtonType.Text, AutoSize = true };
             btnApply.Click += BtnApply_Click;
             btnClear.Click += BtnClear_Click;
             btnClose.Click += (s, e) => this.Close();
@@ -143,12 +154,34 @@ namespace DRED
             this.CancelButton = btnClose;
         }
 
-        private void AddSearchRow(TableLayoutPanel tlp, int row, string lbl1Text, out TextBox txt1, string lbl2Text, out TextBox txt2)
+        private static Label MakeLabel(string text) =>
+            new Label
+            {
+                Text = text,
+                AutoSize = true,
+                Anchor = AnchorStyles.Left | AnchorStyles.Top,
+                Margin = new Padding(0, 10, 0, 0),
+                ForeColor = Color.FromArgb(204, 204, 204),
+            };
+
+        private static NumericUpDown MakeNud(decimal max, int decimals, bool enabled) =>
+            new NumericUpDown
+            {
+                Minimum = 0,
+                Maximum = max,
+                DecimalPlaces = decimals,
+                Dock = DockStyle.Fill,
+                Enabled = enabled,
+                BackColor = Color.FromArgb(50, 50, 50),
+                ForeColor = Color.White,
+            };
+
+        private void AddSearchRow(TableLayoutPanel tlp, int row, string lbl1Text, out MaterialTextBox2 txt1, string lbl2Text, out MaterialTextBox2 txt2)
         {
-            var lbl1 = new Label { Text = lbl1Text, AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Top, Margin = new Padding(0, 6, 0, 0) };
-            txt1 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 6, 4) };
-            var lbl2 = new Label { Text = lbl2Text, AutoSize = true, Anchor = AnchorStyles.Left | AnchorStyles.Top, Margin = new Padding(0, 6, 0, 0) };
-            txt2 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 6, 4) };
+            var lbl1 = MakeLabel(lbl1Text);
+            txt1 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 6, 4), UseTallSize = false };
+            var lbl2 = MakeLabel(lbl2Text);
+            txt2 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 6, 4), UseTallSize = false };
             tlp.Controls.Add(lbl1, 0, row);
             tlp.Controls.Add(txt1, 1, row);
             tlp.Controls.Add(lbl2, 2, row);
@@ -188,8 +221,9 @@ namespace DRED
         private void BtnClear_Click(object? sender, EventArgs e)
         {
             foreach (var txt in new[] { txtOpCo2, txtStatus, txtMFR, txtDevCode, txtBegSer, txtEndSer,
-                                        txtPONumber, txtVintage, txtCID, txtMENumber, txtPurCode, txtEst, txtComments })
+                                        txtPONumber, txtVintage, txtCID, txtMENumber, txtPurCode, txtEst })
                 txt.Text = "";
+            txtComments.Text = "";
             chkPODateFrom.Checked = chkPODateTo.Checked = false;
             chkRecvDateFrom.Checked = chkRecvDateTo.Checked = false;
             chkCostRange.Checked = false;

@@ -1,15 +1,17 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
+using MaterialSkin;
+using MaterialSkin.Controls;
 
 namespace DRED
 {
-    public partial class SettingsForm : Form
+    public partial class SettingsForm : MaterialForm
     {
         public SettingsForm()
         {
             InitializeComponent();
-            ThemeManager.Apply(this);
+            MaterialSkinManager.Instance.AddFormToManage(this);
             txtDatabasePath.Text = AppSettings.DatabasePath;
             nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
         }
