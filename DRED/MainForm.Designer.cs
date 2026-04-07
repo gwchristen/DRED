@@ -316,7 +316,6 @@ namespace DRED
                 Dock           = System.Windows.Forms.DockStyle.Fill,
                 Orientation    = System.Windows.Forms.Orientation.Vertical,
                 FixedPanel     = System.Windows.Forms.FixedPanel.Panel1,
-                SplitterDistance = 300,
                 SplitterWidth  = 1,
                 Panel1MinSize  = 220,
                 Panel2MinSize  = 350,
@@ -358,6 +357,7 @@ namespace DRED
 
             _listBoxes[tabIndex]    = listBox;
             _detailPanels[tabIndex] = detailPanel;
+            _splitContainers[tabIndex] = split;
         }
 
         private static void SetMaterialButton(MaterialSkin.Controls.MaterialButton btn,
