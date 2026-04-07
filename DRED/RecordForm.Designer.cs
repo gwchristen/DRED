@@ -13,7 +13,14 @@ namespace DRED
 
         private void InitializeComponent()
         {
-            this.tableLayoutPanel  = new System.Windows.Forms.TableLayoutPanel();
+            // ── Controls ────────────────────────────────────────────────
+            this.pnlScroll         = new System.Windows.Forms.Panel();
+            this.pnlDeviceInfo     = new System.Windows.Forms.Panel();
+            this.pnlSerialRange    = new System.Windows.Forms.Panel();
+            this.pnlPurchaseInfo   = new System.Windows.Forms.Panel();
+            this.pnlIdentifiers    = new System.Windows.Forms.Panel();
+            this.pnlCommentsCard   = new System.Windows.Forms.Panel();
+
             this.lblOpCo2          = new System.Windows.Forms.Label();
             this.txtOpCo2          = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblStatus         = new System.Windows.Forms.Label();
@@ -22,6 +29,7 @@ namespace DRED
             this.txtMFR            = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblDevCode        = new System.Windows.Forms.Label();
             this.txtDevCode        = new MaterialSkin.Controls.MaterialTextBox2();
+
             this.lblBegSer         = new System.Windows.Forms.Label();
             this.txtBegSer         = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblEndSer         = new System.Windows.Forms.Label();
@@ -29,18 +37,20 @@ namespace DRED
             this.lblQty            = new System.Windows.Forms.Label();
             this.nudQty            = new System.Windows.Forms.NumericUpDown();
             this.chkAutoQty        = new MaterialSkin.Controls.MaterialCheckbox();
+
             this.lblPODate         = new System.Windows.Forms.Label();
             this.dtpPODate         = new System.Windows.Forms.DateTimePicker();
             this.chkNoPODate       = new MaterialSkin.Controls.MaterialCheckbox();
-            this.lblVintage        = new System.Windows.Forms.Label();
-            this.txtVintage        = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblPONumber       = new System.Windows.Forms.Label();
             this.txtPONumber       = new MaterialSkin.Controls.MaterialTextBox2();
+            this.lblVintage        = new System.Windows.Forms.Label();
+            this.txtVintage        = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblRecvDate       = new System.Windows.Forms.Label();
             this.chkRecvDate       = new MaterialSkin.Controls.MaterialCheckbox();
             this.lblRecvDateDisplay = new System.Windows.Forms.Label();
             this.lblUnitCost       = new System.Windows.Forms.Label();
             this.txtUnitCost       = new MaterialSkin.Controls.MaterialTextBox2();
+
             this.lblCID            = new System.Windows.Forms.Label();
             this.txtCID            = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblMENumber       = new System.Windows.Forms.Label();
@@ -49,62 +59,72 @@ namespace DRED
             this.txtPurCode        = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblEst            = new System.Windows.Forms.Label();
             this.txtEst            = new MaterialSkin.Controls.MaterialTextBox2();
+
             this.lblComments       = new System.Windows.Forms.Label();
             this.txtComments       = new System.Windows.Forms.RichTextBox();
+
             this.lblAuditInfo      = new System.Windows.Forms.Label();
             this.pnlButtons        = new System.Windows.Forms.Panel();
             this.btnSave           = new MaterialSkin.Controls.MaterialButton();
             this.btnCancel         = new MaterialSkin.Controls.MaterialButton();
 
+            // Keep tableLayoutPanel for backward compatibility (not used in layout)
+            this.tableLayoutPanel  = new System.Windows.Forms.TableLayoutPanel();
+
             ((System.ComponentModel.ISupportInitialize)(this.nudQty)).BeginInit();
             this.pnlButtons.SuspendLayout();
             this.SuspendLayout();
 
-            // tableLayoutPanel — 4 cols, 12 rows
-            this.tableLayoutPanel.ColumnCount = 4;
-            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
-            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
-            this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.tableLayoutPanel.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tableLayoutPanel.Location = new System.Drawing.Point(0, 0);
-            this.tableLayoutPanel.Padding = new System.Windows.Forms.Padding(8);
-            this.tableLayoutPanel.RowCount = 12;
-            for (int i = 0; i < 11; i++)
-                this.tableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
-            this.tableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 30F)); // Row 11: audit
-            this.tableLayoutPanel.Name = "tableLayoutPanel";
-            this.tableLayoutPanel.TabIndex = 0;
-            this.tableLayoutPanel.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            // ── Shared colors ────────────────────────────────────────────
+            var cardBack  = System.Drawing.Color.FromArgb(56, 56, 58);    // #383838 — card bg
+            var formBack  = System.Drawing.Color.FromArgb(45, 45, 48);    // form bg
+            var labelFore = System.Drawing.Color.FromArgb(180, 180, 180); // label text
+            var headerFore = System.Drawing.Color.FromArgb(100, 181, 246); // accent blue for section headers
+            var accentBorder = System.Drawing.Color.FromArgb(62, 62, 66); // subtle border
 
+            // ── pnlScroll — outer scrollable container ───────────────────
+            this.pnlScroll.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.pnlScroll.AutoScroll = true;
+            this.pnlScroll.Padding = new System.Windows.Forms.Padding(20, 16, 20, 16);
+            this.pnlScroll.BackColor = formBack;
+
+            // ── Card: Device Information ─────────────────────────────────
+            var tblDevice = MakeCardTable(4);
+            var lblDevHeader = MakeCardHeader("DEVICE INFORMATION", headerFore);
             // Row 0: OpCo2 | Status
-            AddLabelControl(0, 0, lblOpCo2, "OpCo2:");
-            AddMaterialTextControl(0, 1, txtOpCo2, 0);
-            AddLabelControl(0, 2, lblStatus, "Status:");
-            AddMaterialTextControl(0, 3, txtStatus, 1);
-
+            AddLabelToCard(tblDevice, lblOpCo2, "OpCo2:", labelFore, 0, 0);
+            ConfigureMaterialText(txtOpCo2, 0); tblDevice.Controls.Add(txtOpCo2, 1, 0);
+            AddLabelToCard(tblDevice, lblStatus, "Status:", labelFore, 0, 2);
+            ConfigureMaterialText(txtStatus, 1); tblDevice.Controls.Add(txtStatus, 3, 0);
             // Row 1: MFR | DevCode
-            AddLabelControl(1, 0, lblMFR, "MFR:");
-            AddMaterialTextControl(1, 1, txtMFR, 2);
-            AddLabelControl(1, 2, lblDevCode, "Dev Code:");
-            AddMaterialTextControl(1, 3, txtDevCode, 3);
+            AddLabelToCard(tblDevice, lblMFR, "MFR:", labelFore, 1, 0);
+            ConfigureMaterialText(txtMFR, 2); tblDevice.Controls.Add(txtMFR, 1, 1);
+            AddLabelToCard(tblDevice, lblDevCode, "Dev Code:", labelFore, 1, 2);
+            ConfigureMaterialText(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
 
-            // Row 2: BegSer | EndSer
-            AddLabelControl(2, 0, lblBegSer, "Beg Ser:");
-            AddMaterialTextControl(2, 1, txtBegSer, 4);
-            this.txtBegSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
-            AddLabelControl(2, 2, lblEndSer, "End Ser:");
-            AddMaterialTextControl(2, 3, txtEndSer, 5);
-            this.txtEndSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
+            pnlDeviceInfo = MakeCard(cardBack, accentBorder, lblDevHeader, tblDevice);
 
-            // Row 3: Qty (+Auto) | PO Date (+No PO Date)
-            AddLabelControl(3, 0, lblQty, "Qty:");
+            // ── Card: Serial Range & Quantity ────────────────────────────
+            var tblSerial = MakeCardTable(2);
+            var lblSerialHeader = MakeCardHeader("SERIAL RANGE & QUANTITY", headerFore);
+            // Row 0: BegSer | EndSer
+            AddLabelToCard(tblSerial, lblBegSer, "Beg Ser:", labelFore, 0, 0);
+            ConfigureMaterialText(txtBegSer, 4);
+            txtBegSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
+            tblSerial.Controls.Add(txtBegSer, 1, 0);
+            AddLabelToCard(tblSerial, lblEndSer, "End Ser:", labelFore, 0, 2);
+            ConfigureMaterialText(txtEndSer, 5);
+            txtEndSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
+            tblSerial.Controls.Add(txtEndSer, 3, 0);
+            // Row 1: Qty (+Auto)
+            AddLabelToCard(tblSerial, lblQty, "Qty:", labelFore, 1, 0);
             var qtyPanel = new System.Windows.Forms.FlowLayoutPanel
             {
-                AutoSize = true,
                 Dock = System.Windows.Forms.DockStyle.Fill,
                 FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
-                BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+                BackColor = System.Drawing.Color.Transparent,
+                Margin = System.Windows.Forms.Padding.Empty,
+                Padding = System.Windows.Forms.Padding.Empty,
             };
             this.nudQty.Maximum = 999999;
             this.nudQty.TabIndex = 6;
@@ -120,15 +140,23 @@ namespace DRED
             this.chkAutoQty.CheckedChanged += new System.EventHandler(this.chkAutoQty_CheckedChanged);
             qtyPanel.Controls.Add(this.nudQty);
             qtyPanel.Controls.Add(this.chkAutoQty);
-            this.tableLayoutPanel.Controls.Add(qtyPanel, 1, 3);
+            tblSerial.Controls.Add(qtyPanel, 1, 1);
+            // Span qty panel across remaining 3 columns
+            tblSerial.SetColumnSpan(qtyPanel, 3);
 
-            AddLabelControl(3, 2, lblPODate, "PO Date:");
+            pnlSerialRange = MakeCard(cardBack, accentBorder, lblSerialHeader, tblSerial);
+
+            // ── Card: Purchase Information ───────────────────────────────
+            var tblPurchase = MakeCardTable(4);
+            var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
+            // Row 0: PO Date (+No PO Date) | PO Number
+            AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
             var poDatePanel = new System.Windows.Forms.FlowLayoutPanel
             {
-                AutoSize = true,
                 Dock = System.Windows.Forms.DockStyle.Fill,
                 FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
-                BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+                BackColor = System.Drawing.Color.Transparent,
+                Margin = System.Windows.Forms.Padding.Empty,
             };
             this.dtpPODate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpPODate.TabIndex = 8;
@@ -140,22 +168,20 @@ namespace DRED
             this.chkNoPODate.CheckedChanged += new System.EventHandler(this.chkNoPODate_CheckedChanged);
             poDatePanel.Controls.Add(this.dtpPODate);
             poDatePanel.Controls.Add(this.chkNoPODate);
-            this.tableLayoutPanel.Controls.Add(poDatePanel, 3, 3);
-
-            // Row 4: Vintage | PO Number
-            AddLabelControl(4, 0, lblVintage, "Vintage:");
-            AddMaterialTextControl(4, 1, txtVintage, 10);
-            AddLabelControl(4, 2, lblPONumber, "PO Number:");
-            AddMaterialTextControl(4, 3, txtPONumber, 11);
-
-            // Row 5: Recv Date | Unit Cost
-            AddLabelControl(5, 0, lblRecvDate, "Recv Date:");
-            var recvDatePanel = new System.Windows.Forms.FlowLayoutPanel
+            tblPurchase.Controls.Add(poDatePanel, 1, 0);
+            AddLabelToCard(tblPurchase, lblPONumber, "PO Number:", labelFore, 0, 2);
+            ConfigureMaterialText(txtPONumber, 11); tblPurchase.Controls.Add(txtPONumber, 3, 0);
+            // Row 1: Vintage | (empty)
+            AddLabelToCard(tblPurchase, lblVintage, "Vintage:", labelFore, 1, 0);
+            ConfigureMaterialText(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
+            // Row 2: Recv Date | Unit Cost
+            AddLabelToCard(tblPurchase, lblRecvDate, "Recv Date:", labelFore, 2, 0);
+            var recvPanel = new System.Windows.Forms.FlowLayoutPanel
             {
-                AutoSize = true,
                 Dock = System.Windows.Forms.DockStyle.Fill,
                 FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
-                BackColor = System.Drawing.Color.FromArgb(45, 45, 48),
+                BackColor = System.Drawing.Color.Transparent,
+                Margin = System.Windows.Forms.Padding.Empty,
             };
             this.chkRecvDate.Text = "Received";
             this.chkRecvDate.AutoSize = true;
@@ -166,30 +192,39 @@ namespace DRED
             this.lblRecvDateDisplay.Font = new System.Drawing.Font("Segoe UI", 9f, System.Drawing.FontStyle.Bold);
             this.lblRecvDateDisplay.ForeColor = System.Drawing.Color.FromArgb(144, 202, 249);
             this.lblRecvDateDisplay.Margin = new System.Windows.Forms.Padding(6, 6, 0, 0);
-            recvDatePanel.Controls.Add(this.chkRecvDate);
-            recvDatePanel.Controls.Add(this.lblRecvDateDisplay);
-            this.tableLayoutPanel.Controls.Add(recvDatePanel, 1, 5);
-            AddLabelControl(5, 2, lblUnitCost, "Unit Cost:");
-            AddMaterialTextControl(5, 3, txtUnitCost, 13);
+            recvPanel.Controls.Add(this.chkRecvDate);
+            recvPanel.Controls.Add(this.lblRecvDateDisplay);
+            tblPurchase.Controls.Add(recvPanel, 1, 2);
+            AddLabelToCard(tblPurchase, lblUnitCost, "Unit Cost:", labelFore, 2, 2);
+            ConfigureMaterialText(txtUnitCost, 13);
             this.txtUnitCost.Enter += new System.EventHandler(this.txtUnitCost_Enter);
             this.txtUnitCost.Leave += new System.EventHandler(this.txtUnitCost_Leave);
+            tblPurchase.Controls.Add(txtUnitCost, 3, 2);
 
-            // Row 6: CID | ME Number
-            AddLabelControl(6, 0, lblCID, "CID:");
-            AddMaterialTextControl(6, 1, txtCID, 14);
-            AddLabelControl(6, 2, lblMENumber, "M.E. #:");
-            AddMaterialTextControl(6, 3, txtMENumber, 15);
+            pnlPurchaseInfo = MakeCard(cardBack, accentBorder, lblPurchaseHeader, tblPurchase);
 
-            // Row 7: Pur Code | Est
-            AddLabelControl(7, 0, lblPurCode, "Pur. Code:");
-            AddMaterialTextControl(7, 1, txtPurCode, 16);
-            AddLabelControl(7, 2, lblEst, "Est.:");
-            AddMaterialTextControl(7, 3, txtEst, 17);
+            // ── Card: Identifiers ────────────────────────────────────────
+            var tblIdent = MakeCardTable(2);
+            var lblIdentHeader = MakeCardHeader("IDENTIFIERS", headerFore);
+            // Row 0: CID | ME Number
+            AddLabelToCard(tblIdent, lblCID, "CID:", labelFore, 0, 0);
+            ConfigureMaterialText(txtCID, 14); tblIdent.Controls.Add(txtCID, 1, 0);
+            AddLabelToCard(tblIdent, lblMENumber, "M.E. #:", labelFore, 0, 2);
+            ConfigureMaterialText(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
+            // Row 1: Pur Code | Est
+            AddLabelToCard(tblIdent, lblPurCode, "Pur. Code:", labelFore, 1, 0);
+            ConfigureMaterialText(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
+            AddLabelToCard(tblIdent, lblEst, "Est.:", labelFore, 1, 2);
+            ConfigureMaterialText(txtEst, 17); tblIdent.Controls.Add(txtEst, 3, 1);
 
-            // Row 8: Comments label
-            AddLabelControl(8, 0, lblComments, "Comments:");
+            pnlIdentifiers = MakeCard(cardBack, accentBorder, lblIdentHeader, tblIdent);
 
-            // Rows 8-10: Comments text area (span 3 cols, span 3 rows)
+            // ── Card: Comments & Notes ───────────────────────────────────
+            var lblCommentsHeader = MakeCardHeader("COMMENTS & NOTES", headerFore);
+            this.lblComments.Text = "";
+            this.lblComments.AutoSize = false;
+            this.lblComments.Visible = false;
+
             this.txtComments.Multiline = true;
             this.txtComments.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.txtComments.TabIndex = 18;
@@ -197,30 +232,48 @@ namespace DRED
             this.txtComments.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
             this.txtComments.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
             this.txtComments.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            this.tableLayoutPanel.Controls.Add(this.txtComments, 1, 8);
-            this.tableLayoutPanel.SetColumnSpan(this.txtComments, 3);
-            this.tableLayoutPanel.SetRowSpan(this.txtComments, 3);
+            this.txtComments.MinimumSize = new System.Drawing.Size(0, 100);
 
-            // Row 11: Audit info label (span all 4 cols)
+            var commentsInner = new System.Windows.Forms.Panel
+            {
+                Dock = System.Windows.Forms.DockStyle.Fill,
+                Padding = new System.Windows.Forms.Padding(0),
+                Height = 110,
+                MinimumSize = new System.Drawing.Size(0, 110),
+            };
+            commentsInner.Controls.Add(this.txtComments);
+
+            pnlCommentsCard = MakeCardWithContent(cardBack, accentBorder, lblCommentsHeader, commentsInner, 160);
+
+            // ── lblAuditInfo ─────────────────────────────────────────────
             this.lblAuditInfo.AutoSize = false;
-            this.lblAuditInfo.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblAuditInfo.Dock = System.Windows.Forms.DockStyle.Top;
+            this.lblAuditInfo.Height = 24;
             this.lblAuditInfo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblAuditInfo.Font = new System.Drawing.Font("Segoe UI", 8f, System.Drawing.FontStyle.Italic);
             this.lblAuditInfo.ForeColor = System.Drawing.Color.FromArgb(144, 202, 249);
-            this.lblAuditInfo.Margin = new System.Windows.Forms.Padding(6, 2, 6, 2);
+            this.lblAuditInfo.Margin = new System.Windows.Forms.Padding(0, 8, 0, 0);
             this.lblAuditInfo.Visible = false;
-            this.tableLayoutPanel.Controls.Add(this.lblAuditInfo, 0, 11);
-            this.tableLayoutPanel.SetColumnSpan(this.lblAuditInfo, 4);
+            this.lblAuditInfo.BackColor = System.Drawing.Color.Transparent;
 
-            // pnlButtons
+            // ── Assemble scroll panel ────────────────────────────────────
+            // Add in reverse order (last added appears at top with DockStyle.Top)
+            this.pnlScroll.Controls.Add(this.lblAuditInfo);
+            this.pnlScroll.Controls.Add(pnlCommentsCard);
+            this.pnlScroll.Controls.Add(pnlIdentifiers);
+            this.pnlScroll.Controls.Add(pnlPurchaseInfo);
+            this.pnlScroll.Controls.Add(pnlSerialRange);
+            this.pnlScroll.Controls.Add(pnlDeviceInfo);
+
+            // ── pnlButtons ───────────────────────────────────────────────
             this.pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlButtons.Height = 54;
+            this.pnlButtons.Height = 60;
             this.pnlButtons.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
+            this.pnlButtons.Padding = new System.Windows.Forms.Padding(12);
             this.pnlButtons.Controls.Add(this.btnSave);
             this.pnlButtons.Controls.Add(this.btnCancel);
 
-            // btnSave
-            this.btnSave.Location = new System.Drawing.Point(8, 8);
+            this.btnSave.Location = new System.Drawing.Point(12, 10);
             this.btnSave.Text = "Save";
             this.btnSave.TabIndex = 20;
             this.btnSave.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -228,8 +281,7 @@ namespace DRED
             this.btnSave.AutoSize = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
 
-            // btnCancel
-            this.btnCancel.Location = new System.Drawing.Point(120, 8);
+            this.btnCancel.Location = new System.Drawing.Point(130, 10);
             this.btnCancel.Text = "Cancel";
             this.btnCancel.TabIndex = 21;
             this.btnCancel.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
@@ -237,14 +289,18 @@ namespace DRED
             this.btnCancel.AutoSize = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
 
-            // RecordForm
+            // tableLayoutPanel kept for reference but not used in new layout
+            this.tableLayoutPanel.Visible = false;
+
+            // ── RecordForm ───────────────────────────────────────────────
             this.AcceptButton = this.btnSave;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(660, 628);
-            this.Controls.Add(this.tableLayoutPanel);
+            this.ClientSize = new System.Drawing.Size(720, 780);
+            this.Controls.Add(this.pnlScroll);
             this.Controls.Add(this.pnlButtons);
+            this.Controls.Add(this.tableLayoutPanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
-            this.MinimumSize = new System.Drawing.Size(640, 648);
+            this.MinimumSize = new System.Drawing.Size(700, 700);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Record";
 
@@ -253,25 +309,144 @@ namespace DRED
             this.ResumeLayout(false);
         }
 
-        private void AddLabelControl(int row, int col, System.Windows.Forms.Label lbl, string text)
+        // ── Layout helpers ────────────────────────────────────────────────
+
+        /// <summary>
+        /// Creates a 4-column TableLayoutPanel for a card section (label | input | label | input).
+        /// </summary>
+        private static System.Windows.Forms.TableLayoutPanel MakeCardTable(int rows)
+        {
+            var tbl = new System.Windows.Forms.TableLayoutPanel
+            {
+                ColumnCount = 4,
+                RowCount = rows,
+                Dock = System.Windows.Forms.DockStyle.Top,
+                AutoSize = true,
+                BackColor = System.Drawing.Color.Transparent,
+                Padding = System.Windows.Forms.Padding.Empty,
+                Margin = System.Windows.Forms.Padding.Empty,
+            };
+            tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+            tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
+            tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
+            for (int i = 0; i < rows; i++)
+                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
+            return tbl;
+        }
+
+        /// <summary>Creates a bold accent-colored section header label.</summary>
+        private static System.Windows.Forms.Label MakeCardHeader(string text, System.Drawing.Color color)
+        {
+            return new System.Windows.Forms.Label
+            {
+                Text = text,
+                Dock = System.Windows.Forms.DockStyle.Top,
+                Height = 28,
+                Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold),
+                ForeColor = color,
+                BackColor = System.Drawing.Color.Transparent,
+                TextAlign = System.Drawing.ContentAlignment.BottomLeft,
+                Padding = new System.Windows.Forms.Padding(2, 0, 0, 2),
+                Margin = System.Windows.Forms.Padding.Empty,
+            };
+        }
+
+        /// <summary>
+        /// Wraps a header label and a content table into a styled card panel.
+        /// </summary>
+        private static System.Windows.Forms.Panel MakeCard(
+            System.Drawing.Color backColor,
+            System.Drawing.Color borderColor,
+            System.Windows.Forms.Label header,
+            System.Windows.Forms.TableLayoutPanel content)
+        {
+            var panel = new System.Windows.Forms.Panel
+            {
+                Dock = System.Windows.Forms.DockStyle.Top,
+                AutoSize = true,
+                BackColor = backColor,
+                Padding = new System.Windows.Forms.Padding(16, 12, 16, 12),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 12),
+            };
+            panel.Paint += (s, e) =>
+            {
+                using var pen = new System.Drawing.Pen(borderColor);
+                e.Graphics.DrawRectangle(pen, 0, 0, panel.Width - 1, panel.Height - 1);
+            };
+
+            // Add content first, then header (header docks Top, so it appears above)
+            panel.Controls.Add(content);
+            panel.Controls.Add(header);
+            return panel;
+        }
+
+        /// <summary>
+        /// Wraps a header and arbitrary content control into a card panel with a fixed inner height.
+        /// </summary>
+        private static System.Windows.Forms.Panel MakeCardWithContent(
+            System.Drawing.Color backColor,
+            System.Drawing.Color borderColor,
+            System.Windows.Forms.Label header,
+            System.Windows.Forms.Control content,
+            int contentHeight)
+        {
+            content.Dock = System.Windows.Forms.DockStyle.Top;
+            content.Height = contentHeight;
+
+            var panel = new System.Windows.Forms.Panel
+            {
+                Dock = System.Windows.Forms.DockStyle.Top,
+                BackColor = backColor,
+                Padding = new System.Windows.Forms.Padding(16, 12, 16, 12),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 12),
+            };
+            panel.Paint += (s, e) =>
+            {
+                using var pen = new System.Drawing.Pen(borderColor);
+                e.Graphics.DrawRectangle(pen, 0, 0, panel.Width - 1, panel.Height - 1);
+            };
+
+            panel.Controls.Add(content);
+            panel.Controls.Add(header);
+
+            // Set panel height to account for header + content + vertical padding (top:12 + bottom:12)
+            const int verticalPadding = 24; // top (12) + bottom (12) from Padding(16, 12, 16, 12)
+            panel.Height = header.Height + contentHeight + verticalPadding;
+            return panel;
+        }
+
+        private static void AddLabelToCard(
+            System.Windows.Forms.TableLayoutPanel tbl,
+            System.Windows.Forms.Label lbl,
+            string text,
+            System.Drawing.Color foreColor,
+            int row, int col)
         {
             lbl.Text = text;
             lbl.AutoSize = true;
             lbl.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
-            lbl.Margin = new System.Windows.Forms.Padding(6, 12, 0, 0);
-            lbl.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
-            this.tableLayoutPanel.Controls.Add(lbl, col, row);
+            lbl.Margin = new System.Windows.Forms.Padding(0, 14, 4, 0);
+            lbl.ForeColor = foreColor;
+            lbl.BackColor = System.Drawing.Color.Transparent;
+            tbl.Controls.Add(lbl, col, row);
         }
 
-        private void AddMaterialTextControl(int row, int col, MaterialSkin.Controls.MaterialTextBox2 txt, int tabIndex)
+        private static void ConfigureMaterialText(MaterialSkin.Controls.MaterialTextBox2 txt, int tabIndex)
         {
             txt.UseTallSize = false;
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
-            txt.Margin = new System.Windows.Forms.Padding(0, 4, 6, 4);
-            this.tableLayoutPanel.Controls.Add(txt, col, row);
+            txt.Margin = new System.Windows.Forms.Padding(0, 4, 8, 4);
         }
 
+        // ── Field declarations ────────────────────────────────────────────
+        private System.Windows.Forms.Panel pnlScroll = null!;
+        private System.Windows.Forms.Panel pnlDeviceInfo = null!;
+        private System.Windows.Forms.Panel pnlSerialRange = null!;
+        private System.Windows.Forms.Panel pnlPurchaseInfo = null!;
+        private System.Windows.Forms.Panel pnlIdentifiers = null!;
+        private System.Windows.Forms.Panel pnlCommentsCard = null!;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel = null!;
         private System.Windows.Forms.Label lblOpCo2 = null!;
         private MaterialSkin.Controls.MaterialTextBox2 txtOpCo2 = null!;
@@ -316,4 +491,3 @@ namespace DRED
         private MaterialSkin.Controls.MaterialButton btnCancel = null!;
     }
 }
-

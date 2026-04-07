@@ -127,11 +127,19 @@ namespace DRED
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
+            btnClearSearch.Visible = !string.IsNullOrEmpty(txtSearch.Text);
             RefreshCurrentTab();
         }
 
         private void cboFilterColumn_SelectedIndexChanged(object? sender, EventArgs e)
         {
+            RefreshCurrentTab();
+        }
+
+        private void btnClearSearch_Click(object sender, EventArgs e)
+        {
+            txtSearch.Text = "";
+            _advancedCriteria = null;
             RefreshCurrentTab();
         }
 
