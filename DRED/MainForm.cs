@@ -22,6 +22,7 @@ namespace DRED
         };
 
         // Populated by Designer's SetupTabWithSplit; arrays allocated here as field initializers
+        private System.Windows.Forms.SplitContainer[] _splitContainers = new System.Windows.Forms.SplitContainer[4];
         private System.Windows.Forms.ListBox[] _listBoxes   = new System.Windows.Forms.ListBox[4];
         private System.Windows.Forms.Panel[]   _detailPanels = new System.Windows.Forms.Panel[4];
         private System.Data.DataTable?[]       _dataTables   = new System.Data.DataTable?[4];
@@ -78,6 +79,20 @@ namespace DRED
             _refreshTimer = new System.Windows.Forms.Timer();
             _refreshTimer.Tick += (s, e) => { if (!_dialogOpen) RefreshCurrentTab(); };
             UpdateRefreshTimer();
+
+            // Defer SplitterDistance until the form is fully laid out and controls have real widths
+            this.Load += (s, e) =>
+            {
+                foreach (var sc in _splitContainers)
+                {
+                    if (sc != null && sc.Width > sc.Panel1MinSize + sc.Panel2MinSize + sc.SplitterWidth)
+                    {
+                        // InvalidOperationException is expected when the control isn't sized yet;
+                        // WinForms will apply a default position in that case.
+                        try { sc.SplitterDistance = 300; } catch (InvalidOperationException) { }
+                    }
+                }
+            };
 
             _initialized = true;
             RefreshCurrentTab();
