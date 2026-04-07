@@ -338,7 +338,7 @@ namespace DRED
             {
                 int w = contentFlow.ClientRectangle.Width;
                 foreach (Control c in contentFlow.Controls)
-                    if (c.Tag is CardTag)
+                    if (c.Tag is string t && t == CardTag)
                         c.Width = w;
             };
 
