@@ -25,8 +25,11 @@ namespace DRED
         private System.Windows.Forms.ListBox[] _listBoxes   = new System.Windows.Forms.ListBox[4];
         private System.Windows.Forms.Panel[]   _detailPanels = new System.Windows.Forms.Panel[4];
         private System.Data.DataTable?[]       _dataTables   = new System.Data.DataTable?[4];
-        private DetailLabels[]                 _detailLabels = null!;
+        private DetailLabels[]                 _detailLabels = new DetailLabels[4];
         private int[]                          _hoveredListItem = { -1, -1, -1, -1 };
+
+        private const int  ListItemHeight     = 92;
+        private const string CardTag          = "card";
 
         private string CurrentTable =>
             TabTableNames[tabControl.SelectedIndex];
@@ -175,7 +178,7 @@ namespace DRED
 
         private void listBox_MeasureItem(object sender, MeasureItemEventArgs e)
         {
-            e.ItemHeight = 92;
+            e.ItemHeight = ListItemHeight;
         }
 
         private void listBox_DrawItem(object sender, DrawItemEventArgs e)
@@ -335,7 +338,7 @@ namespace DRED
             {
                 int w = contentFlow.ClientRectangle.Width;
                 foreach (Control c in contentFlow.Controls)
-                    if (c.Tag is "card")
+                    if (c.Tag is CardTag)
                         c.Width = w;
             };
 
@@ -398,7 +401,7 @@ namespace DRED
                 Height    = 24,
                 Margin    = new Padding(0, 0, 0, 6),
                 TextAlign = ContentAlignment.MiddleLeft,
-                Tag       = "card",
+                Tag       = CardTag,
             };
             dl.LblAudit = auditLabel;
             contentFlow.Controls.Add(auditLabel);
@@ -445,7 +448,7 @@ namespace DRED
                 Padding         = new Padding(HPad, VPad, HPad, VPad),
                 Margin          = new Padding(0, 0, 0, 10),
                 CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
-                Tag             = "card",
+                Tag             = CardTag,
             };
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 115));
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent,  100));
@@ -519,7 +522,7 @@ namespace DRED
                 Padding         = new Padding(HPad, VPad, HPad, VPad),
                 Margin          = new Padding(0, 0, 0, 10),
                 CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
-                Tag             = "card",
+                Tag             = CardTag,
             };
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100));
             tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, HeaderHeight));
