@@ -90,9 +90,13 @@ namespace DRED
                 {
                     foreach (var sc in _splitContainers)
                     {
-                        if (sc == null) continue;
-                        try { sc.SplitterDistance = 300; }
-                        catch (InvalidOperationException) { /* control not ready yet */ }
+                        if (sc == null || sc.Width <= 0) continue;
+                        int maxDist = sc.Width - sc.Panel2MinSize - sc.SplitterWidth;
+                        int desired = 300;
+                        if (maxDist >= sc.Panel1MinSize)
+                        {
+                            sc.SplitterDistance = Math.Clamp(desired, sc.Panel1MinSize, maxDist);
+                        }
                     }
                 }));
             };
