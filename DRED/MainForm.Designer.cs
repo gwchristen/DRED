@@ -34,13 +34,13 @@ namespace DRED
             this.mnuSearchFind       = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuSearchAdvanced   = new System.Windows.Forms.ToolStripMenuItem();
 
-            // ── Slim toolbar (3 buttons) ─────────────────────────────────
+            // ── Slim toolbar ─────────────────────────────────────────────
             this.pnlToolbar          = new System.Windows.Forms.FlowLayoutPanel();
             this.btnAdd              = new MaterialSkin.Controls.MaterialButton();
             this.btnRefresh          = new MaterialSkin.Controls.MaterialButton();
             this.btnAdvancedSearch   = new MaterialSkin.Controls.MaterialButton();
 
-            // ── Hidden buttons kept for event wiring compatibility ───────
+            // ── Hidden buttons kept for event wiring compatibility ────────
             this.btnEdit             = new MaterialSkin.Controls.MaterialButton();
             this.btnDelete           = new MaterialSkin.Controls.MaterialButton();
             this.btnImport           = new MaterialSkin.Controls.MaterialButton();
@@ -61,10 +61,6 @@ namespace DRED
             this.tabIMMeters         = new System.Windows.Forms.TabPage();
             this.tabOHTransformers   = new System.Windows.Forms.TabPage();
             this.tabIMTransformers   = new System.Windows.Forms.TabPage();
-            this.gridOHMeters        = CreateGrid();
-            this.gridIMMeters        = CreateGrid();
-            this.gridOHTransformers  = CreateGrid();
-            this.gridIMTransformers  = CreateGrid();
 
             // ── Status bar ───────────────────────────────────────────────
             this.pnlStatus           = new System.Windows.Forms.Panel();
@@ -72,12 +68,6 @@ namespace DRED
             this.lblStatusRecords    = new System.Windows.Forms.Label();
             this.lblStatusConnection = new System.Windows.Forms.Label();
             this.lblStatusUser       = new System.Windows.Forms.Label();
-
-            // Wire CellDoubleClick for all grids
-            this.gridOHMeters.CellDoubleClick       += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellDoubleClick);
-            this.gridIMMeters.CellDoubleClick       += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellDoubleClick);
-            this.gridOHTransformers.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellDoubleClick);
-            this.gridIMTransformers.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.grid_CellDoubleClick);
 
             this.mainMenu.SuspendLayout();
             this.pnlToolbar.SuspendLayout();
@@ -159,27 +149,26 @@ namespace DRED
             this.pnlToolbar.WrapContents = false;
             this.pnlToolbar.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
 
-            SetMaterialButton(btnAdd,          "Add",              MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained, true,  this.btnAdd_Click);
-            SetMaterialButton(btnRefresh,      "Refresh",          MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnRefresh_Click);
-            SetMaterialButton(btnAdvancedSearch,"Advanced Search",  MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnAdvancedSearch_Click);
-            btnAdd.AccessibleName           = "Add new record";
-            btnRefresh.AccessibleName       = "Refresh current tab";
+            SetMaterialButton(btnAdd,           "Add",              MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained, true,  this.btnAdd_Click);
+            SetMaterialButton(btnRefresh,       "Refresh",          MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnRefresh_Click);
+            SetMaterialButton(btnAdvancedSearch, "Advanced Search",  MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnAdvancedSearch_Click);
+            btnAdd.AccessibleName            = "Add new record";
+            btnRefresh.AccessibleName        = "Refresh current tab";
             btnAdvancedSearch.AccessibleName = "Open advanced search";
 
             // Hidden buttons kept for programmatic access / keyboard handler compatibility
-            SetMaterialButton(btnEdit,    "Edit",       MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnEdit_Click);
-            SetMaterialButton(btnDelete,  "Delete",     MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnDelete_Click);
-            SetMaterialButton(btnImport,  "Import",     MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnImport_Click);
-            SetMaterialButton(btnExport,  "Export",     MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnExport_Click);
-            SetMaterialButton(btnExportAll,"Export All",MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnExportAll_Click);
-            SetMaterialButton(btnSettings, "Settings",  MaterialSkin.Controls.MaterialButton.MaterialButtonType.Text,     false, this.btnSettings_Click);
-            // Make hidden buttons invisible so they don't take up space
-            btnEdit.Visible = false;
-            btnDelete.Visible = false;
-            btnImport.Visible = false;
-            btnExport.Visible = false;
+            SetMaterialButton(btnEdit,     "Edit",        MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnEdit_Click);
+            SetMaterialButton(btnDelete,   "Delete",      MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnDelete_Click);
+            SetMaterialButton(btnImport,   "Import",      MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnImport_Click);
+            SetMaterialButton(btnExport,   "Export",      MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnExport_Click);
+            SetMaterialButton(btnExportAll,"Export All",  MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnExportAll_Click);
+            SetMaterialButton(btnSettings, "Settings",    MaterialSkin.Controls.MaterialButton.MaterialButtonType.Text,     false, this.btnSettings_Click);
+            btnEdit.Visible      = false;
+            btnDelete.Visible    = false;
+            btnImport.Visible    = false;
+            btnExport.Visible    = false;
             btnExportAll.Visible = false;
-            btnSettings.Visible = false;
+            btnSettings.Visible  = false;
 
             this.pnlToolbar.Controls.AddRange(new System.Windows.Forms.Control[] {
                 btnAdd, btnRefresh, btnAdvancedSearch });
@@ -190,7 +179,6 @@ namespace DRED
             this.pnlSearch.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
             this.pnlSearch.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
 
-            // txtSearch
             this.txtSearch.Hint = "Search...";
             this.txtSearch.UseTallSize = false;
             this.txtSearch.Location = new System.Drawing.Point(12, 8);
@@ -199,13 +187,11 @@ namespace DRED
             this.txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
 
-            // cboFilterColumn
             this.cboFilterColumn.Location = new System.Drawing.Point(378, 18);
             this.cboFilterColumn.Size = new System.Drawing.Size(200, 36);
             this.cboFilterColumn.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboFilterColumn.TabIndex = 2;
 
-            // btnClearSearch — small "✕" button, only visible when search has text
             this.btnClearSearch.Text = "✕";
             this.btnClearSearch.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Text;
             this.btnClearSearch.HighEmphasis = false;
@@ -227,10 +213,10 @@ namespace DRED
             this.tabControl.TabIndex = 3;
             this.tabControl.SelectedIndexChanged += new System.EventHandler(this.tabControl_SelectedIndexChanged);
 
-            SetupTabWithAccent(tabOHMeters,       "OH - Meters",        gridOHMeters,        System.Drawing.Color.FromArgb(0x42, 0xA5, 0xF5)); // Blue 400
-            SetupTabWithAccent(tabIMMeters,       "I&M - Meters",       gridIMMeters,        System.Drawing.Color.FromArgb(0x26, 0xA6, 0x9A)); // Teal 400
-            SetupTabWithAccent(tabOHTransformers, "OH - Transformers",  gridOHTransformers,  System.Drawing.Color.FromArgb(0xFF, 0xA7, 0x26)); // Orange 400
-            SetupTabWithAccent(tabIMTransformers, "I&M - Transformers", gridIMTransformers,  System.Drawing.Color.FromArgb(0xAB, 0x47, 0xBC)); // Purple 400
+            SetupTabWithSplit(tabOHMeters,       "OH - Meters",        System.Drawing.Color.FromArgb(0x42, 0xA5, 0xF5), 0);
+            SetupTabWithSplit(tabIMMeters,       "I&M - Meters",       System.Drawing.Color.FromArgb(0x26, 0xA6, 0x9A), 1);
+            SetupTabWithSplit(tabOHTransformers, "OH - Transformers",  System.Drawing.Color.FromArgb(0xFF, 0xA7, 0x26), 2);
+            SetupTabWithSplit(tabIMTransformers, "I&M - Transformers", System.Drawing.Color.FromArgb(0xAB, 0x47, 0xBC), 3);
 
             // ── tabSelector ──────────────────────────────────────────────
             this.tabSelector.BaseTabControl = this.tabControl;
@@ -245,14 +231,12 @@ namespace DRED
             this.pnlStatus.BackColor = System.Drawing.Color.FromArgb(0x2A, 0x2A, 0x2D);
             this.pnlStatus.Padding = new System.Windows.Forms.Padding(12, 6, 12, 6);
 
-            // Draw top border line on status panel
             this.pnlStatus.Paint += (s, e) =>
             {
                 using var pen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(0x3E, 0x3E, 0x42));
                 e.Graphics.DrawLine(pen, 0, 0, pnlStatus.Width, 0);
             };
 
-            // tblStatus — 3-column table layout for status sections
             this.tblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tblStatus.ColumnCount = 3;
             this.tblStatus.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 33F));
@@ -263,7 +247,6 @@ namespace DRED
             this.tblStatus.BackColor = System.Drawing.Color.Transparent;
             this.tblStatus.Margin = System.Windows.Forms.Padding.Empty;
 
-            // lblStatusRecords (left)
             this.lblStatusRecords.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatusRecords.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblStatusRecords.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
@@ -271,7 +254,6 @@ namespace DRED
             this.lblStatusRecords.Text = "Records: 0";
             this.tblStatus.Controls.Add(this.lblStatusRecords, 0, 0);
 
-            // lblStatusConnection (center)
             this.lblStatusConnection.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatusConnection.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             this.lblStatusConnection.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
@@ -279,7 +261,6 @@ namespace DRED
             this.lblStatusConnection.Text = "Connected: (none)";
             this.tblStatus.Controls.Add(this.lblStatusConnection, 1, 0);
 
-            // lblStatusUser (right)
             this.lblStatusUser.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatusUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.lblStatusUser.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
@@ -318,76 +299,77 @@ namespace DRED
             this.PerformLayout();
         }
 
-        private static System.Windows.Forms.DataGridView CreateGrid()
-        {
-            var g = new System.Windows.Forms.DataGridView
-            {
-                Dock = System.Windows.Forms.DockStyle.Fill,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                ReadOnly = true,
-                SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect,
-                MultiSelect = false,
-                AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.AllCells,
-                RowHeadersVisible = false,
-                RowTemplate = { Height = 36 },
-                BorderStyle = System.Windows.Forms.BorderStyle.None,
-                CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal,
-                BackgroundColor = System.Drawing.Color.FromArgb(30, 30, 30),
-                GridColor = System.Drawing.Color.FromArgb(60, 60, 60),
-                EnableHeadersVisualStyles = false,
-                ColumnHeadersHeight = 40,
-                ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
-            };
-
-            g.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
-            g.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
-            g.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI Semibold", 10F);
-            g.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(30, 30, 30);
-            g.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-
-            g.DefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            g.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
-            g.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(25, 118, 210);
-            g.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
-            g.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-
-            g.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
-            g.AlternatingRowsDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
-            g.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(25, 118, 210);
-            g.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
-
-            return g;
-        }
-
-        private static void SetupTabWithAccent(System.Windows.Forms.TabPage tab, string text,
-            System.Windows.Forms.DataGridView grid, System.Drawing.Color accentColor)
+        private void SetupTabWithSplit(System.Windows.Forms.TabPage tab, string text,
+            System.Drawing.Color accentColor, int tabIndex)
         {
             tab.Text = text;
 
-            // Thin colored accent bar at top of tab page
             var accentBar = new System.Windows.Forms.Panel
             {
-                Dock = System.Windows.Forms.DockStyle.Top,
-                Height = 4,
+                Dock      = System.Windows.Forms.DockStyle.Top,
+                Height    = 4,
                 BackColor = accentColor,
             };
 
-            // Add grid first, then accent bar (accent bar docks on top)
-            tab.Controls.Add(grid);
+            var split = new System.Windows.Forms.SplitContainer
+            {
+                Dock           = System.Windows.Forms.DockStyle.Fill,
+                Orientation    = System.Windows.Forms.Orientation.Vertical,
+                FixedPanel     = System.Windows.Forms.FixedPanel.Panel1,
+                SplitterDistance = 300,
+                SplitterWidth  = 1,
+                Panel1MinSize  = 220,
+                Panel2MinSize  = 350,
+                BackColor      = System.Drawing.Color.FromArgb(0x3E, 0x3E, 0x42),
+            };
+            split.Panel1.BackColor = System.Drawing.Color.FromArgb(0x1E, 0x1E, 0x1E);
+            split.Panel2.BackColor = System.Drawing.Color.FromArgb(0x2D, 0x2D, 0x30);
+
+            var listBox = new System.Windows.Forms.ListBox
+            {
+                Dock         = System.Windows.Forms.DockStyle.Fill,
+                DrawMode     = System.Windows.Forms.DrawMode.OwnerDrawVariable,
+                BackColor    = System.Drawing.Color.FromArgb(0x1E, 0x1E, 0x1E),
+                ForeColor    = System.Drawing.Color.White,
+                BorderStyle  = System.Windows.Forms.BorderStyle.None,
+                IntegralHeight = false,
+                Tag          = tabIndex,
+            };
+            listBox.MeasureItem          += new System.Windows.Forms.MeasureItemEventHandler(this.listBox_MeasureItem);
+            listBox.DrawItem             += new System.Windows.Forms.DrawItemEventHandler(this.listBox_DrawItem);
+            listBox.SelectedIndexChanged += new System.EventHandler(this.listBox_SelectedIndexChanged);
+            listBox.DoubleClick          += new System.EventHandler(this.listBox_DoubleClick);
+            listBox.MouseMove            += new System.Windows.Forms.MouseEventHandler(this.listBox_MouseMove);
+            listBox.MouseLeave           += new System.EventHandler(this.listBox_MouseLeave);
+
+            split.Panel1.Controls.Add(listBox);
+
+            var detailPanel = new System.Windows.Forms.Panel
+            {
+                Dock        = System.Windows.Forms.DockStyle.Fill,
+                AutoScroll  = true,
+                BackColor   = System.Drawing.Color.FromArgb(0x2D, 0x2D, 0x30),
+            };
+
+            split.Panel2.Controls.Add(detailPanel);
+
+            tab.Controls.Add(split);
             tab.Controls.Add(accentBar);
+
+            _listBoxes[tabIndex]    = listBox;
+            _detailPanels[tabIndex] = detailPanel;
         }
 
         private static void SetMaterialButton(MaterialSkin.Controls.MaterialButton btn,
             string text, MaterialSkin.Controls.MaterialButton.MaterialButtonType type,
             bool highEmphasis, System.EventHandler handler)
         {
-            btn.Text = text;
-            btn.Type = type;
+            btn.Text         = text;
+            btn.Type         = type;
             btn.HighEmphasis = highEmphasis;
-            btn.AutoSize = true;
+            btn.AutoSize     = true;
             btn.UseAccentColor = false;
-            btn.Click += handler;
+            btn.Click       += handler;
         }
 
         // ── Field declarations ────────────────────────────────────────────
@@ -427,10 +409,6 @@ namespace DRED
         private System.Windows.Forms.TabPage tabIMMeters = null!;
         private System.Windows.Forms.TabPage tabOHTransformers = null!;
         private System.Windows.Forms.TabPage tabIMTransformers = null!;
-        private System.Windows.Forms.DataGridView gridOHMeters = null!;
-        private System.Windows.Forms.DataGridView gridIMMeters = null!;
-        private System.Windows.Forms.DataGridView gridOHTransformers = null!;
-        private System.Windows.Forms.DataGridView gridIMTransformers = null!;
         private System.Windows.Forms.Panel pnlStatus = null!;
         private System.Windows.Forms.TableLayoutPanel tblStatus = null!;
         private System.Windows.Forms.Label lblStatusRecords = null!;
