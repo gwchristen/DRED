@@ -13,6 +13,99 @@ namespace DRED
         public static readonly Color GridAltRowColor    = Color.FromArgb(0x25, 0x25, 0x28);
         public static readonly Color GridLineColor      = Color.FromArgb(0x3C, 0x3C, 0x3C);
         public static readonly Color InputBackColor     = Color.FromArgb(0x32, 0x32, 0x32);
+        public static readonly Color MenuBarColor       = Color.FromArgb(0x2D, 0x2D, 0x30);
+        public static readonly Color MenuHighlightColor = Color.FromArgb(0x19, 0x76, 0xD2);
+        public static readonly Color MenuBorderColor    = Color.FromArgb(0x3E, 0x3E, 0x42);
+
+        /// <summary>
+        /// Applies a dark theme renderer to the given MenuStrip.
+        /// </summary>
+        public static void ApplyDarkMenuStrip(MenuStrip menu)
+        {
+            menu.BackColor = MenuBarColor;
+            menu.ForeColor = TextColor;
+            menu.Renderer = new DarkMenuRenderer();
+        }
+
+        /// <summary>
+        /// Custom ToolStrip renderer that paints MenuStrip items with dark colors.
+        /// </summary>
+        private sealed class DarkMenuRenderer : ToolStripProfessionalRenderer
+        {
+            public DarkMenuRenderer() : base(new DarkColorTable()) { }
+
+            protected override void OnRenderMenuItemBackground(ToolStripItemRenderEventArgs e)
+            {
+                var item = e.Item;
+                var g = e.Graphics;
+                if (item.Selected || item.Pressed)
+                {
+                    using var brush = new SolidBrush(MenuHighlightColor);
+                    g.FillRectangle(brush, new Rectangle(Point.Empty, item.Size));
+                }
+                else
+                {
+                    using var brush = new SolidBrush(MenuBarColor);
+                    g.FillRectangle(brush, new Rectangle(Point.Empty, item.Size));
+                }
+            }
+
+            protected override void OnRenderToolStripBackground(ToolStripRenderEventArgs e)
+            {
+                using var brush = new SolidBrush(MenuBarColor);
+                e.Graphics.FillRectangle(brush, e.AffectedBounds);
+            }
+
+            protected override void OnRenderItemText(ToolStripItemTextRenderEventArgs e)
+            {
+                e.TextColor = e.Item.Enabled ? TextColor : SecondaryTextColor;
+                base.OnRenderItemText(e);
+            }
+
+            protected override void OnRenderToolStripBorder(ToolStripRenderEventArgs e)
+            {
+                // Draw a subtle bottom border
+                using var pen = new Pen(MenuBorderColor);
+                int y = e.AffectedBounds.Bottom - 1;
+                e.Graphics.DrawLine(pen, e.AffectedBounds.Left, y, e.AffectedBounds.Right, y);
+            }
+
+            protected override void OnRenderSeparator(ToolStripSeparatorRenderEventArgs e)
+            {
+                int y = e.Item.Height / 2;
+                using var pen = new Pen(MenuBorderColor);
+                e.Graphics.DrawLine(pen, 4, y, e.Item.Width - 4, y);
+            }
+
+            protected override void OnRenderArrow(ToolStripArrowRenderEventArgs e)
+            {
+                e.ArrowColor = TextColor;
+                base.OnRenderArrow(e);
+            }
+        }
+
+        private sealed class DarkColorTable : ProfessionalColorTable
+        {
+            public override Color MenuItemSelected           => MenuHighlightColor;
+            public override Color MenuItemBorder             => MenuHighlightColor;
+            public override Color MenuBorder                 => MenuBorderColor;
+            public override Color MenuItemSelectedGradientBegin => MenuHighlightColor;
+            public override Color MenuItemSelectedGradientEnd   => MenuHighlightColor;
+            public override Color MenuItemPressedGradientBegin  => MenuHighlightColor;
+            public override Color MenuItemPressedGradientEnd    => MenuHighlightColor;
+            public override Color MenuItemPressedGradientMiddle => MenuHighlightColor;
+            public override Color ToolStripDropDownBackground   => SurfaceColor;
+            public override Color ImageMarginGradientBegin   => SurfaceColor;
+            public override Color ImageMarginGradientMiddle  => SurfaceColor;
+            public override Color ImageMarginGradientEnd     => SurfaceColor;
+            public override Color MenuStripGradientBegin     => MenuBarColor;
+            public override Color MenuStripGradientEnd       => MenuBarColor;
+            public override Color ToolStripBorder            => MenuBorderColor;
+            public override Color ToolStripContentPanelGradientBegin => MenuBarColor;
+            public override Color ToolStripContentPanelGradientEnd   => MenuBarColor;
+            public override Color SeparatorDark              => MenuBorderColor;
+            public override Color SeparatorLight             => MenuBorderColor;
+        }
 
         /// <summary>
         /// Applies dark styling to non-Material controls such as DataGridView,
