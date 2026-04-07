@@ -84,7 +84,7 @@ namespace DRED
             this.pnlSearch.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
 
             // txtSearch (MaterialTextBox2)
-            this.txtSearch.Hint = "Search…";
+            this.txtSearch.Hint = "Search...";
             this.txtSearch.UseTallSize = false;
             this.txtSearch.Location = new System.Drawing.Point(6, 6);
             this.txtSearch.Size = new System.Drawing.Size(300, 48);
@@ -138,15 +138,17 @@ namespace DRED
             this.lblStatusConnection.Text = "Connected: (none)";
 
             this.lblStatusUser.AutoSize = true;
-            this.lblStatusUser.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            this.lblStatusUser.Location = new System.Drawing.Point(900, 5);
+            this.lblStatusUser.Dock = System.Windows.Forms.DockStyle.Right;
+            this.lblStatusUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblStatusUser.Padding = new System.Windows.Forms.Padding(0, 0, 6, 0);
             this.lblStatusUser.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
             this.lblStatusUser.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.lblStatusUser.Text = "User: ";
 
+            // Add right-docked label first so it anchors correctly
+            this.pnlStatus.Controls.Add(this.lblStatusUser);
             this.pnlStatus.Controls.Add(this.lblStatusRecords);
             this.pnlStatus.Controls.Add(this.lblStatusConnection);
-            this.pnlStatus.Controls.Add(this.lblStatusUser);
 
             // MainForm
             this.ClientSize = new System.Drawing.Size(1200, 764);
