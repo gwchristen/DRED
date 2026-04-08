@@ -214,7 +214,7 @@ namespace DRED
                 int panelW = pnlSearch.ClientSize.Width;
                 if (panelW < cboWidth + leftMargin * 2 + gap) return; // panel too narrow; controls keep prior positions
                 int cboLeft = panelW - leftMargin - cboWidth;
-                cboFilterColumn.Location  = new System.Drawing.Point(cboLeft, 14);
+                cboFilterColumn.Location  = new System.Drawing.Point(cboLeft, 9);
                 txtSearch.Width           = cboLeft - leftMargin - gap;
                 btnClearSearch.Location   = new System.Drawing.Point(cboLeft - leftMargin - 36, 10);
             };
