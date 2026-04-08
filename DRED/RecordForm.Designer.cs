@@ -85,7 +85,7 @@ namespace DRED
             // ── pnlScroll — outer scrollable container ───────────────────
             this.pnlScroll.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlScroll.AutoScroll = true;
-            this.pnlScroll.Padding = new System.Windows.Forms.Padding(20, 16, 20, 16);
+            this.pnlScroll.Padding = new System.Windows.Forms.Padding(16, 12, 16, 12);
             this.pnlScroll.BackColor = formBack;
 
             // ── Card: Device Information ─────────────────────────────────
@@ -267,7 +267,7 @@ namespace DRED
 
             // ── pnlButtons ───────────────────────────────────────────────
             this.pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlButtons.Height = 60;
+            this.pnlButtons.Height = 50;
             this.pnlButtons.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
             this.pnlButtons.Padding = new System.Windows.Forms.Padding(12);
             this.pnlButtons.Controls.Add(this.btnSave);
@@ -331,7 +331,7 @@ namespace DRED
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             for (int i = 0; i < rows; i++)
-                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
+                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
             return tbl;
         }
 
@@ -366,8 +366,8 @@ namespace DRED
                 Dock = System.Windows.Forms.DockStyle.Top,
                 AutoSize = true,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(16, 12, 16, 12),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 12),
+                Padding = new System.Windows.Forms.Padding(12, 8, 12, 8),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 8),
             };
             panel.Paint += (s, e) =>
             {
@@ -398,8 +398,8 @@ namespace DRED
             {
                 Dock = System.Windows.Forms.DockStyle.Top,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(16, 12, 16, 12),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 12),
+                Padding = new System.Windows.Forms.Padding(12, 8, 12, 8),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 8),
             };
             panel.Paint += (s, e) =>
             {
@@ -410,8 +410,8 @@ namespace DRED
             panel.Controls.Add(content);
             panel.Controls.Add(header);
 
-            // Set panel height to account for header + content + vertical padding (top:12 + bottom:12)
-            const int verticalPadding = 24; // top (12) + bottom (12) from Padding(16, 12, 16, 12)
+            // Set panel height to account for header + content + vertical padding (top:8 + bottom:8)
+            const int verticalPadding = 16; // top (8) + bottom (8) from Padding(12, 8, 12, 8)
             panel.Height = header.Height + contentHeight + verticalPadding;
             return panel;
         }

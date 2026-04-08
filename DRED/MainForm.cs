@@ -29,7 +29,7 @@ namespace DRED
         private DetailLabels[]                 _detailLabels = new DetailLabels[4];
         private int[]                          _hoveredListItem = { -1, -1, -1, -1 };
 
-        private const int  ListItemHeight     = 92;
+        private const int  ListItemHeight     = 72;
         private const string CardTag          = "card";
 
         private string CurrentTable =>
@@ -239,25 +239,25 @@ namespace DRED
             using var backBrush = new SolidBrush(backColor);
             g.FillRectangle(backBrush, e.Bounds);
 
-            int x = e.Bounds.X + 12;
-            int y = e.Bounds.Y + 8;
+            int x = e.Bounds.X + 8;
+            int y = e.Bounds.Y + 6;
 
-            using var font1  = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            using var font2  = new Font("Segoe UI", 9F);
-            using var font3  = new Font("Segoe UI", 8.5F);
+            using var font1  = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold);
+            using var font2  = new Font("Segoe UI", 8.5F);
+            using var font3  = new Font("Segoe UI", 8F);
             using var brush1 = new SolidBrush(Color.White);
             using var brush2 = new SolidBrush(Color.FromArgb(0xCC, 0xCC, 0xCC));
             using var brush3 = new SolidBrush(Color.FromArgb(0x99, 0x99, 0x99));
 
-            int maxW = e.Bounds.Width - 24;
+            int maxW = e.Bounds.Width - 16;
             var fmt = System.Drawing.StringFormat.GenericDefault;
             fmt.Trimming    = System.Drawing.StringTrimming.EllipsisCharacter;
             fmt.FormatFlags = System.Drawing.StringFormatFlags.NoWrap;
 
-            var r1 = new System.Drawing.RectangleF(x, y,      maxW, 20);
-            var r2 = new System.Drawing.RectangleF(x, y + 20, maxW, 18);
-            var r3 = new System.Drawing.RectangleF(x, y + 38, maxW, 18);
-            var r4 = new System.Drawing.RectangleF(x, y + 56, maxW, 16);
+            var r1 = new System.Drawing.RectangleF(x, y,      maxW, 18);
+            var r2 = new System.Drawing.RectangleF(x, y + 17, maxW, 16);
+            var r3 = new System.Drawing.RectangleF(x, y + 32, maxW, 16);
+            var r4 = new System.Drawing.RectangleF(x, y + 48, maxW, 14);
 
             g.DrawString(item.DevCode,               font1, brush1, r1, fmt);
             g.DrawString($"Qty: {item.Qty}",         font2, brush2, r2, fmt);
@@ -342,166 +342,61 @@ namespace DRED
             dl.EmptyStateLabel = emptyLabel;
             scrollPanel.Controls.Add(emptyLabel);
 
-            // Content flow panel (hidden initially)
-            var contentFlow = new System.Windows.Forms.FlowLayoutPanel
+            // Content panel — fills the detail panel, no scrolling needed
+            var contentPanel = new System.Windows.Forms.Panel
             {
-                FlowDirection = FlowDirection.TopDown,
-                WrapContents  = false,
-                AutoSize      = true,
-                AutoSizeMode  = AutoSizeMode.GrowAndShrink,
-                Padding       = new Padding(12, 12, 12, 20),
-                BackColor     = Color.FromArgb(0x2D, 0x2D, 0x30),
-                Location      = new System.Drawing.Point(0, 0),
-                Visible       = false,
-            };
-            dl.ContentPanel = contentFlow;
-            scrollPanel.Controls.Add(contentFlow);
-
-            scrollPanel.ClientSizeChanged += (s, ev) =>
-                contentFlow.Width = scrollPanel.ClientRectangle.Width;
-
-            contentFlow.ClientSizeChanged += (s, ev) =>
-            {
-                int w = contentFlow.ClientRectangle.Width;
-                foreach (Control c in contentFlow.Controls)
-                    if (c.Tag is string t && t == CardTag)
-                        c.Width = w;
-            };
-
-            // Device Information card
-            var devCard = CreateSectionCard(
-                "DEVICE INFORMATION", accentColor,
-                new[] { "OpCo2", "Status", "MFR", "Dev Code" },
-                out var devVals);
-            contentFlow.Controls.Add(devCard);
-            dl.ValOpCo2   = devVals[0];
-            dl.ValStatus  = devVals[1];
-            dl.ValMFR     = devVals[2];
-            dl.ValDevCode = devVals[3];
-
-            // Serial Range & Quantity card
-            var serCard = CreateSectionCard(
-                "SERIAL RANGE & QUANTITY", accentColor,
-                new[] { "Beg Ser", "End Ser", "Qty" },
-                out var serVals);
-            contentFlow.Controls.Add(serCard);
-            dl.ValBegSer = serVals[0];
-            dl.ValEndSer = serVals[1];
-            dl.ValQty    = serVals[2];
-
-            // Purchase Information card
-            var purCard = CreateSectionCard(
-                "PURCHASE INFORMATION", accentColor,
-                new[] { "PO Date", "PO Number", "Vintage", "Recv Date", "Unit Cost" },
-                out var purVals);
-            contentFlow.Controls.Add(purCard);
-            dl.ValPODate   = purVals[0];
-            dl.ValPONumber = purVals[1];
-            dl.ValVintage  = purVals[2];
-            dl.ValRecvDate = purVals[3];
-            dl.ValUnitCost = purVals[4];
-
-            // Identifiers card
-            var idCard = CreateSectionCard(
-                "IDENTIFIERS", accentColor,
-                new[] { "CID", "M.E. #", "Pur. Code", "Est." },
-                out var idVals);
-            contentFlow.Controls.Add(idCard);
-            dl.ValCID      = idVals[0];
-            dl.ValMENumber = idVals[1];
-            dl.ValPurCode  = idVals[2];
-            dl.ValEst      = idVals[3];
-
-            // Comments card
-            var commCard = CreateCommentsCard("COMMENTS & NOTES", accentColor, out var commLabel);
-            contentFlow.Controls.Add(commCard);
-            dl.ValComments = commLabel;
-
-            // Audit label
-            var auditLabel = new System.Windows.Forms.Label
-            {
-                Text      = "",
-                ForeColor = Color.FromArgb(0x88, 0x88, 0x88),
-                Font      = new Font("Segoe UI", 8.5F, FontStyle.Italic),
-                AutoSize  = false,
-                Height    = 24,
-                Margin    = new Padding(0, 0, 0, 6),
-                TextAlign = ContentAlignment.MiddleLeft,
-                Tag       = CardTag,
-            };
-            dl.LblAudit = auditLabel;
-            contentFlow.Controls.Add(auditLabel);
-
-            // Action buttons
-            var btnDetailEdit   = CreateDetailButton("Edit",   accentColor,                      (s, ev) => btnEdit_Click(s!, ev));
-            var btnDetailDelete = CreateDetailButton("Delete", Color.FromArgb(0xEF, 0x53, 0x50), (s, ev) => btnDelete_Click(s!, ev));
-            var btnPanel = new System.Windows.Forms.FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents  = false,
-                AutoSize      = true,
-                Margin        = new Padding(0, 4, 0, 0),
-            };
-            btnPanel.Controls.Add(btnDetailEdit);
-            btnPanel.Controls.Add(btnDetailDelete);
-            contentFlow.Controls.Add(btnPanel);
-            dl.BtnDetailEdit   = btnDetailEdit;
-            dl.BtnDetailDelete = btnDetailDelete;
-
-            _detailLabels[tabIndex] = dl;
-        }
-
-        // ── Card factory helpers ─────────────────────────────────────────
-
-        private static System.Windows.Forms.TableLayoutPanel CreateSectionCard(
-            string title, Color accentColor, string[] fieldNames,
-            out System.Windows.Forms.Label[] valueLabels)
-        {
-            const int HeaderHeight = 30;
-            const int RowHeight    = 26;
-            const int HPad         = 14;
-            const int VPad         = 12;
-
-            int totalHeight = VPad + HeaderHeight + fieldNames.Length * RowHeight + VPad;
-
-            var tbl = new System.Windows.Forms.TableLayoutPanel
-            {
-                ColumnCount     = 2,
-                RowCount        = fieldNames.Length + 1,
-                Width           = 400,
-                Height          = totalHeight,
-                BackColor       = Color.FromArgb(0x38, 0x38, 0x38),
-                Padding         = new Padding(HPad, VPad, HPad, VPad),
-                Margin          = new Padding(0, 0, 0, 10),
-                CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
-                Tag             = CardTag,
-            };
-            tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 115));
-            tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent,  100));
-            tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, HeaderHeight));
-
-            var hdr = new System.Windows.Forms.Label
-            {
-                Text      = title,
-                ForeColor = accentColor,
-                Font      = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
                 Dock      = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft,
-                BackColor = Color.Transparent,
+                Padding   = new Padding(10, 8, 10, 8),
+                BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
+                Visible   = false,
             };
-            tbl.Controls.Add(hdr, 0, 0);
-            tbl.SetColumnSpan(hdr, 2);
+            dl.ContentPanel = contentPanel;
+            scrollPanel.Controls.Add(contentPanel);
 
-            valueLabels = new System.Windows.Forms.Label[fieldNames.Length];
-            for (int i = 0; i < fieldNames.Length; i++)
+            // Main 4-column TableLayoutPanel: [label 80px] [value 50%] [label 80px] [value 50%]
+            var grid = new System.Windows.Forms.TableLayoutPanel
             {
-                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, RowHeight));
+                Dock            = DockStyle.Fill,
+                ColumnCount     = 4,
+                BackColor       = Color.Transparent,
+                CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
+                Padding         = Padding.Empty,
+                Margin          = Padding.Empty,
+            };
+            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80));
+            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
+            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80));
+            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
+            contentPanel.Controls.Add(grid);
 
+            int row = 0;
+
+            // ── Helper closures ──────────────────────────────────────────
+            void AddSectionHeader(string title)
+            {
+                grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26));
+                var hdr = new System.Windows.Forms.Label
+                {
+                    Text      = title,
+                    ForeColor = accentColor,
+                    Font      = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
+                    Dock      = DockStyle.Fill,
+                    TextAlign = ContentAlignment.BottomLeft,
+                    BackColor = Color.Transparent,
+                    Padding   = new Padding(0, 0, 0, 2),
+                };
+                grid.Controls.Add(hdr, 0, row);
+                grid.SetColumnSpan(hdr, 4);
+                row++;
+            }
+
+            System.Windows.Forms.Label AddFieldPair(string labelText, int col)
+            {
                 var nm = new System.Windows.Forms.Label
                 {
-                    Text      = fieldNames[i],
+                    Text      = labelText,
                     ForeColor = Color.FromArgb(0x99, 0x99, 0x99),
-                    Font      = new Font("Segoe UI", 9F),
+                    Font      = new Font("Segoe UI", 8F),
                     Dock      = DockStyle.Fill,
                     TextAlign = ContentAlignment.MiddleLeft,
                     BackColor = Color.Transparent,
@@ -510,81 +405,143 @@ namespace DRED
                 {
                     Text      = "\u2014",
                     ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1),
-                    Font      = new Font("Segoe UI", 9.5F),
+                    Font      = new Font("Segoe UI", 9F),
                     Dock      = DockStyle.Fill,
                     TextAlign = ContentAlignment.MiddleLeft,
                     BackColor = Color.Transparent,
                 };
-                tbl.Controls.Add(nm, 0, i + 1);
-                tbl.Controls.Add(vl, 1, i + 1);
-                valueLabels[i] = vl;
+                grid.Controls.Add(nm, col, row);
+                grid.Controls.Add(vl, col + 1, row);
+                return vl;
             }
 
-            tbl.Paint += (s, e) =>
+            void AddSeparator()
             {
-                using var pen = new System.Drawing.Pen(Color.FromArgb(0x3E, 0x3E, 0x42));
-                e.Graphics.DrawRectangle(pen, 0, 0, tbl.Width - 1, tbl.Height - 1);
+                grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 1));
+                var sep = new System.Windows.Forms.Panel
+                {
+                    Dock      = DockStyle.Fill,
+                    BackColor = Color.FromArgb(0x3E, 0x3E, 0x42),
+                    Margin    = Padding.Empty,
+                };
+                grid.Controls.Add(sep, 0, row);
+                grid.SetColumnSpan(sep, 4);
+                row++;
+            }
+
+            // ── DEVICE INFORMATION ───────────────────────────────────────
+            AddSectionHeader("DEVICE INFORMATION");
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValOpCo2  = AddFieldPair("OpCo2:",  0);
+            dl.ValStatus = AddFieldPair("Status:", 2);
+            row++;
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValMFR     = AddFieldPair("MFR:",      0);
+            dl.ValDevCode = AddFieldPair("Dev Code:", 2);
+            row++;
+
+            AddSeparator();
+
+            // ── SERIAL RANGE & QUANTITY ──────────────────────────────────
+            AddSectionHeader("SERIAL RANGE & QUANTITY");
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValBegSer = AddFieldPair("Beg Ser:", 0);
+            dl.ValEndSer = AddFieldPair("End Ser:", 2);
+            row++;
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValQty = AddFieldPair("Qty:", 0);
+            row++;
+
+            AddSeparator();
+
+            // ── PURCHASE INFORMATION ─────────────────────────────────────
+            AddSectionHeader("PURCHASE INFORMATION");
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValPODate   = AddFieldPair("PO Date:",  0);
+            dl.ValPONumber = AddFieldPair("PO Number:", 2);
+            row++;
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValVintage  = AddFieldPair("Vintage:",  0);
+            dl.ValRecvDate = AddFieldPair("Recv Date:", 2);
+            row++;
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValUnitCost = AddFieldPair("Unit Cost:", 0);
+            row++;
+
+            AddSeparator();
+
+            // ── IDENTIFIERS ──────────────────────────────────────────────
+            AddSectionHeader("IDENTIFIERS");
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValCID      = AddFieldPair("CID:",      0);
+            dl.ValMENumber = AddFieldPair("M.E. #:",   2);
+            row++;
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            dl.ValPurCode = AddFieldPair("Pur Code:", 0);
+            dl.ValEst     = AddFieldPair("Est.:",     2);
+            row++;
+
+            AddSeparator();
+
+            // ── COMMENTS & NOTES ─────────────────────────────────────────
+            AddSectionHeader("COMMENTS & NOTES");
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54));
+            var commLabel = new System.Windows.Forms.Label
+            {
+                Text      = "\u2014",
+                ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                Font      = new Font("Segoe UI", 9F),
+                Dock      = DockStyle.Fill,
+                TextAlign = ContentAlignment.TopLeft,
+                BackColor = Color.Transparent,
             };
+            grid.Controls.Add(commLabel, 0, row);
+            grid.SetColumnSpan(commLabel, 4);
+            dl.ValComments = commLabel;
+            row++;
 
-            return tbl;
-        }
+            AddSeparator();
 
-        private static System.Windows.Forms.TableLayoutPanel CreateCommentsCard(
-            string title, Color accentColor, out System.Windows.Forms.Label commentsLabel)
-        {
-            const int HeaderHeight  = 30;
-            const int ContentHeight = 80;
-            const int HPad          = 14;
-            const int VPad          = 12;
-            int totalHeight = VPad + HeaderHeight + ContentHeight + VPad;
-
-            var tbl = new System.Windows.Forms.TableLayoutPanel
+            // ── Audit label ──────────────────────────────────────────────
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            var auditLabel = new System.Windows.Forms.Label
             {
-                ColumnCount     = 1,
-                RowCount        = 2,
-                Width           = 400,
-                Height          = totalHeight,
-                BackColor       = Color.FromArgb(0x38, 0x38, 0x38),
-                Padding         = new Padding(HPad, VPad, HPad, VPad),
-                Margin          = new Padding(0, 0, 0, 10),
-                CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
-                Tag             = CardTag,
-            };
-            tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100));
-            tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, HeaderHeight));
-            tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, ContentHeight));
-
-            var hdr = new System.Windows.Forms.Label
-            {
-                Text      = title,
-                ForeColor = accentColor,
-                Font      = new Font("Segoe UI Semibold", 9.5F, FontStyle.Bold),
+                Text      = "",
+                ForeColor = Color.FromArgb(0x88, 0x88, 0x88),
+                Font      = new Font("Segoe UI", 8F, FontStyle.Italic),
                 Dock      = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent,
             };
-            tbl.Controls.Add(hdr, 0, 0);
+            dl.LblAudit = auditLabel;
+            grid.Controls.Add(auditLabel, 0, row);
+            grid.SetColumnSpan(auditLabel, 4);
+            row++;
 
-            var cl = new System.Windows.Forms.Label
+            // ── Action buttons ───────────────────────────────────────────
+            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40));
+            var btnDetailEdit   = CreateDetailButton("Edit",   accentColor,                      (s, ev) => btnEdit_Click(s!, ev));
+            var btnDetailDelete = CreateDetailButton("Delete", Color.FromArgb(0xEF, 0x53, 0x50), (s, ev) => btnDelete_Click(s!, ev));
+            var btnPanel = new System.Windows.Forms.FlowLayoutPanel
             {
-                Text         = "\u2014",
-                ForeColor    = Color.FromArgb(0xF1, 0xF1, 0xF1),
-                Font         = new Font("Segoe UI", 9.5F),
-                Dock         = DockStyle.Fill,
-                TextAlign    = ContentAlignment.TopLeft,
-                BackColor    = Color.Transparent,
-                AutoEllipsis = false,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents  = false,
+                AutoSize      = false,
+                Dock          = DockStyle.Fill,
+                BackColor     = Color.Transparent,
+                Margin        = Padding.Empty,
+                Padding       = Padding.Empty,
             };
-            tbl.Controls.Add(cl, 0, 1);
-            commentsLabel = cl;
+            btnPanel.Controls.Add(btnDetailEdit);
+            btnPanel.Controls.Add(btnDetailDelete);
+            grid.Controls.Add(btnPanel, 0, row);
+            grid.SetColumnSpan(btnPanel, 4);
+            dl.BtnDetailEdit   = btnDetailEdit;
+            dl.BtnDetailDelete = btnDetailDelete;
 
-            tbl.Paint += (s, e) =>
-            {
-                using var pen = new System.Drawing.Pen(Color.FromArgb(0x3E, 0x3E, 0x42));
-                e.Graphics.DrawRectangle(pen, 0, 0, tbl.Width - 1, tbl.Height - 1);
-            };
+            grid.RowCount = row + 1;
 
-            return tbl;
+            _detailLabels[tabIndex] = dl;
         }
 
         private MaterialSkin.Controls.MaterialButton CreateDetailButton(
