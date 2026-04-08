@@ -39,8 +39,7 @@ namespace DRED
             this.chkAutoQty        = new MaterialSkin.Controls.MaterialCheckbox();
 
             this.lblPODate         = new System.Windows.Forms.Label();
-            this.dtpPODate         = new System.Windows.Forms.DateTimePicker();
-            this.chkNoPODate       = new MaterialSkin.Controls.MaterialCheckbox();
+            this.txtPODate         = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblPONumber       = new System.Windows.Forms.Label();
             this.txtPONumber       = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblVintage        = new System.Windows.Forms.Label();
@@ -149,22 +148,12 @@ namespace DRED
             // ── Card: Purchase Information ───────────────────────────────
             var tblPurchase = MakeCardTable(3);
             var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
-            // Row 0: PO Date | dtpPODate | No PO Date checkbox (spans cols 2-3)
+            // Row 0: PO Date | txtPODate (text input)
             AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
-            this.dtpPODate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            this.dtpPODate.TabIndex = 8;
-            this.dtpPODate.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
-            this.dtpPODate.ForeColor = System.Drawing.Color.White;
-            this.dtpPODate.Dock = System.Windows.Forms.DockStyle.Fill;
-            tblPurchase.Controls.Add(this.dtpPODate, 1, 0);
-            this.chkNoPODate.Text = "No PO Date";
-            this.chkNoPODate.AutoSize = true;
-            this.chkNoPODate.TabIndex = 9;
-            this.chkNoPODate.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
-            this.chkNoPODate.Margin = new System.Windows.Forms.Padding(6, 0, 0, 0);
-            this.chkNoPODate.CheckedChanged += new System.EventHandler(this.chkNoPODate_CheckedChanged);
-            tblPurchase.Controls.Add(this.chkNoPODate, 2, 0);
-            tblPurchase.SetColumnSpan(this.chkNoPODate, 2);
+            ConfigureMaterialText(txtPODate, 8);
+            this.txtPODate.Hint = "MM/dd/yyyy";
+            tblPurchase.Controls.Add(this.txtPODate, 1, 0);
+            tblPurchase.SetColumnSpan(this.txtPODate, 3);
             // Row 1: Vintage | txtVintage | PO Number | txtPONumber
             AddLabelToCard(tblPurchase, lblVintage, "Vintage:", labelFore, 1, 0);
             ConfigureMaterialText(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
@@ -461,8 +450,7 @@ namespace DRED
         private System.Windows.Forms.NumericUpDown nudQty = null!;
         private MaterialSkin.Controls.MaterialCheckbox chkAutoQty = null!;
         private System.Windows.Forms.Label lblPODate = null!;
-        private System.Windows.Forms.DateTimePicker dtpPODate = null!;
-        private MaterialSkin.Controls.MaterialCheckbox chkNoPODate = null!;
+        private MaterialSkin.Controls.MaterialTextBox2 txtPODate = null!;
         private System.Windows.Forms.Label lblVintage = null!;
         private MaterialSkin.Controls.MaterialTextBox2 txtVintage = null!;
         private System.Windows.Forms.Label lblPONumber = null!;
