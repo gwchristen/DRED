@@ -325,6 +325,21 @@ namespace DRED
             split.Panel1.BackColor = System.Drawing.Color.FromArgb(0x1E, 0x1E, 0x1E);
             split.Panel2.BackColor = System.Drawing.Color.FromArgb(0x2D, 0x2D, 0x30);
 
+            split.Resize += (s, e) =>
+            {
+                if (split.Width <= 0) return;
+                int maxDist = split.Width - split.Panel2MinSize - split.SplitterWidth;
+                if (maxDist < split.Panel1MinSize) return;
+                try
+                {
+                    if (split.SplitterDistance > maxDist)
+                        split.SplitterDistance = maxDist;
+                    else if (split.SplitterDistance < split.Panel1MinSize)
+                        split.SplitterDistance = split.Panel1MinSize;
+                }
+                catch (InvalidOperationException) { }
+            };
+
             var listBox = new System.Windows.Forms.ListBox
             {
                 Dock         = System.Windows.Forms.DockStyle.Fill,
