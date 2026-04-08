@@ -149,31 +149,27 @@ namespace DRED
             // ── Card: Purchase Information ───────────────────────────────
             var tblPurchase = MakeCardTable(3);
             var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
-            // Row 0: PO Date (+No PO Date) | PO Number
+            // Row 0: PO Date | dtpPODate | No PO Date checkbox (spans cols 2-3)
             AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
-            var poDatePanel = new System.Windows.Forms.FlowLayoutPanel
-            {
-                Dock = System.Windows.Forms.DockStyle.Fill,
-                FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
-                BackColor = System.Drawing.Color.Transparent,
-                Margin = System.Windows.Forms.Padding.Empty,
-            };
             this.dtpPODate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.dtpPODate.TabIndex = 8;
             this.dtpPODate.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
             this.dtpPODate.ForeColor = System.Drawing.Color.White;
+            this.dtpPODate.Dock = System.Windows.Forms.DockStyle.Fill;
+            tblPurchase.Controls.Add(this.dtpPODate, 1, 0);
             this.chkNoPODate.Text = "No PO Date";
             this.chkNoPODate.AutoSize = true;
             this.chkNoPODate.TabIndex = 9;
+            this.chkNoPODate.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
+            this.chkNoPODate.Margin = new System.Windows.Forms.Padding(6, 0, 0, 0);
             this.chkNoPODate.CheckedChanged += new System.EventHandler(this.chkNoPODate_CheckedChanged);
-            poDatePanel.Controls.Add(this.dtpPODate);
-            poDatePanel.Controls.Add(this.chkNoPODate);
-            tblPurchase.Controls.Add(poDatePanel, 1, 0);
-            AddLabelToCard(tblPurchase, lblPONumber, "PO Number:", labelFore, 0, 2);
-            ConfigureMaterialText(txtPONumber, 11); tblPurchase.Controls.Add(txtPONumber, 3, 0);
-            // Row 1: Vintage | (empty)
+            tblPurchase.Controls.Add(this.chkNoPODate, 2, 0);
+            tblPurchase.SetColumnSpan(this.chkNoPODate, 2);
+            // Row 1: Vintage | txtVintage | PO Number | txtPONumber
             AddLabelToCard(tblPurchase, lblVintage, "Vintage:", labelFore, 1, 0);
             ConfigureMaterialText(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
+            AddLabelToCard(tblPurchase, lblPONumber, "PO Number:", labelFore, 1, 2);
+            ConfigureMaterialText(txtPONumber, 11); tblPurchase.Controls.Add(txtPONumber, 3, 1);
             // Row 2: Recv Date | Unit Cost
             AddLabelToCard(tblPurchase, lblRecvDate, "Recv Date:", labelFore, 2, 0);
             var recvPanel = new System.Windows.Forms.FlowLayoutPanel
