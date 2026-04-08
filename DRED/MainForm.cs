@@ -29,7 +29,7 @@ namespace DRED
         private DetailLabels[]                 _detailLabels = new DetailLabels[4];
         private int[]                          _hoveredListItem = { -1, -1, -1, -1 };
 
-        private const int  ListItemHeight     = 72;
+        private const int  ListItemHeight     = 58;
         private const string CardTag          = "card";
 
         private string CurrentTable =>
@@ -259,14 +259,12 @@ namespace DRED
             fmt.FormatFlags = System.Drawing.StringFormatFlags.NoWrap;
 
             var r1 = new System.Drawing.RectangleF(x, y,      maxW, 18);
-            var r2 = new System.Drawing.RectangleF(x, y + 17, maxW, 16);
-            var r3 = new System.Drawing.RectangleF(x, y + 32, maxW, 16);
-            var r4 = new System.Drawing.RectangleF(x, y + 48, maxW, 14);
+            var r2 = new System.Drawing.RectangleF(x, y + 18, maxW, 16);
+            var r3 = new System.Drawing.RectangleF(x, y + 34, maxW, 14);
 
-            g.DrawString(item.DevCode,               font1, brush1, r1, fmt);
-            g.DrawString($"Qty: {item.Qty}",         font2, brush2, r2, fmt);
-            g.DrawString(item.PONumber,              font2, brush2, r3, fmt);
-            g.DrawString(item.RecvDate,              font3, brush3, r4, fmt);
+            g.DrawString($"{item.DevCode} - {item.PONumber}", font1, brush1, r1, fmt);
+            g.DrawString($"Qty: {item.Qty}",                  font2, brush2, r2, fmt);
+            g.DrawString(item.RecvDate,                       font3, brush3, r3, fmt);
 
             using var divPen = new System.Drawing.Pen(Color.FromArgb(0x30, 0x30, 0x33));
             g.DrawLine(divPen, e.Bounds.Left, e.Bounds.Bottom - 1, e.Bounds.Right, e.Bounds.Bottom - 1);
