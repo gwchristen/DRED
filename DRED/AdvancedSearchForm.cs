@@ -62,12 +62,12 @@ namespace DRED
                 AutoSize = true,
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Dock = DockStyle.Top,
-                Padding = new Padding(10),
+                Padding = new Padding(8, 6, 8, 6),
                 BackColor = Color.FromArgb(45, 45, 48),
             };
-            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
-            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+            tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
 
             int row = 0;
@@ -84,10 +84,9 @@ namespace DRED
             txtComments = new RichTextBox
             {
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0, 4, 6, 4),
+                Margin = new Padding(0, 2, 4, 2),
                 BackColor = Color.FromArgb(50, 50, 50),
                 ForeColor = Color.FromArgb(241, 241, 241),
-                BorderStyle = BorderStyle.None,
                 Height = 50,
             };
             tlp.Controls.Add(lblComments, 0, row);
@@ -139,10 +138,10 @@ namespace DRED
             scroll.Controls.Add(tlp);
 
             // Button panel
-            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 54, BackColor = Color.FromArgb(37, 37, 40) };
-            btnApply = new MaterialButton { Text = "Apply", Location = new Point(8, 8), Type = MaterialButton.MaterialButtonType.Contained, HighEmphasis = true, AutoSize = true };
-            btnClear = new MaterialButton { Text = "Clear All", Location = new Point(120, 8), Type = MaterialButton.MaterialButtonType.Outlined, AutoSize = true };
-            btnClose = new MaterialButton { Text = "Close", Location = new Point(230, 8), Type = MaterialButton.MaterialButtonType.Text, AutoSize = true };
+            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 46, BackColor = Color.FromArgb(37, 37, 40) };
+            btnApply = new MaterialButton { Text = "Apply", Location = new Point(8, 6), Type = MaterialButton.MaterialButtonType.Contained, HighEmphasis = true, AutoSize = true };
+            btnClear = new MaterialButton { Text = "Clear All", Location = new Point(120, 6), Type = MaterialButton.MaterialButtonType.Outlined, AutoSize = true };
+            btnClose = new MaterialButton { Text = "Close", Location = new Point(230, 6), Type = MaterialButton.MaterialButtonType.Text, AutoSize = true };
             btnApply.Click += BtnApply_Click;
             btnClear.Click += BtnClear_Click;
             btnClose.Click += (s, e) => this.Close();
@@ -159,7 +158,7 @@ namespace DRED
                 Text = text,
                 AutoSize = true,
                 Anchor = AnchorStyles.Left | AnchorStyles.Top,
-                Margin = new Padding(0, 10, 0, 0),
+                Margin = new Padding(0, 6, 0, 0),
                 ForeColor = Color.FromArgb(204, 204, 204),
             };
 
@@ -178,9 +177,9 @@ namespace DRED
         private void AddSearchRow(TableLayoutPanel tlp, int row, string lbl1Text, out MaterialTextBox2 txt1, string lbl2Text, out MaterialTextBox2 txt2)
         {
             var lbl1 = MakeLabel(lbl1Text);
-            txt1 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 6, 4), UseTallSize = false };
+            txt1 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false };
             var lbl2 = MakeLabel(lbl2Text);
-            txt2 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 4, 6, 4), UseTallSize = false };
+            txt2 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false };
             tlp.Controls.Add(lbl1, 0, row);
             tlp.Controls.Add(txt1, 1, row);
             tlp.Controls.Add(lbl2, 2, row);

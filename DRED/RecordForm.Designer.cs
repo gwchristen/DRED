@@ -85,7 +85,7 @@ namespace DRED
             // ── pnlScroll — outer scrollable container ───────────────────
             this.pnlScroll.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlScroll.AutoScroll = true;
-            this.pnlScroll.Padding = new System.Windows.Forms.Padding(16, 12, 16, 12);
+            this.pnlScroll.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
             this.pnlScroll.BackColor = formBack;
 
             // ── Card: Device Information ─────────────────────────────────
@@ -267,13 +267,13 @@ namespace DRED
 
             // ── pnlButtons ───────────────────────────────────────────────
             this.pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlButtons.Height = 50;
+            this.pnlButtons.Height = 46;
             this.pnlButtons.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
             this.pnlButtons.Padding = new System.Windows.Forms.Padding(12);
             this.pnlButtons.Controls.Add(this.btnSave);
             this.pnlButtons.Controls.Add(this.btnCancel);
 
-            this.btnSave.Location = new System.Drawing.Point(12, 10);
+            this.btnSave.Location = new System.Drawing.Point(12, 8);
             this.btnSave.Text = "Save";
             this.btnSave.TabIndex = 20;
             this.btnSave.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
@@ -281,7 +281,7 @@ namespace DRED
             this.btnSave.AutoSize = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
 
-            this.btnCancel.Location = new System.Drawing.Point(130, 10);
+            this.btnCancel.Location = new System.Drawing.Point(130, 8);
             this.btnCancel.Text = "Cancel";
             this.btnCancel.TabIndex = 21;
             this.btnCancel.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
@@ -331,7 +331,7 @@ namespace DRED
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             for (int i = 0; i < rows; i++)
-                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F));
+                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
             return tbl;
         }
 
@@ -342,7 +342,7 @@ namespace DRED
             {
                 Text = text,
                 Dock = System.Windows.Forms.DockStyle.Top,
-                Height = 28,
+                Height = 24,
                 Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold),
                 ForeColor = color,
                 BackColor = System.Drawing.Color.Transparent,
@@ -366,8 +366,8 @@ namespace DRED
                 Dock = System.Windows.Forms.DockStyle.Top,
                 AutoSize = true,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(12, 8, 12, 8),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 8),
+                Padding = new System.Windows.Forms.Padding(10, 6, 10, 6),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 6),
             };
             panel.Paint += (s, e) =>
             {
@@ -398,8 +398,8 @@ namespace DRED
             {
                 Dock = System.Windows.Forms.DockStyle.Top,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(12, 8, 12, 8),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 8),
+                Padding = new System.Windows.Forms.Padding(10, 6, 10, 6),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 6),
             };
             panel.Paint += (s, e) =>
             {
@@ -411,7 +411,7 @@ namespace DRED
             panel.Controls.Add(header);
 
             // Set panel height to account for header + content + vertical padding (top:8 + bottom:8)
-            const int verticalPadding = 16; // top (8) + bottom (8) from Padding(12, 8, 12, 8)
+            const int verticalPadding = 12; // top (6) + bottom (6) from Padding(10, 6, 10, 6)
             panel.Height = header.Height + contentHeight + verticalPadding;
             return panel;
         }
@@ -426,7 +426,7 @@ namespace DRED
             lbl.Text = text;
             lbl.AutoSize = true;
             lbl.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
-            lbl.Margin = new System.Windows.Forms.Padding(0, 14, 4, 0);
+            lbl.Margin = new System.Windows.Forms.Padding(0, 10, 4, 0);
             lbl.ForeColor = foreColor;
             lbl.BackColor = System.Drawing.Color.Transparent;
             tbl.Controls.Add(lbl, col, row);
