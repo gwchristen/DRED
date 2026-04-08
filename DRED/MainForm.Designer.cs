@@ -317,22 +317,12 @@ namespace DRED
                 Orientation    = System.Windows.Forms.Orientation.Vertical,
                 FixedPanel     = System.Windows.Forms.FixedPanel.Panel1,
                 SplitterWidth  = 1,
-                Panel1MinSize  = 200,
-                Panel2MinSize  = 200,
+                Panel1MinSize  = 0,
+                Panel2MinSize  = 0,
                 BackColor      = System.Drawing.Color.FromArgb(0x3E, 0x3E, 0x42),
             };
             split.Panel1.BackColor = System.Drawing.Color.FromArgb(0x1E, 0x1E, 0x1E);
             split.Panel2.BackColor = System.Drawing.Color.FromArgb(0x2D, 0x2D, 0x30);
-            split.Resize += (s, e) =>
-            {
-                if (split.Width <= 0) return;
-                int maxDist = split.Width - split.Panel2MinSize - split.SplitterWidth;
-                if (maxDist < split.Panel1MinSize) return;
-                if (split.SplitterDistance > maxDist)
-                    split.SplitterDistance = maxDist;
-                else if (split.SplitterDistance < split.Panel1MinSize)
-                    split.SplitterDistance = split.Panel1MinSize;
-            };
 
             var listBox = new System.Windows.Forms.ListBox
             {
