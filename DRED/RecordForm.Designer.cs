@@ -85,11 +85,11 @@ namespace DRED
             // ── pnlScroll — outer scrollable container ───────────────────
             this.pnlScroll.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlScroll.AutoScroll = true;
-            this.pnlScroll.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
+            this.pnlScroll.Padding = new System.Windows.Forms.Padding(10, 6, 10, 6);
             this.pnlScroll.BackColor = formBack;
 
             // ── Card: Device Information ─────────────────────────────────
-            var tblDevice = MakeCardTable(4);
+            var tblDevice = MakeCardTable(2);
             var lblDevHeader = MakeCardHeader("DEVICE INFORMATION", headerFore);
             // Row 0: OpCo2 | Status
             AddLabelToCard(tblDevice, lblOpCo2, "OpCo2:", labelFore, 0, 0);
@@ -147,7 +147,7 @@ namespace DRED
             pnlSerialRange = MakeCard(cardBack, accentBorder, lblSerialHeader, tblSerial);
 
             // ── Card: Purchase Information ───────────────────────────────
-            var tblPurchase = MakeCardTable(4);
+            var tblPurchase = MakeCardTable(3);
             var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
             // Row 0: PO Date (+No PO Date) | PO Number
             AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
@@ -331,7 +331,7 @@ namespace DRED
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             for (int i = 0; i < rows; i++)
-                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
+                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             return tbl;
         }
 
@@ -342,13 +342,14 @@ namespace DRED
             {
                 Text = text,
                 Dock = System.Windows.Forms.DockStyle.Top,
-                Height = 24,
+                Height = 22,
                 Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold),
                 ForeColor = color,
                 BackColor = System.Drawing.Color.Transparent,
                 TextAlign = System.Drawing.ContentAlignment.BottomLeft,
-                Padding = new System.Windows.Forms.Padding(2, 0, 0, 2),
+                Padding = new System.Windows.Forms.Padding(2, 0, 0, 0),
                 Margin = System.Windows.Forms.Padding.Empty,
+                UseMnemonic = false,
             };
         }
 
@@ -366,8 +367,8 @@ namespace DRED
                 Dock = System.Windows.Forms.DockStyle.Top,
                 AutoSize = true,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(10, 6, 10, 6),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 6),
+                Padding = new System.Windows.Forms.Padding(8, 4, 8, 4),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 4),
             };
             panel.Paint += (s, e) =>
             {
@@ -398,8 +399,8 @@ namespace DRED
             {
                 Dock = System.Windows.Forms.DockStyle.Top,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(10, 6, 10, 6),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 6),
+                Padding = new System.Windows.Forms.Padding(8, 4, 8, 4),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 4),
             };
             panel.Paint += (s, e) =>
             {
@@ -410,8 +411,8 @@ namespace DRED
             panel.Controls.Add(content);
             panel.Controls.Add(header);
 
-            // Set panel height to account for header + content + vertical padding (top:8 + bottom:8)
-            const int verticalPadding = 12; // top (6) + bottom (6) from Padding(10, 6, 10, 6)
+            // Set panel height to account for header + content + vertical padding (top:4 + bottom:4)
+            const int verticalPadding = 8; // top (4) + bottom (4) from Padding(8, 4, 8, 4)
             panel.Height = header.Height + contentHeight + verticalPadding;
             return panel;
         }
@@ -426,7 +427,7 @@ namespace DRED
             lbl.Text = text;
             lbl.AutoSize = true;
             lbl.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
-            lbl.Margin = new System.Windows.Forms.Padding(0, 10, 4, 0);
+            lbl.Margin = new System.Windows.Forms.Padding(0, 8, 4, 0);
             lbl.ForeColor = foreColor;
             lbl.BackColor = System.Drawing.Color.Transparent;
             tbl.Controls.Add(lbl, col, row);
@@ -437,7 +438,7 @@ namespace DRED
             txt.UseTallSize = false;
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
-            txt.Margin = new System.Windows.Forms.Padding(0, 4, 8, 4);
+            txt.Margin = new System.Windows.Forms.Padding(0, 2, 4, 2);
         }
 
         // ── Field declarations ────────────────────────────────────────────
