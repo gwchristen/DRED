@@ -144,8 +144,8 @@ namespace DRED
 
             // ── pnlToolbar ───────────────────────────────────────────────
             this.pnlToolbar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlToolbar.Height = 56;
-            this.pnlToolbar.Padding = new System.Windows.Forms.Padding(12, 12, 12, 8);
+            this.pnlToolbar.Height = 48;
+            this.pnlToolbar.Padding = new System.Windows.Forms.Padding(8, 8, 8, 6);
             this.pnlToolbar.WrapContents = false;
             this.pnlToolbar.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
 
@@ -175,22 +175,23 @@ namespace DRED
 
             // ── pnlSearch ────────────────────────────────────────────────
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlSearch.Height = 68;
-            this.pnlSearch.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
+            this.pnlSearch.Height = 54;
+            this.pnlSearch.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
             this.pnlSearch.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
 
             this.txtSearch.Hint = "Search...";
             this.txtSearch.UseTallSize = false;
-            this.txtSearch.Location = new System.Drawing.Point(12, 8);
-            this.txtSearch.Size = new System.Drawing.Size(350, 48);
+            this.txtSearch.Location = new System.Drawing.Point(8, 6);
+            this.txtSearch.Size = new System.Drawing.Size(350, 42);
             this.txtSearch.TabIndex = 1;
             this.txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
             this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
 
-            this.cboFilterColumn.Location = new System.Drawing.Point(378, 18);
+            this.cboFilterColumn.Location = new System.Drawing.Point(366, 14);
             this.cboFilterColumn.Size = new System.Drawing.Size(200, 36);
             this.cboFilterColumn.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboFilterColumn.TabIndex = 2;
+            this.cboFilterColumn.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
 
             this.btnClearSearch.Text = "✕";
             this.btnClearSearch.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Text;
@@ -198,7 +199,7 @@ namespace DRED
             this.btnClearSearch.AutoSize = true;
             this.btnClearSearch.TabIndex = 3;
             this.btnClearSearch.Visible = false;
-            this.btnClearSearch.Location = new System.Drawing.Point(590, 14);
+            this.btnClearSearch.Location = new System.Drawing.Point(575, 10);
             this.btnClearSearch.AccessibleName = "Clear search";
             this.btnClearSearch.Click += new System.EventHandler(this.btnClearSearch_Click);
 
@@ -229,7 +230,7 @@ namespace DRED
             this.pnlStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.pnlStatus.Height = 30;
             this.pnlStatus.BackColor = System.Drawing.Color.FromArgb(0x2A, 0x2A, 0x2D);
-            this.pnlStatus.Padding = new System.Windows.Forms.Padding(12, 6, 12, 6);
+            this.pnlStatus.Padding = new System.Windows.Forms.Padding(8, 4, 8, 4);
 
             this.pnlStatus.Paint += (s, e) =>
             {
