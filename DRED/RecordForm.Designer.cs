@@ -424,7 +424,6 @@ namespace DRED
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
             txt.Margin = new System.Windows.Forms.Padding(0, 2, 4, 2);
-            txt.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
         }
 
         // ── Field declarations ────────────────────────────────────────────

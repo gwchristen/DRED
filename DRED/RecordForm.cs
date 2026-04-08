@@ -16,6 +16,7 @@ namespace DRED
         public RecordForm(RecordData? existing = null)
         {
             InitializeComponent();
+            MaterialSkinManager.Instance.AddFormToManage(this);
             _isEdit = existing != null;
             this.Text = _isEdit ? "Edit Record" : "Add Record";
             lblAuditInfo.Visible = false;
