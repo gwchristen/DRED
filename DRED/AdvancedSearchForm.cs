@@ -45,6 +45,7 @@ namespace DRED
         public AdvancedSearchForm()
         {
             InitializeAdvancedForm();
+            MaterialSkinManager.Instance.AddFormToManage(this);
         }
 
         private void InitializeAdvancedForm()
