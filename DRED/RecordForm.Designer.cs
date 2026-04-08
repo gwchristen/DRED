@@ -148,18 +148,23 @@ namespace DRED
             // ── Card: Purchase Information ───────────────────────────────
             var tblPurchase = MakeCardTable(3);
             var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
-            // Row 0: PO Date | txtPODate (text input)
+            // Row 0: PO Date | txtPODate | PO Number | txtPONumber
             AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
             ConfigureMaterialText(txtPODate, 8);
             this.txtPODate.Hint = "MM/dd/yyyy";
             tblPurchase.Controls.Add(this.txtPODate, 1, 0);
-            tblPurchase.SetColumnSpan(this.txtPODate, 3);
-            // Row 1: Vintage | txtVintage | PO Number | txtPONumber
+            AddLabelToCard(tblPurchase, lblPONumber, "PO Number:", labelFore, 0, 2);
+            ConfigureMaterialText(txtPONumber, 9);
+            tblPurchase.Controls.Add(txtPONumber, 3, 0);
+            // Row 1: Vintage | txtVintage | Unit Cost | txtUnitCost
             AddLabelToCard(tblPurchase, lblVintage, "Vintage:", labelFore, 1, 0);
             ConfigureMaterialText(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
-            AddLabelToCard(tblPurchase, lblPONumber, "PO Number:", labelFore, 1, 2);
-            ConfigureMaterialText(txtPONumber, 11); tblPurchase.Controls.Add(txtPONumber, 3, 1);
-            // Row 2: Recv Date | Unit Cost
+            AddLabelToCard(tblPurchase, lblUnitCost, "Unit Cost:", labelFore, 1, 2);
+            ConfigureMaterialText(txtUnitCost, 11);
+            this.txtUnitCost.Enter += new System.EventHandler(this.txtUnitCost_Enter);
+            this.txtUnitCost.Leave += new System.EventHandler(this.txtUnitCost_Leave);
+            tblPurchase.Controls.Add(txtUnitCost, 3, 1);
+            // Row 2: Recv Date alone
             AddLabelToCard(tblPurchase, lblRecvDate, "Recv Date:", labelFore, 2, 0);
             var recvPanel = new System.Windows.Forms.FlowLayoutPanel
             {
@@ -180,11 +185,6 @@ namespace DRED
             recvPanel.Controls.Add(this.chkRecvDate);
             recvPanel.Controls.Add(this.lblRecvDateDisplay);
             tblPurchase.Controls.Add(recvPanel, 1, 2);
-            AddLabelToCard(tblPurchase, lblUnitCost, "Unit Cost:", labelFore, 2, 2);
-            ConfigureMaterialText(txtUnitCost, 13);
-            this.txtUnitCost.Enter += new System.EventHandler(this.txtUnitCost_Enter);
-            this.txtUnitCost.Leave += new System.EventHandler(this.txtUnitCost_Leave);
-            tblPurchase.Controls.Add(txtUnitCost, 3, 2);
 
             pnlPurchaseInfo = MakeCard(cardBack, accentBorder, lblPurchaseHeader, tblPurchase);
 
@@ -280,12 +280,12 @@ namespace DRED
             // ── RecordForm ───────────────────────────────────────────────
             this.AcceptButton = this.btnSave;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(720, 780);
+            this.ClientSize = new System.Drawing.Size(720, 920);
             this.Controls.Add(this.pnlScroll);
             this.Controls.Add(this.pnlButtons);
             this.Controls.Add(this.tableLayoutPanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
-            this.MinimumSize = new System.Drawing.Size(700, 700);
+            this.MinimumSize = new System.Drawing.Size(700, 850);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Record";
 
@@ -424,6 +424,7 @@ namespace DRED
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
             txt.Margin = new System.Windows.Forms.Padding(0, 2, 4, 2);
+            txt.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
         }
 
         // ── Field declarations ────────────────────────────────────────────
