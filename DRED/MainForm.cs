@@ -80,22 +80,26 @@ namespace DRED
             _refreshTimer.Tick += (s, e) => { if (!_dialogOpen) RefreshCurrentTab(); };
             UpdateRefreshTimer();
 
-            // Defer SplitterDistance until the form is fully visible and all
-            // controls have been laid out with real dimensions. Using Shown +
-            // BeginInvoke guarantees the SplitContainer has a non-zero Width
-            // before we touch SplitterDistance.
             this.Shown += (s, e) =>
             {
                 this.BeginInvoke(new Action(() =>
                 {
                     foreach (var sc in _splitContainers)
                     {
-                        if (sc == null || sc.Width <= 0) continue;
-                        int maxDist = sc.Width - sc.Panel2MinSize - sc.SplitterWidth;
-                        int desired = 300;
-                        if (maxDist >= sc.Panel1MinSize)
+                        if (sc == null) continue;
+
+                        // Now that the form is visible with real dimensions,
+                        // set the real minimum sizes and splitter position.
+                        sc.Panel1MinSize = 200;
+                        sc.Panel2MinSize = 200;
+
+                        if (sc.Width > 0)
                         {
-                            sc.SplitterDistance = Math.Clamp(desired, sc.Panel1MinSize, maxDist);
+                            int maxDist = sc.Width - sc.Panel2MinSize - sc.SplitterWidth;
+                            if (maxDist >= sc.Panel1MinSize)
+                            {
+                                sc.SplitterDistance = Math.Clamp(300, sc.Panel1MinSize, maxDist);
+                            }
                         }
                     }
                 }));
