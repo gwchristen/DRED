@@ -45,18 +45,8 @@ namespace DRED
             txtEst.Text      = r.Est ?? "";
             txtComments.Text = r.Comments ?? "";
 
-            // PO Date: if value exists, show it; else mark as "No PO Date"
-            if (r.PODate.HasValue)
-            {
-                chkNoPODate.Checked = false;
-                dtpPODate.Value = r.PODate.Value;
-                dtpPODate.Enabled = true;
-            }
-            else
-            {
-                chkNoPODate.Checked = true;
-                dtpPODate.Enabled = false;
-            }
+            // PO Date: if value exists, show it; else leave blank
+            txtPODate.Text = r.PODate.HasValue ? r.PODate.Value.ToString("MM/dd/yyyy") : "";
 
             // Recv Date: checkbox only; date is always today when checked
             chkRecvDate.Checked = r.RecvDate.HasValue;
@@ -97,6 +87,19 @@ namespace DRED
                 unitCost = cost;
             }
 
+            DateTime? poDate = null;
+            if (!string.IsNullOrWhiteSpace(txtPODate.Text))
+            {
+                if (!DateTime.TryParse(txtPODate.Text, out DateTime parsedDate))
+                {
+                    MessageBox.Show("PO Date must be a valid date (e.g. MM/dd/yyyy).", "Validation",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    txtPODate.Focus();
+                    return;
+                }
+                poDate = parsedDate.Date;
+            }
+
             Result = new RecordData
             {
                 OpCo2    = NullIfEmpty(txtOpCo2.Text),
@@ -106,7 +109,7 @@ namespace DRED
                 BegSer   = NullIfEmpty(txtBegSer.Text),
                 EndSer   = NullIfEmpty(txtEndSer.Text),
                 Qty      = (int)nudQty.Value == 0 ? (int?)null : (int)nudQty.Value,
-                PODate   = chkNoPODate.Checked ? (DateTime?)null : dtpPODate.Value.Date,
+                PODate   = poDate,
                 Vintage  = NullIfEmpty(txtVintage.Text),
                 PONumber = NullIfEmpty(txtPONumber.Text),
                 RecvDate = chkRecvDate.Checked ? DateTime.Today : (DateTime?)null,
@@ -126,11 +129,6 @@ namespace DRED
         {
             DialogResult = DialogResult.Cancel;
             Close();
-        }
-
-        private void chkNoPODate_CheckedChanged(object sender, EventArgs e)
-        {
-            dtpPODate.Enabled = !chkNoPODate.Checked;
         }
 
         private void chkRecvDate_CheckedChanged(object sender, EventArgs e)
