@@ -30,7 +30,6 @@ namespace DRED
         private int[]                          _hoveredListItem = { -1, -1, -1, -1 };
 
         private const int  ListItemHeight     = 58;
-        private const string CardTag          = "card";
 
         private string CurrentTable =>
             TabTableNames[tabControl.SelectedIndex];
@@ -344,39 +343,55 @@ namespace DRED
             dl.EmptyStateLabel = emptyLabel;
             scrollPanel.Controls.Add(emptyLabel);
 
-            // Content panel — fills the detail panel, no scrolling needed
+            // Content panel — fills the detail panel
             var contentPanel = new System.Windows.Forms.Panel
             {
                 Dock      = DockStyle.Fill,
-                Padding   = new Padding(10, 8, 10, 8),
+                Padding   = new Padding(8),
                 BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
                 Visible   = false,
             };
             dl.ContentPanel = contentPanel;
             scrollPanel.Controls.Add(contentPanel);
 
-            // Main 4-column TableLayoutPanel: [label 80px] [value 50%] [label 80px] [value 50%]
-            var grid = new System.Windows.Forms.TableLayoutPanel
+            // Outer 2-column grid: [50%] [50%], 5 rows
+            var outerGrid = new System.Windows.Forms.TableLayoutPanel
             {
                 Dock            = DockStyle.Fill,
-                ColumnCount     = 4,
+                ColumnCount     = 2,
+                RowCount        = 5,
                 BackColor       = Color.Transparent,
                 CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
                 Padding         = Padding.Empty,
                 Margin          = Padding.Empty,
             };
-            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80));
-            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
-            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 80));
-            grid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
-            contentPanel.Controls.Add(grid);
+            outerGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
+            outerGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
+            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize)); // Row 0: devCard | serCard
+            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize)); // Row 1: purCard | idCard
+            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize)); // Row 2: commCard (full width)
+            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 24)); // Row 3: audit label
+            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44)); // Row 4: buttons
+            contentPanel.Controls.Add(outerGrid);
 
-            int row = 0;
-
-            // ── Helper closures ──────────────────────────────────────────
-            void AddSectionHeader(string title)
+            // ── Helper: create a section card ────────────────────────────
+            System.Windows.Forms.TableLayoutPanel MakeCard(string title)
             {
-                grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26));
+                var card = new System.Windows.Forms.TableLayoutPanel
+                {
+                    ColumnCount  = 2,
+                    RowCount     = 1,
+                    AutoSize     = true,
+                    AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                    Dock         = DockStyle.Fill,
+                    BackColor    = Color.FromArgb(0x25, 0x25, 0x28),
+                    Margin       = new Padding(4),
+                    Padding      = new Padding(8, 6, 8, 8),
+                    CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
+                };
+                card.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 75));
+                card.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100));
+                // Header
                 var hdr = new System.Windows.Forms.Label
                 {
                     Text      = title,
@@ -387,13 +402,17 @@ namespace DRED
                     BackColor = Color.Transparent,
                     Padding   = new Padding(0, 0, 0, 2),
                 };
-                grid.Controls.Add(hdr, 0, row);
-                grid.SetColumnSpan(hdr, 4);
-                row++;
+                card.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26));
+                card.Controls.Add(hdr, 0, 0);
+                card.SetColumnSpan(hdr, 2);
+                return card;
             }
 
-            System.Windows.Forms.Label AddFieldPair(string labelText, int col)
+            // ── Helper: add a field row to a card ────────────────────────
+            System.Windows.Forms.Label AddField(System.Windows.Forms.TableLayoutPanel card, string labelText)
             {
+                int r = card.RowCount++;
+                card.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
                 var nm = new System.Windows.Forms.Label
                 {
                     Text      = labelText,
@@ -412,82 +431,47 @@ namespace DRED
                     TextAlign = ContentAlignment.MiddleLeft,
                     BackColor = Color.Transparent,
                 };
-                grid.Controls.Add(nm, col, row);
-                grid.Controls.Add(vl, col + 1, row);
+                card.Controls.Add(nm, 0, r);
+                card.Controls.Add(vl, 1, r);
                 return vl;
             }
 
-            void AddSeparator()
-            {
-                grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 1));
-                var sep = new System.Windows.Forms.Panel
-                {
-                    Dock      = DockStyle.Fill,
-                    BackColor = Color.FromArgb(0x3E, 0x3E, 0x42),
-                    Margin    = Padding.Empty,
-                };
-                grid.Controls.Add(sep, 0, row);
-                grid.SetColumnSpan(sep, 4);
-                row++;
-            }
+            // ── DEVICE INFORMATION (col 0, row 0) ────────────────────────
+            var devCard = MakeCard("DEVICE INFORMATION");
+            dl.ValOpCo2   = AddField(devCard, "OpCo2:");
+            dl.ValStatus  = AddField(devCard, "Status:");
+            dl.ValMFR     = AddField(devCard, "MFR:");
+            dl.ValDevCode = AddField(devCard, "Dev Code:");
+            outerGrid.Controls.Add(devCard, 0, 0);
 
-            // ── DEVICE INFORMATION ───────────────────────────────────────
-            AddSectionHeader("DEVICE INFORMATION");
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValOpCo2  = AddFieldPair("OpCo2:",  0);
-            dl.ValStatus = AddFieldPair("Status:", 2);
-            row++;
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValMFR     = AddFieldPair("MFR:",      0);
-            dl.ValDevCode = AddFieldPair("Dev Code:", 2);
-            row++;
+            // ── SERIAL RANGE & QUANTITY (col 1, row 0) ───────────────────
+            var serCard = MakeCard("SERIAL RANGE & QUANTITY");
+            dl.ValBegSer = AddField(serCard, "Beg Ser:");
+            dl.ValEndSer = AddField(serCard, "End Ser:");
+            dl.ValQty    = AddField(serCard, "Qty:");
+            outerGrid.Controls.Add(serCard, 1, 0);
 
-            AddSeparator();
+            // ── PURCHASE INFORMATION (col 0, row 1) ──────────────────────
+            var purCard = MakeCard("PURCHASE INFORMATION");
+            dl.ValPODate   = AddField(purCard, "PO Date:");
+            dl.ValPONumber = AddField(purCard, "PO Number:");
+            dl.ValVintage  = AddField(purCard, "Vintage:");
+            dl.ValRecvDate = AddField(purCard, "Recv Date:");
+            dl.ValUnitCost = AddField(purCard, "Unit Cost:");
+            outerGrid.Controls.Add(purCard, 0, 1);
 
-            // ── SERIAL RANGE & QUANTITY ──────────────────────────────────
-            AddSectionHeader("SERIAL RANGE & QUANTITY");
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValBegSer = AddFieldPair("Beg Ser:", 0);
-            dl.ValEndSer = AddFieldPair("End Ser:", 2);
-            row++;
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValQty = AddFieldPair("Qty:", 0);
-            row++;
+            // ── IDENTIFIERS (col 1, row 1) ───────────────────────────────
+            var idCard = MakeCard("IDENTIFIERS");
+            dl.ValCID      = AddField(idCard, "CID:");
+            dl.ValMENumber = AddField(idCard, "M.E. #:");
+            dl.ValPurCode  = AddField(idCard, "Pur Code:");
+            dl.ValEst      = AddField(idCard, "Est.:");
+            outerGrid.Controls.Add(idCard, 1, 1);
 
-            AddSeparator();
-
-            // ── PURCHASE INFORMATION ─────────────────────────────────────
-            AddSectionHeader("PURCHASE INFORMATION");
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValPODate   = AddFieldPair("PO Date:",  0);
-            dl.ValPONumber = AddFieldPair("PO Number:", 2);
-            row++;
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValVintage  = AddFieldPair("Vintage:",  0);
-            dl.ValRecvDate = AddFieldPair("Recv Date:", 2);
-            row++;
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValUnitCost = AddFieldPair("Unit Cost:", 0);
-            row++;
-
-            AddSeparator();
-
-            // ── IDENTIFIERS ──────────────────────────────────────────────
-            AddSectionHeader("IDENTIFIERS");
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValCID      = AddFieldPair("CID:",      0);
-            dl.ValMENumber = AddFieldPair("M.E. #:",   2);
-            row++;
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-            dl.ValPurCode = AddFieldPair("Pur Code:", 0);
-            dl.ValEst     = AddFieldPair("Est.:",     2);
-            row++;
-
-            AddSeparator();
-
-            // ── COMMENTS & NOTES ─────────────────────────────────────────
-            AddSectionHeader("COMMENTS & NOTES");
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54));
+            // ── COMMENTS & NOTES (full width, row 2) ─────────────────────
+            var commCard = MakeCard("COMMENTS & NOTES");
+            int commRow = commCard.RowCount++;
+            commCard.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54));
             var commLabel = new System.Windows.Forms.Label
             {
                 Text      = "\u2014",
@@ -497,15 +481,13 @@ namespace DRED
                 TextAlign = ContentAlignment.TopLeft,
                 BackColor = Color.Transparent,
             };
-            grid.Controls.Add(commLabel, 0, row);
-            grid.SetColumnSpan(commLabel, 4);
+            commCard.Controls.Add(commLabel, 0, commRow);
+            commCard.SetColumnSpan(commLabel, 2);
             dl.ValComments = commLabel;
-            row++;
+            outerGrid.Controls.Add(commCard, 0, 2);
+            outerGrid.SetColumnSpan(commCard, 2);
 
-            AddSeparator();
-
-            // ── Audit label ──────────────────────────────────────────────
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
+            // ── Audit label (full width, row 3) ──────────────────────────
             var auditLabel = new System.Windows.Forms.Label
             {
                 Text      = "",
@@ -514,14 +496,13 @@ namespace DRED
                 Dock      = DockStyle.Fill,
                 TextAlign = ContentAlignment.MiddleLeft,
                 BackColor = Color.Transparent,
+                Margin    = new Padding(8, 0, 0, 0),
             };
             dl.LblAudit = auditLabel;
-            grid.Controls.Add(auditLabel, 0, row);
-            grid.SetColumnSpan(auditLabel, 4);
-            row++;
+            outerGrid.Controls.Add(auditLabel, 0, 3);
+            outerGrid.SetColumnSpan(auditLabel, 2);
 
-            // ── Action buttons ───────────────────────────────────────────
-            grid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 40));
+            // ── Action buttons (full width, row 4) ───────────────────────
             var btnDetailEdit   = CreateDetailButton("Edit",   accentColor,                      (s, ev) => btnEdit_Click(s!, ev));
             var btnDetailDelete = CreateDetailButton("Delete", Color.FromArgb(0xEF, 0x53, 0x50), (s, ev) => btnDelete_Click(s!, ev));
             var btnPanel = new System.Windows.Forms.FlowLayoutPanel
@@ -536,12 +517,10 @@ namespace DRED
             };
             btnPanel.Controls.Add(btnDetailEdit);
             btnPanel.Controls.Add(btnDetailDelete);
-            grid.Controls.Add(btnPanel, 0, row);
-            grid.SetColumnSpan(btnPanel, 4);
+            outerGrid.Controls.Add(btnPanel, 0, 4);
+            outerGrid.SetColumnSpan(btnPanel, 2);
             dl.BtnDetailEdit   = btnDetailEdit;
             dl.BtnDetailDelete = btnDetailDelete;
-
-            grid.RowCount = row + 1;
 
             _detailLabels[tabIndex] = dl;
         }
