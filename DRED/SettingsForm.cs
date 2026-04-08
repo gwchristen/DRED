@@ -11,7 +11,6 @@ namespace DRED
         public SettingsForm()
         {
             InitializeComponent();
-            MaterialSkinManager.Instance.AddFormToManage(this);
             txtDatabasePath.Text = AppSettings.DatabasePath;
             nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
         }

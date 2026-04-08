@@ -632,6 +632,7 @@ namespace DRED
 
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
+            tabSelector?.Invalidate();
             RefreshCurrentTab();
         }
 

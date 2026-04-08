@@ -56,7 +56,7 @@ namespace DRED
 
             // ── Tab control ──────────────────────────────────────────────
             this.tabControl          = new MaterialSkin.Controls.MaterialTabControl();
-            this.tabSelector         = new MaterialSkin.Controls.MaterialTabSelector();
+            this.tabSelector         = new System.Windows.Forms.Panel();
             this.tabOHMeters         = new System.Windows.Forms.TabPage();
             this.tabIMMeters         = new System.Windows.Forms.TabPage();
             this.tabOHTransformers   = new System.Windows.Forms.TabPage();
@@ -184,14 +184,13 @@ namespace DRED
             this.txtSearch.Location = new System.Drawing.Point(8, 6);
             this.txtSearch.Size = new System.Drawing.Size(350, 42);
             this.txtSearch.TabIndex = 1;
-            this.txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            this.txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
             this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
 
-            this.cboFilterColumn.Location = new System.Drawing.Point(366, 14);
             this.cboFilterColumn.Size = new System.Drawing.Size(200, 36);
             this.cboFilterColumn.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboFilterColumn.TabIndex = 2;
-            this.cboFilterColumn.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            this.cboFilterColumn.Anchor = System.Windows.Forms.AnchorStyles.None;
 
             this.btnClearSearch.Text = "✕";
             this.btnClearSearch.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Text;
@@ -199,9 +198,26 @@ namespace DRED
             this.btnClearSearch.AutoSize = true;
             this.btnClearSearch.TabIndex = 3;
             this.btnClearSearch.Visible = false;
-            this.btnClearSearch.Location = new System.Drawing.Point(575, 10);
+            this.btnClearSearch.Anchor = System.Windows.Forms.AnchorStyles.None;
             this.btnClearSearch.AccessibleName = "Clear search";
             this.btnClearSearch.Click += new System.EventHandler(this.btnClearSearch_Click);
+
+            // Position cboFilterColumn and resize txtSearch whenever the search panel changes size.
+            // This replaces the unreliable Anchor=Right approach (whose distances are computed
+            // when the parent panel has width=0 during InitializeComponent, causing the control
+            // to render off-screen).
+            this.pnlSearch.Resize += (s, e) =>
+            {
+                const int leftMargin = 8;
+                const int gap        = 8;
+                const int cboWidth   = 200;
+                int panelW = pnlSearch.ClientSize.Width;
+                if (panelW < cboWidth + leftMargin * 2 + gap) return; // panel too narrow; controls keep prior positions
+                int cboLeft = panelW - leftMargin - cboWidth;
+                cboFilterColumn.Location  = new System.Drawing.Point(cboLeft, 14);
+                txtSearch.Width           = cboLeft - leftMargin - gap;
+                btnClearSearch.Location   = new System.Drawing.Point(cboLeft - leftMargin - 36, 10);
+            };
 
             this.pnlSearch.Controls.Add(this.txtSearch);
             this.pnlSearch.Controls.Add(this.cboFilterColumn);
@@ -219,12 +235,91 @@ namespace DRED
             SetupTabWithSplit(tabOHTransformers, "OH - Transformers",  System.Drawing.Color.FromArgb(0xFF, 0xA7, 0x26), 2);
             SetupTabWithSplit(tabIMTransformers, "I&M - Transformers", System.Drawing.Color.FromArgb(0xAB, 0x47, 0xBC), 3);
 
-            // ── tabSelector ──────────────────────────────────────────────
-            this.tabSelector.BaseTabControl = this.tabControl;
-            this.tabSelector.Dock = System.Windows.Forms.DockStyle.Top;
-            this.tabSelector.Depth = 0;
-            this.tabSelector.MouseState = MaterialSkin.MouseState.HOVER;
-            this.tabSelector.TabIndex = 4;
+            // ── tabSelector (custom accent-colored tab strip) ────────────────
+            // Replaces MaterialTabSelector so each tab can show its unique accent color.
+            this.tabSelector.Dock       = System.Windows.Forms.DockStyle.Top;
+            this.tabSelector.Height     = 48;
+            this.tabSelector.BackColor  = System.Drawing.Color.FromArgb(30, 30, 30);
+            this.tabSelector.TabIndex   = 4;
+            this.tabSelector.TabStop    = false;
+
+            this.tabSelector.Paint += (s, e) =>
+            {
+                var g = e.Graphics;
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                int count = tabControl.TabPages.Count;
+                if (count == 0 || tabSelector.Width <= 0) return;
+                float tabW  = (float)tabSelector.Width / count;
+                int   sel   = tabControl.SelectedIndex;
+                int   h     = tabSelector.Height;
+
+                // Tab strip drawing constants
+                const int   AccentBlend       = 5;   // divisor for blending accent into background
+                const int   BaseBackground    = 28;  // base dark level for selected-tab tint
+                const float TabFontSizeSelected   = 9F;
+                const float TabFontSizeUnselected  = 8.5F;
+                const string TabFontFamily = "Segoe UI";
+
+                for (int i = 0; i < count; i++)
+                {
+                    bool isSelected = i == sel;
+                    var  accent     = TabAccentColors[i];
+                    float x = i * tabW;
+
+                    // Background: subtle accent tint for selected tab, flat dark for others
+                    using var bgBrush = new System.Drawing.SolidBrush(
+                        isSelected
+                            ? System.Drawing.Color.FromArgb(
+                                Math.Min(255, accent.R / AccentBlend + BaseBackground),
+                                Math.Min(255, accent.G / AccentBlend + BaseBackground),
+                                Math.Min(255, accent.B / AccentBlend + BaseBackground))
+                            : System.Drawing.Color.FromArgb(30, 30, 30));
+                    g.FillRectangle(bgBrush, x, 0, tabW, h);
+
+                    // Label
+                    string label = tabControl.TabPages[i].Text;
+                    using var fgBrush = new System.Drawing.SolidBrush(
+                        isSelected ? accent : System.Drawing.Color.FromArgb(160, 160, 160));
+                    using var font = new System.Drawing.Font(TabFontFamily,
+                        isSelected ? TabFontSizeSelected : TabFontSizeUnselected,
+                        isSelected ? System.Drawing.FontStyle.Bold : System.Drawing.FontStyle.Regular);
+                    var fmt = new System.Drawing.StringFormat
+                    {
+                        Alignment     = System.Drawing.StringAlignment.Center,
+                        LineAlignment = System.Drawing.StringAlignment.Center,
+                        Trimming      = System.Drawing.StringTrimming.EllipsisCharacter,
+                        FormatFlags   = System.Drawing.StringFormatFlags.NoWrap,
+                    };
+                    g.DrawString(label, font, fgBrush,
+                        new System.Drawing.RectangleF(x + 2, 0, tabW - 4, h - 3), fmt);
+
+                    // Accent indicator bar at bottom of selected tab
+                    if (isSelected)
+                    {
+                        using var bar = new System.Drawing.SolidBrush(accent);
+                        g.FillRectangle(bar, x, h - 3, tabW, 3);
+                    }
+
+                    // Divider between tabs
+                    if (i < count - 1)
+                    {
+                        using var sep = new System.Drawing.Pen(System.Drawing.Color.FromArgb(55, 55, 55));
+                        g.DrawLine(sep, x + tabW, 4, x + tabW, h - 4);
+                    }
+                }
+            };
+
+            this.tabSelector.MouseClick += (s, e) =>
+            {
+                int count = tabControl.TabPages.Count;
+                if (count == 0 || tabSelector.Width <= 0) return;
+                float tabW   = (float)tabSelector.Width / count;
+                int clicked  = (int)(e.X / tabW);
+                if (clicked >= 0 && clicked < count)
+                    tabControl.SelectedIndex = clicked;
+            };
+
+            this.tabSelector.Resize += (s, e) => tabSelector.Invalidate();
 
             // ── pnlStatus ────────────────────────────────────────────────
             this.pnlStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
@@ -328,6 +423,8 @@ namespace DRED
             split.Resize += (s, e) =>
             {
                 if (split.Width <= 0) return;
+                // Don't adjust splitter until real min sizes have been applied in Shown handler.
+                if (split.Panel1MinSize == 0 && split.Panel2MinSize == 0) return;
                 int maxDist = split.Width - split.Panel2MinSize - split.SplitterWidth;
                 if (maxDist < split.Panel1MinSize) return;
                 try
@@ -420,7 +517,7 @@ namespace DRED
         private MaterialSkin.Controls.MaterialComboBox cboFilterColumn = null!;
         private MaterialSkin.Controls.MaterialButton btnClearSearch = null!;
         private MaterialSkin.Controls.MaterialTabControl tabControl = null!;
-        private MaterialSkin.Controls.MaterialTabSelector tabSelector = null!;
+        private System.Windows.Forms.Panel tabSelector = null!;
         private System.Windows.Forms.TabPage tabOHMeters = null!;
         private System.Windows.Forms.TabPage tabIMMeters = null!;
         private System.Windows.Forms.TabPage tabOHTransformers = null!;
