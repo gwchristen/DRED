@@ -98,7 +98,11 @@ namespace DRED
                             int maxDist = sc.Width - sc.Panel2MinSize - sc.SplitterWidth;
                             if (maxDist >= sc.Panel1MinSize)
                             {
-                                sc.SplitterDistance = Math.Clamp(300, sc.Panel1MinSize, maxDist);
+                                try
+                                {
+                                    sc.SplitterDistance = Math.Clamp(300, sc.Panel1MinSize, maxDist);
+                                }
+                                catch (InvalidOperationException) { }
                             }
                         }
                     }
