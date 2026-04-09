@@ -92,7 +92,7 @@ namespace DRED
                     CID      = GetText(row, colMap, "CID"),
                     MENumber = GetText(row, colMap, "M.E. #"),
                     PurCode  = GetText(row, colMap, "Pur. Code"),
-                    Est      = GetText(row, colMap, "Est."),
+                    Est      = GetBool(row, colMap, "Est."),
                     Comments = GetText(row, colMap, "Comments"),
                 };
 
@@ -108,6 +108,18 @@ namespace DRED
             if (!colMap.TryGetValue(colName, out int col)) return null;
             string val = row.Cell(col).GetString().Trim();
             return string.IsNullOrEmpty(val) ? null : val;
+        }
+
+        private static bool GetBool(IXLRow row, System.Collections.Generic.Dictionary<string, int> colMap, string colName)
+        {
+            if (!colMap.TryGetValue(colName, out int col)) return false;
+            var cell = row.Cell(col);
+            if (cell.IsEmpty()) return false;
+            if (cell.DataType == XLDataType.Boolean) return cell.GetBoolean();
+            string s = cell.GetString().Trim();
+            if (bool.TryParse(s, out bool bv)) return bv;
+            // Accept common truthy representations from Excel: "1", "Yes", "Y", "True"
+            return s == "1" || s.ToUpperInvariant() is "YES" or "TRUE" or "Y";
         }
 
         private static int? GetInt(IXLRow row, System.Collections.Generic.Dictionary<string, int> colMap, string colName)
