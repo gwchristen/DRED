@@ -136,6 +136,8 @@ CREATE TABLE [{tableName}] (
             }
             catch { return; } // If we can't add the temp column, abort
 
+            // Treat any non-empty text value as True (the original text field stored "1" or similar
+            // to indicate established, and null/empty to indicate not established).
             try
             {
                 using var a2 = new OleDbCommand(

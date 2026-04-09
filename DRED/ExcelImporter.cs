@@ -118,7 +118,7 @@ namespace DRED
             if (cell.DataType == XLDataType.Boolean) return cell.GetBoolean();
             string s = cell.GetString().Trim();
             if (bool.TryParse(s, out bool bv)) return bv;
-            // Treat "1", non-empty text as true
+            // Accept common truthy representations from Excel: "1", "Yes", "Y", "True"
             return s == "1" || s.ToUpperInvariant() is "YES" or "TRUE" or "Y";
         }
 
