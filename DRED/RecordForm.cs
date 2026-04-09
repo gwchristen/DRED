@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows.Forms;
 using MaterialSkin.Controls;
 
@@ -44,6 +45,7 @@ namespace DRED
             chkEst.Checked       = r.Est;
             chkTextFile.Checked  = r.TextFile;
             txtComments.Text = r.Comments ?? "";
+            txtOOSSerials.Text = r.OOSSerials ?? "";
 
             // PO Date: if value exists, show it; else leave blank
             txtPODate.Text = r.PODate.HasValue ? r.PODate.Value.ToString("MM/dd/yyyy") : "";
@@ -120,6 +122,7 @@ namespace DRED
                 Est      = chkEst.Checked,
                 TextFile = chkTextFile.Checked,
                 Comments = NullIfEmpty(txtComments.Text),
+                OOSSerials = NullIfEmpty(txtOOSSerials.Text),
             };
 
             DialogResult = DialogResult.OK;
@@ -170,17 +173,33 @@ namespace DRED
 
         private void TryAutoCalcQty()
         {
+            int rangeQty = 0;
             if (long.TryParse(txtBegSer.Text.Trim(), out long beg) &&
                 long.TryParse(txtEndSer.Text.Trim(), out long end))
             {
-                long qty = end - beg + 1;
-                if (qty > 0 && qty <= 999999)
-                {
-                    _suppressQtyAutoCalc = true;
-                    nudQty.Value = qty;
-                    _suppressQtyAutoCalc = false;
-                }
+                long range = end - beg + 1;
+                if (range > 0)
+                    rangeQty = (int)Math.Min(range, 999999);
             }
+
+            int oosCount = txtOOSSerials.Text
+                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Count(s => !string.IsNullOrWhiteSpace(s));
+
+            int totalQty = rangeQty + oosCount;
+            if (totalQty > 0 && totalQty <= 999999)
+            {
+                _suppressQtyAutoCalc = true;
+                nudQty.Value = totalQty;
+                _suppressQtyAutoCalc = false;
+            }
+        }
+
+        private void OOSSerials_TextChanged(object sender, EventArgs e)
+        {
+            if (_suppressQtyAutoCalc) return;
+            if (chkAutoQty.Checked)
+                TryAutoCalcQty();
         }
 
         private void nudQty_ValueChanged(object sender, EventArgs e)

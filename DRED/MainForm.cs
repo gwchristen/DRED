@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 using MaterialSkin;
 using MaterialSkin.Controls;
@@ -50,7 +51,8 @@ namespace DRED
         {
             public System.Windows.Forms.Label ValOpCo2   = null!, ValStatus   = null!,
                                               ValMFR      = null!, ValDevCode  = null!;
-            public System.Windows.Forms.Label ValBegSer  = null!, ValEndSer   = null!, ValQty = null!;
+            public System.Windows.Forms.Label ValBegSer  = null!, ValEndSer   = null!, ValQty = null!,
+                                              ValOOSSerials = null!;
             public System.Windows.Forms.Label ValPODate  = null!, ValPONumber = null!,
                                               ValVintage  = null!, ValRecvDate = null!, ValUnitCost = null!;
             public System.Windows.Forms.Label ValCID     = null!, ValMENumber = null!,
@@ -505,9 +507,10 @@ namespace DRED
             // ── SERIAL RANGE & QUANTITY (col 1, row 0) ───────────────────
             var (serCard, serHdr) = MakeCard("SERIAL RANGE & QUANTITY");
             dl.HdrSerialRange = serHdr;
-            dl.ValBegSer = AddField(serCard, "Beg Ser:");
-            dl.ValEndSer = AddField(serCard, "End Ser:");
-            dl.ValQty    = AddField(serCard, "Qty:");
+            dl.ValBegSer     = AddField(serCard, "Beg Ser:");
+            dl.ValEndSer     = AddField(serCard, "End Ser:");
+            dl.ValQty        = AddField(serCard, "Qty:");
+            dl.ValOOSSerials = AddField(serCard, "OOS:");
             outerGrid.Controls.Add(serCard, 1, 0);
 
             // ── PURCHASE INFORMATION (col 0, row 1) ──────────────────────
@@ -623,6 +626,13 @@ namespace DRED
             dl.ValBegSer.Text = S(row["BegSer"]);
             dl.ValEndSer.Text = S(row["EndSer"]);
             dl.ValQty.Text    = S(row["Qty"]);
+
+            string oosRaw = row.Table.Columns.Contains("OOSSerials") && !(row["OOSSerials"] is DBNull)
+                ? row["OOSSerials"] as string ?? "" : "";
+            int oosCount = string.IsNullOrEmpty(oosRaw) ? 0
+                : oosRaw.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                         .Count(s => !string.IsNullOrWhiteSpace(s));
+            dl.ValOOSSerials.Text = oosCount > 0 ? oosCount.ToString() : "\u2014";
 
             dl.ValPODate.Text   = D(row["PODate"]);
             dl.ValPONumber.Text = S(row["PONumber"]);
@@ -1030,6 +1040,7 @@ namespace DRED
                 Est      = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]),
                 TextFile = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]),
                 Comments = row["Comments"] as string,
+                OOSSerials = row.Table.Columns.Contains("OOSSerials") ? row["OOSSerials"] as string : null,
                 CreatedBy    = row.Table.Columns.Contains("CreatedBy") ? row["CreatedBy"] as string : null,
                 CreatedDate  = row.Table.Columns.Contains("CreatedDate") && !(row["CreatedDate"] is DBNull)
                                ? Convert.ToDateTime(row["CreatedDate"]) : (DateTime?)null,
