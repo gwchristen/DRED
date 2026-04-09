@@ -62,6 +62,10 @@ namespace DRED
             public System.Windows.Forms.Label HdrDeviceInfo   = null!, HdrSerialRange  = null!,
                                               HdrPurchaseInfo = null!, HdrIdentifiers  = null!,
                                               HdrComments     = null!;
+            // Field name labels ("OpCo2:", "Status:", etc.) and value labels — tracked so
+            // ReapplyDetailPanelColors() can restore them after MaterialSkinManager resets them.
+            public List<System.Windows.Forms.Label> FieldNameLabels = new();
+            public List<System.Windows.Forms.Label> ValueLabels     = new();
         }
 
         // ── Constructor ──────────────────────────────────────────────────
@@ -330,18 +334,40 @@ namespace DRED
                 BuildDetailForTab(i, _detailPanels[i], TabAccentColors[i]);
         }
 
-        private void ReapplyDetailAccentColors()
+        private void ReapplyDetailPanelColors()
         {
             for (int i = 0; i < 4; i++)
             {
                 var dl = _detailLabels[i];
                 if (dl == null) continue;
-                var accent = TabAccentColors[i];
+
+                var accent         = TabAccentColors[i];
+                var fieldNameColor = Color.FromArgb(0x99, 0x99, 0x99);
+                var valueColor     = Color.FromArgb(0xF1, 0xF1, 0xF1);
+
+                // Section headers
                 dl.HdrDeviceInfo.ForeColor   = accent;
                 dl.HdrSerialRange.ForeColor  = accent;
                 dl.HdrPurchaseInfo.ForeColor = accent;
                 dl.HdrIdentifiers.ForeColor  = accent;
                 dl.HdrComments.ForeColor     = accent;
+
+                // Field name labels
+                foreach (var lbl in dl.FieldNameLabels)
+                    lbl.ForeColor = fieldNameColor;
+
+                // Value labels
+                foreach (var lbl in dl.ValueLabels)
+                    lbl.ForeColor = valueColor;
+
+                // Audit label
+                dl.LblAudit.ForeColor = Color.FromArgb(0x88, 0x88, 0x88);
+
+                // Empty-state label
+                dl.EmptyStateLabel.ForeColor = Color.FromArgb(0x66, 0x66, 0x66);
+
+                // Panel backgrounds
+                dl.ContentPanel.BackColor = Color.FromArgb(0x2D, 0x2D, 0x30);
             }
         }
 
@@ -453,6 +479,8 @@ namespace DRED
                 };
                 card.Controls.Add(nm, 0, r);
                 card.Controls.Add(vl, 1, r);
+                dl.FieldNameLabels.Add(nm);
+                dl.ValueLabels.Add(vl);
                 return vl;
             }
 
@@ -510,6 +538,7 @@ namespace DRED
             commCard.Controls.Add(commLabel, 0, commRow);
             commCard.SetColumnSpan(commLabel, 2);
             dl.ValComments = commLabel;
+            dl.ValueLabels.Add(commLabel);
             outerGrid.Controls.Add(commCard, 0, 2);
             outerGrid.SetColumnSpan(commCard, 2);
 
@@ -684,7 +713,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                ReapplyDetailAccentColors();
+                ReapplyDetailPanelColors();
             }
         }
 
@@ -727,7 +756,7 @@ namespace DRED
             {
                 _dialogOpen = false;
                 DatabaseHelper.UnlockRecord(CurrentTable, id);
-                ReapplyDetailAccentColors();
+                ReapplyDetailPanelColors();
             }
         }
 
@@ -768,7 +797,7 @@ namespace DRED
             }
             finally
             {
-                ReapplyDetailAccentColors();
+                ReapplyDetailPanelColors();
             }
         }
 
@@ -787,7 +816,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                ReapplyDetailAccentColors();
+                ReapplyDetailPanelColors();
             }
         }
 
