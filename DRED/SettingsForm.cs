@@ -1,12 +1,10 @@
 using System;
 using System.IO;
 using System.Windows.Forms;
-using MaterialSkin;
-using MaterialSkin.Controls;
 
 namespace DRED
 {
-    public partial class SettingsForm : MaterialForm
+    public partial class SettingsForm : Form
     {
         public SettingsForm()
         {

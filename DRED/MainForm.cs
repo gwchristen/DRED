@@ -624,8 +624,13 @@ namespace DRED
             dl.ValCID.Text      = S(row["CID"]);
             dl.ValMENumber.Text = S(row["MENumber"]);
             dl.ValPurCode.Text  = S(row["PurCode"]);
-            dl.ValEst.Text      = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]) ? "✓" : "—";
-            dl.ValTextFile.Text = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]) ? "✓" : "—";
+            bool estVal = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]);
+            dl.ValEst.Text = estVal ? "✔ Yes" : "✘ No";
+            dl.ValEst.ForeColor = estVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0x75, 0x75, 0x75);
+
+            bool tfVal = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]);
+            dl.ValTextFile.Text = tfVal ? "✔ Yes" : "✘ No";
+            dl.ValTextFile.ForeColor = tfVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0x75, 0x75, 0x75);
 
             dl.ValComments.Text = S(row["Comments"]);
 
