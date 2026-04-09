@@ -43,7 +43,8 @@ namespace DRED
             txtCID.Text      = r.CID ?? "";
             txtMENumber.Text = r.MENumber ?? "";
             txtPurCode.Text  = r.PurCode ?? "";
-            txtEst.Text      = r.Est ?? "";
+            chkEst.Checked       = r.Est;
+            chkTextFile.Checked  = r.TextFile;
             txtComments.Text = r.Comments ?? "";
 
             // PO Date: if value exists, show it; else leave blank
@@ -118,7 +119,8 @@ namespace DRED
                 CID      = NullIfEmpty(txtCID.Text),
                 MENumber = NullIfEmpty(txtMENumber.Text),
                 PurCode  = NullIfEmpty(txtPurCode.Text),
-                Est      = NullIfEmpty(txtEst.Text),
+                Est      = chkEst.Checked,
+                TextFile = chkTextFile.Checked,
                 Comments = NullIfEmpty(txtComments.Text),
             };
 

@@ -57,7 +57,9 @@ namespace DRED
             this.lblPurCode        = new System.Windows.Forms.Label();
             this.txtPurCode        = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblEst            = new System.Windows.Forms.Label();
-            this.txtEst            = new MaterialSkin.Controls.MaterialTextBox2();
+            this.chkEst            = new MaterialSkin.Controls.MaterialCheckbox();
+            this.lblTextFile       = new System.Windows.Forms.Label();
+            this.chkTextFile       = new MaterialSkin.Controls.MaterialCheckbox();
 
             this.lblComments       = new System.Windows.Forms.Label();
             this.txtComments       = new System.Windows.Forms.RichTextBox();
@@ -189,18 +191,29 @@ namespace DRED
             pnlPurchaseInfo = MakeCard(cardBack, accentBorder, lblPurchaseHeader, tblPurchase);
 
             // ── Card: Identifiers ────────────────────────────────────────
-            var tblIdent = MakeCardTable(2);
+            var tblIdent = MakeCardTable(3);
             var lblIdentHeader = MakeCardHeader("IDENTIFIERS", headerFore);
             // Row 0: CID | ME Number
             AddLabelToCard(tblIdent, lblCID, "CID:", labelFore, 0, 0);
             ConfigureMaterialText(txtCID, 14); tblIdent.Controls.Add(txtCID, 1, 0);
             AddLabelToCard(tblIdent, lblMENumber, "M.E. #:", labelFore, 0, 2);
             ConfigureMaterialText(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
-            // Row 1: Pur Code | Est
+            // Row 1: Pur Code | Established (checkbox)
             AddLabelToCard(tblIdent, lblPurCode, "Pur. Code:", labelFore, 1, 0);
             ConfigureMaterialText(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
-            AddLabelToCard(tblIdent, lblEst, "Est.:", labelFore, 1, 2);
-            ConfigureMaterialText(txtEst, 17); tblIdent.Controls.Add(txtEst, 3, 1);
+            AddLabelToCard(tblIdent, lblEst, "Established:", labelFore, 1, 2);
+            this.chkEst.Text = "";
+            this.chkEst.AutoSize = true;
+            this.chkEst.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chkEst.TabIndex = 17;
+            tblIdent.Controls.Add(this.chkEst, 3, 1);
+            // Row 2: Text File (checkbox)
+            AddLabelToCard(tblIdent, lblTextFile, "Text File:", labelFore, 2, 0);
+            this.chkTextFile.Text = "";
+            this.chkTextFile.AutoSize = true;
+            this.chkTextFile.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chkTextFile.TabIndex = 18;
+            tblIdent.Controls.Add(this.chkTextFile, 1, 2);
 
             pnlIdentifiers = MakeCard(cardBack, accentBorder, lblIdentHeader, tblIdent);
 
@@ -212,7 +225,7 @@ namespace DRED
 
             this.txtComments.Multiline = true;
             this.txtComments.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
-            this.txtComments.TabIndex = 18;
+            this.txtComments.TabIndex = 19;
             this.txtComments.Dock = System.Windows.Forms.DockStyle.Fill;
             this.txtComments.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
             this.txtComments.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
@@ -467,7 +480,9 @@ namespace DRED
         private System.Windows.Forms.Label lblPurCode = null!;
         private MaterialSkin.Controls.MaterialTextBox2 txtPurCode = null!;
         private System.Windows.Forms.Label lblEst = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtEst = null!;
+        private MaterialSkin.Controls.MaterialCheckbox chkEst = null!;
+        private System.Windows.Forms.Label lblTextFile = null!;
+        private MaterialSkin.Controls.MaterialCheckbox chkTextFile = null!;
         private System.Windows.Forms.Label lblComments = null!;
         private System.Windows.Forms.RichTextBox txtComments = null!;
         private System.Windows.Forms.Label lblAuditInfo = null!;

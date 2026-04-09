@@ -22,7 +22,8 @@ namespace DRED
         private MaterialTextBox2 txtCID = null!;
         private MaterialTextBox2 txtMENumber = null!;
         private MaterialTextBox2 txtPurCode = null!;
-        private MaterialTextBox2 txtEst = null!;
+        private MaterialCheckbox chkEstFilter = null!;
+        private MaterialCheckbox chkTextFileFilter = null!;
         private RichTextBox txtComments = null!;
         private DateTimePicker dtpPODateFrom = null!;
         private DateTimePicker dtpPODateTo = null!;
@@ -78,7 +79,16 @@ namespace DRED
             AddSearchRow(tlp, row++, "Beg Ser:", out txtBegSer, "End Ser:", out txtEndSer);
             AddSearchRow(tlp, row++, "PO Number:", out txtPONumber, "Vintage:", out txtVintage);
             AddSearchRow(tlp, row++, "CID:", out txtCID, "M.E. #:", out txtMENumber);
-            AddSearchRow(tlp, row++, "Pur. Code:", out txtPurCode, "Est.:", out txtEst);
+            AddSearchRow(tlp, row++, "Pur. Code:", out txtPurCode, "", out _);
+
+            // Est and TextFile checkboxes (full-width rows)
+            chkEstFilter = new MaterialCheckbox { Text = "Established", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 0, 4) };
+            tlp.Controls.Add(chkEstFilter, 0, row);
+            tlp.SetColumnSpan(chkEstFilter, 2);
+            chkTextFileFilter = new MaterialCheckbox { Text = "Text File", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 0, 4) };
+            tlp.Controls.Add(chkTextFileFilter, 2, row);
+            tlp.SetColumnSpan(chkTextFileFilter, 2);
+            row++;
 
             // Comments spans full width
             var lblComments = MakeLabel("Comments:");
@@ -202,7 +212,8 @@ namespace DRED
                 CID      = NullIfEmpty(txtCID.Text),
                 MENumber = NullIfEmpty(txtMENumber.Text),
                 PurCode  = NullIfEmpty(txtPurCode.Text),
-                Est      = NullIfEmpty(txtEst.Text),
+                Est      = chkEstFilter.Checked ? (bool?)true : null,
+                TextFile = chkTextFileFilter.Checked ? (bool?)true : null,
                 Comments = NullIfEmpty(txtComments.Text),
                 PODateFrom   = chkPODateFrom.Checked ? dtpPODateFrom.Value.Date : (DateTime?)null,
                 PODateTo     = chkPODateTo.Checked ? dtpPODateTo.Value.Date : (DateTime?)null,
@@ -220,9 +231,11 @@ namespace DRED
         private void BtnClear_Click(object? sender, EventArgs e)
         {
             foreach (var txt in new[] { txtOpCo2, txtStatus, txtMFR, txtDevCode, txtBegSer, txtEndSer,
-                                        txtPONumber, txtVintage, txtCID, txtMENumber, txtPurCode, txtEst })
+                                        txtPONumber, txtVintage, txtCID, txtMENumber, txtPurCode })
                 txt.Text = "";
             txtComments.Text = "";
+            chkEstFilter.Checked = false;
+            chkTextFileFilter.Checked = false;
             chkPODateFrom.Checked = chkPODateTo.Checked = false;
             chkRecvDateFrom.Checked = chkRecvDateTo.Checked = false;
             chkCostRange.Checked = false;
@@ -246,7 +259,8 @@ namespace DRED
         public string? CID { get; set; }
         public string? MENumber { get; set; }
         public string? PurCode { get; set; }
-        public string? Est { get; set; }
+        public bool? Est { get; set; }
+        public bool? TextFile { get; set; }
         public string? Comments { get; set; }
         public DateTime? PODateFrom { get; set; }
         public DateTime? PODateTo { get; set; }

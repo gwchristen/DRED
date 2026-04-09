@@ -51,7 +51,8 @@ namespace DRED
             public System.Windows.Forms.Label ValPODate  = null!, ValPONumber = null!,
                                               ValVintage  = null!, ValRecvDate = null!, ValUnitCost = null!;
             public System.Windows.Forms.Label ValCID     = null!, ValMENumber = null!,
-                                              ValPurCode  = null!, ValEst      = null!;
+                                              ValPurCode  = null!, ValEst      = null!,
+                                              ValTextFile = null!;
             public System.Windows.Forms.Label ValComments = null!;
             public System.Windows.Forms.Label LblAudit   = null!;
             public System.Windows.Forms.Label EmptyStateLabel = null!;
@@ -72,7 +73,7 @@ namespace DRED
 
             cboFilterColumn.Items.AddRange(new object[] {
                 "All Columns", "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer",
-                "PONumber", "Vintage", "CID", "MENumber", "PurCode", "Est", "Comments"
+                "PONumber", "Vintage", "CID", "MENumber", "PurCode", "Comments"
             });
             cboFilterColumn.SelectedIndex = 0;
             cboFilterColumn.SelectedIndexChanged += cboFilterColumn_SelectedIndexChanged;
@@ -489,6 +490,7 @@ namespace DRED
             dl.ValMENumber = AddField(idCard, "M.E. #:");
             dl.ValPurCode  = AddField(idCard, "Pur Code:");
             dl.ValEst      = AddField(idCard, "Est.:");
+            dl.ValTextFile = AddField(idCard, "Text File:");
             outerGrid.Controls.Add(idCard, 1, 1);
 
             // ── COMMENTS & NOTES (full width, row 2) ─────────────────────
@@ -593,7 +595,8 @@ namespace DRED
             dl.ValCID.Text      = S(row["CID"]);
             dl.ValMENumber.Text = S(row["MENumber"]);
             dl.ValPurCode.Text  = S(row["PurCode"]);
-            dl.ValEst.Text      = S(row["Est"]);
+            dl.ValEst.Text      = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]) ? "✓" : "—";
+            dl.ValTextFile.Text = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]) ? "✓" : "—";
 
             dl.ValComments.Text = S(row["Comments"]);
 
@@ -981,7 +984,8 @@ namespace DRED
                 CID      = row["CID"] as string,
                 MENumber = row["MENumber"] as string,
                 PurCode  = row["PurCode"] as string,
-                Est      = row["Est"] as string,
+                Est      = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]),
+                TextFile = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]),
                 Comments = row["Comments"] as string,
                 CreatedBy    = row.Table.Columns.Contains("CreatedBy") ? row["CreatedBy"] as string : null,
                 CreatedDate  = row.Table.Columns.Contains("CreatedDate") && !(row["CreatedDate"] is DBNull)

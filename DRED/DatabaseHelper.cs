@@ -92,7 +92,8 @@ CREATE TABLE [{tableName}] (
     [CID] TEXT(255),
     [MENumber] TEXT(255),
     [PurCode] TEXT(255),
-    [Est] TEXT(255),
+    [Est] YESNO,
+    [TextFile] YESNO,
     [Comments] MEMO
 )";
                 using var cmd = new OleDbCommand(sql, conn);
@@ -108,6 +109,81 @@ CREATE TABLE [{tableName}] (
             catch { /* Column may not exist — expected */ }
 
             EnsureAuditColumns(conn, tableName);
+            MigrateEstToBoolean(conn, tableName);
+            EnsureTextFileColumn(conn, tableName);
+        }
+
+        /// <summary>
+        /// Migrates the [Est] column from TEXT(255) to YESNO for existing databases.
+        /// If it's already YESNO, this method is a no-op.
+        /// </summary>
+        private static void MigrateEstToBoolean(OleDbConnection conn, string tableName)
+        {
+            // Check the actual data type of the Est column
+            var schemaTable = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Columns,
+                new object?[] { null, null, tableName, "Est" })!;
+
+            if (schemaTable.Rows.Count == 0) return; // Column doesn't exist — CREATE TABLE handles it
+
+            int dataType = Convert.ToInt32(schemaTable.Rows[0]["DATA_TYPE"]);
+            if (dataType == 11) return; // 11 = Boolean (YESNO) — already migrated
+
+            // It's TEXT — perform migration via a temp column
+            try
+            {
+                using var a1 = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [Est_New] YESNO", conn);
+                a1.ExecuteNonQuery();
+            }
+            catch { return; } // If we can't add the temp column, abort
+
+            try
+            {
+                using var a2 = new OleDbCommand(
+                    $"UPDATE [{tableName}] SET [Est_New] = IIF([Est] IS NOT NULL AND [Est] <> '', True, False)", conn);
+                a2.ExecuteNonQuery();
+            }
+            catch { /* Best effort */ }
+
+            try
+            {
+                using var a3 = new OleDbCommand($"ALTER TABLE [{tableName}] DROP COLUMN [Est]", conn);
+                a3.ExecuteNonQuery();
+            }
+            catch { }
+
+            try
+            {
+                using var a4 = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [Est] YESNO", conn);
+                a4.ExecuteNonQuery();
+            }
+            catch { }
+
+            try
+            {
+                using var a5 = new OleDbCommand($"UPDATE [{tableName}] SET [Est] = [Est_New]", conn);
+                a5.ExecuteNonQuery();
+            }
+            catch { }
+
+            try
+            {
+                using var a6 = new OleDbCommand($"ALTER TABLE [{tableName}] DROP COLUMN [Est_New]", conn);
+                a6.ExecuteNonQuery();
+            }
+            catch { }
+        }
+
+        /// <summary>
+        /// Adds the [TextFile] YESNO column if it does not already exist.
+        /// </summary>
+        private static void EnsureTextFileColumn(OleDbConnection conn, string tableName)
+        {
+            try
+            {
+                using var cmd = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [TextFile] YESNO", conn);
+                cmd.ExecuteNonQuery();
+            }
+            catch { /* Column likely already exists */ }
         }
 
         private static void EnsureAuditColumns(OleDbConnection conn, string tableName)
@@ -168,7 +244,7 @@ CREATE TABLE [RecordLocks] (
                 else
                 {
                     var cols = new[] { "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer",
-                                       "PONumber", "Vintage", "CID", "MENumber", "PurCode", "Est", "Comments" };
+                                       "PONumber", "Vintage", "CID", "MENumber", "PurCode", "Comments" };
                     var orParts = new List<string>();
                     foreach (var col in cols)
                     {
@@ -194,7 +270,8 @@ CREATE TABLE [RecordLocks] (
                 if (adv.CID != null)      { whereParts.Add("[CID] LIKE '%' & ? & '%'");      paramValues.Add(adv.CID); }
                 if (adv.MENumber != null) { whereParts.Add("[MENumber] LIKE '%' & ? & '%'"); paramValues.Add(adv.MENumber); }
                 if (adv.PurCode != null)  { whereParts.Add("[PurCode] LIKE '%' & ? & '%'");  paramValues.Add(adv.PurCode); }
-                if (adv.Est != null)      { whereParts.Add("[Est] LIKE '%' & ? & '%'");      paramValues.Add(adv.Est); }
+                if (adv.Est.HasValue)      { whereParts.Add("[Est] = ?");      paramValues.Add(adv.Est.Value); }
+                if (adv.TextFile.HasValue) { whereParts.Add("[TextFile] = ?"); paramValues.Add(adv.TextFile.Value); }
                 if (adv.Comments != null) { whereParts.Add("[Comments] LIKE '%' & ? & '%'"); paramValues.Add(adv.Comments); }
                 if (adv.PODateFrom.HasValue)   { whereParts.Add("[PODate] >= ?");   paramValues.Add(adv.PODateFrom.Value); }
                 if (adv.PODateTo.HasValue)     { whereParts.Add("[PODate] <= ?");   paramValues.Add(adv.PODateTo.Value); }
@@ -222,6 +299,8 @@ CREATE TABLE [RecordLocks] (
                     p = new OleDbParameter { OleDbType = OleDbType.Currency, Value = dec };
                 else if (val is int iv)
                     p = new OleDbParameter { OleDbType = OleDbType.Integer, Value = iv };
+                else if (val is bool bv)
+                    p = new OleDbParameter { OleDbType = OleDbType.Boolean, Value = bv };
                 else
                     // Text filter values and LIKE pattern strings are always VarWChar
                     p = new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = val };
@@ -241,9 +320,9 @@ CREATE TABLE [RecordLocks] (
 INSERT INTO [{tableName}]
     ([OpCo2],[Status],[MFR],[DevCode],[BegSer],[EndSer],[Qty],
      [PODate],[Vintage],[PONumber],[RecvDate],[UnitCost],[CID],[MENumber],
-     [PurCode],[Est],[Comments],[CreatedBy],[CreatedDate])
+     [PurCode],[Est],[TextFile],[Comments],[CreatedBy],[CreatedDate])
 VALUES
-    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
             using var cmd = new OleDbCommand(sql, conn);
             AddParameters(cmd, data);
@@ -261,7 +340,7 @@ UPDATE [{tableName}] SET
     [BegSer]=?, [EndSer]=?, [Qty]=?,
     [PODate]=?, [Vintage]=?, [PONumber]=?,
     [RecvDate]=?, [UnitCost]=?, [CID]=?,
-    [MENumber]=?, [PurCode]=?, [Est]=?, [Comments]=?,
+    [MENumber]=?, [PurCode]=?, [Est]=?, [TextFile]=?, [Comments]=?,
     [ModifiedBy]=?, [ModifiedDate]=?
 WHERE [Id]=?";
 
@@ -299,8 +378,15 @@ WHERE [Id]=?";
             AddTextParam(cmd, data.CID);
             AddTextParam(cmd, data.MENumber);
             AddTextParam(cmd, data.PurCode);
-            AddTextParam(cmd, data.Est);
+            AddBoolParam(cmd, data.Est);
+            AddBoolParam(cmd, data.TextFile);
             AddMemoParam(cmd, data.Comments);
+        }
+
+        private static void AddBoolParam(OleDbCommand cmd, bool value)
+        {
+            var p = new OleDbParameter { OleDbType = OleDbType.Boolean, Value = value };
+            cmd.Parameters.Add(p);
         }
 
         private static void AddTextParam(OleDbCommand cmd, string? value)
@@ -451,7 +537,8 @@ WHERE [Id]=?";
         public string? CID { get; set; }
         public string? MENumber { get; set; }
         public string? PurCode { get; set; }
-        public string? Est { get; set; }
+        public bool Est { get; set; }
+        public bool TextFile { get; set; }
         public string? Comments { get; set; }
         public string? CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }
