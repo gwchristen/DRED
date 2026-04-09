@@ -714,8 +714,6 @@ namespace DRED
             {
                 _dialogOpen = false;
                 ReapplyDetailPanelColors();
-                foreach (var panel in _detailPanels)
-                    panel?.PerformLayout();
             }
         }
 
@@ -759,8 +757,6 @@ namespace DRED
                 _dialogOpen = false;
                 DatabaseHelper.UnlockRecord(CurrentTable, id);
                 ReapplyDetailPanelColors();
-                foreach (var panel in _detailPanels)
-                    panel?.PerformLayout();
             }
         }
 
@@ -802,8 +798,6 @@ namespace DRED
             finally
             {
                 ReapplyDetailPanelColors();
-                foreach (var panel in _detailPanels)
-                    panel?.PerformLayout();
             }
         }
 
@@ -823,8 +817,6 @@ namespace DRED
             {
                 _dialogOpen = false;
                 ReapplyDetailPanelColors();
-                foreach (var panel in _detailPanels)
-                    panel?.PerformLayout();
             }
         }
 

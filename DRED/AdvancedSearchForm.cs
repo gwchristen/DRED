@@ -2,12 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using MaterialSkin;
 using MaterialSkin.Controls;
 
 namespace DRED
 {
-    public class AdvancedSearchForm : MaterialForm
+    public class AdvancedSearchForm : Form
     {
         public AdvancedSearchCriteria? Criteria { get; private set; }
 
@@ -46,8 +45,6 @@ namespace DRED
         public AdvancedSearchForm()
         {
             InitializeAdvancedForm();
-            MaterialSkinManager.Instance.AddFormToManage(this);
-            this.FormClosed += (s, e) => MaterialSkinManager.Instance.RemoveFormToManage(this);
         }
 
         private void InitializeAdvancedForm()
@@ -57,6 +54,9 @@ namespace DRED
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.StartPosition = FormStartPosition.CenterParent;
             this.MinimumSize = new Size(600, 614);
+
+            this.BackColor = Color.FromArgb(45, 45, 48);
+            this.ForeColor = Color.FromArgb(241, 241, 241);
 
             var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(45, 45, 48) };
             var tlp = new TableLayoutPanel
