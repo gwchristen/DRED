@@ -1,11 +1,10 @@
 using System;
 using System.Windows.Forms;
-using MaterialSkin;
 using MaterialSkin.Controls;
 
 namespace DRED
 {
-    public partial class RecordForm : MaterialForm
+    public partial class RecordForm : Form
     {
         public RecordData? Result { get; private set; }
 
@@ -16,8 +15,6 @@ namespace DRED
         public RecordForm(RecordData? existing = null)
         {
             InitializeComponent();
-            MaterialSkinManager.Instance.AddFormToManage(this);
-            this.FormClosed += (s, e) => MaterialSkinManager.Instance.RemoveFormToManage(this);
             _isEdit = existing != null;
             this.Text = _isEdit ? "Edit Record" : "Add Record";
             lblAuditInfo.Visible = false;

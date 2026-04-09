@@ -301,6 +301,8 @@ namespace DRED
             this.MinimumSize = new System.Drawing.Size(700, 850);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Record";
+            this.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            this.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
 
             ((System.ComponentModel.ISupportInitialize)(this.nudQty)).EndInit();
             this.pnlButtons.ResumeLayout(false);
