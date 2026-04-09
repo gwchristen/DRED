@@ -94,6 +94,7 @@ namespace DRED
                     PurCode  = GetText(row, colMap, "Pur. Code"),
                     Est      = GetBool(row, colMap, "Est."),
                     Comments = GetText(row, colMap, "Comments"),
+                    OOSSerials = GetText(row, colMap, "OOSSerials"),
                 };
 
                 DatabaseHelper.InsertRecord(tableName, data);

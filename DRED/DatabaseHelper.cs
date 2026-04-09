@@ -94,7 +94,8 @@ CREATE TABLE [{tableName}] (
     [PurCode] TEXT(255),
     [Est] YESNO,
     [TextFile] YESNO,
-    [Comments] MEMO
+    [Comments] MEMO,
+    [OOSSerials] MEMO
 )";
                 using var cmd = new OleDbCommand(sql, conn);
                 cmd.ExecuteNonQuery();
@@ -111,6 +112,7 @@ CREATE TABLE [{tableName}] (
             EnsureAuditColumns(conn, tableName);
             MigrateEstToBoolean(conn, tableName);
             EnsureTextFileColumn(conn, tableName);
+            EnsureOOSSerialsColumn(conn, tableName);
         }
 
         /// <summary>
@@ -183,6 +185,19 @@ CREATE TABLE [{tableName}] (
             try
             {
                 using var cmd = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [TextFile] YESNO", conn);
+                cmd.ExecuteNonQuery();
+            }
+            catch { /* Column likely already exists */ }
+        }
+
+        /// <summary>
+        /// Adds the [OOSSerials] MEMO column if it does not already exist.
+        /// </summary>
+        private static void EnsureOOSSerialsColumn(OleDbConnection conn, string tableName)
+        {
+            try
+            {
+                using var cmd = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [OOSSerials] MEMO", conn);
                 cmd.ExecuteNonQuery();
             }
             catch { /* Column likely already exists */ }
@@ -322,9 +337,9 @@ CREATE TABLE [RecordLocks] (
 INSERT INTO [{tableName}]
     ([OpCo2],[Status],[MFR],[DevCode],[BegSer],[EndSer],[Qty],
      [PODate],[Vintage],[PONumber],[RecvDate],[UnitCost],[CID],[MENumber],
-     [PurCode],[Est],[TextFile],[Comments],[CreatedBy],[CreatedDate])
+     [PurCode],[Est],[TextFile],[Comments],[OOSSerials],[CreatedBy],[CreatedDate])
 VALUES
-    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
             using var cmd = new OleDbCommand(sql, conn);
             AddParameters(cmd, data);
@@ -342,7 +357,7 @@ UPDATE [{tableName}] SET
     [BegSer]=?, [EndSer]=?, [Qty]=?,
     [PODate]=?, [Vintage]=?, [PONumber]=?,
     [RecvDate]=?, [UnitCost]=?, [CID]=?,
-    [MENumber]=?, [PurCode]=?, [Est]=?, [TextFile]=?, [Comments]=?,
+    [MENumber]=?, [PurCode]=?, [Est]=?, [TextFile]=?, [Comments]=?, [OOSSerials]=?,
     [ModifiedBy]=?, [ModifiedDate]=?
 WHERE [Id]=?";
 
@@ -383,6 +398,7 @@ WHERE [Id]=?";
             AddBoolParam(cmd, data.Est);
             AddBoolParam(cmd, data.TextFile);
             AddMemoParam(cmd, data.Comments);
+            AddMemoParam(cmd, data.OOSSerials);
         }
 
         private static void AddBoolParam(OleDbCommand cmd, bool value)
@@ -542,6 +558,7 @@ WHERE [Id]=?";
         public bool Est { get; set; }
         public bool TextFile { get; set; }
         public string? Comments { get; set; }
+        public string? OOSSerials { get; set; }
         public string? CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }
         public string? ModifiedBy { get; set; }

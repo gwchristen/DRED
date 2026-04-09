@@ -37,6 +37,8 @@ namespace DRED
             this.lblQty            = new System.Windows.Forms.Label();
             this.nudQty            = new System.Windows.Forms.NumericUpDown();
             this.chkAutoQty        = new MaterialSkin.Controls.MaterialCheckbox();
+            this.lblOOSSerials     = new System.Windows.Forms.Label();
+            this.txtOOSSerials     = new System.Windows.Forms.RichTextBox();
 
             this.lblPODate         = new System.Windows.Forms.Label();
             this.txtPODate         = new MaterialSkin.Controls.MaterialTextBox2();
@@ -144,6 +146,21 @@ namespace DRED
             tblSerial.Controls.Add(qtyPanel, 1, 1);
             // Span qty panel across remaining 3 columns
             tblSerial.SetColumnSpan(qtyPanel, 3);
+            // Row 2: OOS Serials (multi-line, full width)
+            tblSerial.RowCount = 3;
+            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 90F));
+            AddLabelToCard(tblSerial, lblOOSSerials, "OOS Serials:", labelFore, 2, 0);
+            this.txtOOSSerials.Multiline = true;
+            this.txtOOSSerials.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
+            this.txtOOSSerials.TabIndex = 22;
+            this.txtOOSSerials.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtOOSSerials.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.txtOOSSerials.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
+            this.txtOOSSerials.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.txtOOSSerials.Margin = new System.Windows.Forms.Padding(0, 4, 4, 4);
+            this.txtOOSSerials.TextChanged += new System.EventHandler(this.OOSSerials_TextChanged);
+            tblSerial.Controls.Add(this.txtOOSSerials, 1, 2);
+            tblSerial.SetColumnSpan(this.txtOOSSerials, 3);
 
             pnlSerialRange = MakeCard(cardBack, accentBorder, lblSerialHeader, tblSerial);
 
@@ -464,6 +481,8 @@ namespace DRED
         private System.Windows.Forms.Label lblQty = null!;
         private System.Windows.Forms.NumericUpDown nudQty = null!;
         private MaterialSkin.Controls.MaterialCheckbox chkAutoQty = null!;
+        private System.Windows.Forms.Label lblOOSSerials = null!;
+        private System.Windows.Forms.RichTextBox txtOOSSerials = null!;
         private System.Windows.Forms.Label lblPODate = null!;
         private MaterialSkin.Controls.MaterialTextBox2 txtPODate = null!;
         private System.Windows.Forms.Label lblVintage = null!;
