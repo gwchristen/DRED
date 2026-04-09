@@ -360,6 +360,12 @@ namespace DRED
                 foreach (var lbl in dl.ValueLabels)
                     lbl.ForeColor = valueColor;
 
+                // Re-apply boolean-specific colors that the bulk reset just overwrote
+                dl.ValEst.ForeColor = dl.ValEst.Text.StartsWith("✔")
+                    ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0xEF, 0x53, 0x50);
+                dl.ValTextFile.ForeColor = dl.ValTextFile.Text.StartsWith("✔")
+                    ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0xEF, 0x53, 0x50);
+
                 // Audit label
                 dl.LblAudit.ForeColor = Color.FromArgb(0x88, 0x88, 0x88);
 
@@ -626,11 +632,11 @@ namespace DRED
             dl.ValPurCode.Text  = S(row["PurCode"]);
             bool estVal = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]);
             dl.ValEst.Text = estVal ? "✔ Yes" : "✘ No";
-            dl.ValEst.ForeColor = estVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0x75, 0x75, 0x75);
+            dl.ValEst.ForeColor = estVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0xEF, 0x53, 0x50);
 
             bool tfVal = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]);
             dl.ValTextFile.Text = tfVal ? "✔ Yes" : "✘ No";
-            dl.ValTextFile.ForeColor = tfVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0x75, 0x75, 0x75);
+            dl.ValTextFile.ForeColor = tfVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0xEF, 0x53, 0x50);
 
             dl.ValComments.Text = S(row["Comments"]);
 
