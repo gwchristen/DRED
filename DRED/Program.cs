@@ -27,7 +27,6 @@ namespace DRED
             if (string.IsNullOrWhiteSpace(AppSettings.DatabasePath))
             {
                 using var settingsForm = new SettingsForm();
-                materialSkinManager.AddFormToManage(settingsForm);
                 if (settingsForm.ShowDialog() != DialogResult.OK)
                 {
                     MessageBox.Show(

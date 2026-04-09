@@ -88,6 +88,8 @@ namespace DRED
             // SettingsForm
             this.AcceptButton = this.btnOK;
             this.CancelButton = this.btnCancel;
+            this.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
+            this.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
             this.ClientSize = new System.Drawing.Size(584, 316);
             this.Controls.Add(this.lblInfo);
             this.Controls.Add(this.lblDatabasePath);
