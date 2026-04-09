@@ -21,6 +21,9 @@ namespace DRED
             Color.FromArgb(0xAB, 0x47, 0xBC), // Purple - I&M Transformers
         };
 
+        private static readonly Color BooleanTrueColor  = Color.FromArgb(0x66, 0xBB, 0x6A); // Material Green 400
+        private static readonly Color BooleanFalseColor = Color.FromArgb(0xEF, 0x53, 0x50); // Material Red 400
+
         // Populated by Designer's SetupTabWithSplit; arrays allocated here as field initializers
         private System.Windows.Forms.SplitContainer[] _splitContainers = new System.Windows.Forms.SplitContainer[4];
         private System.Windows.Forms.ListBox[] _listBoxes   = new System.Windows.Forms.ListBox[4];
@@ -360,6 +363,12 @@ namespace DRED
                 foreach (var lbl in dl.ValueLabels)
                     lbl.ForeColor = valueColor;
 
+                // Re-apply boolean-specific colors that the bulk reset just overwrote
+                dl.ValEst.ForeColor = dl.ValEst.Text.StartsWith("✔")
+                    ? BooleanTrueColor : BooleanFalseColor;
+                dl.ValTextFile.ForeColor = dl.ValTextFile.Text.StartsWith("✔")
+                    ? BooleanTrueColor : BooleanFalseColor;
+
                 // Audit label
                 dl.LblAudit.ForeColor = Color.FromArgb(0x88, 0x88, 0x88);
 
@@ -626,11 +635,11 @@ namespace DRED
             dl.ValPurCode.Text  = S(row["PurCode"]);
             bool estVal = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]);
             dl.ValEst.Text = estVal ? "✔ Yes" : "✘ No";
-            dl.ValEst.ForeColor = estVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0x75, 0x75, 0x75);
+            dl.ValEst.ForeColor = estVal ? BooleanTrueColor : BooleanFalseColor;
 
             bool tfVal = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]);
             dl.ValTextFile.Text = tfVal ? "✔ Yes" : "✘ No";
-            dl.ValTextFile.ForeColor = tfVal ? Color.FromArgb(0x66, 0xBB, 0x6A) : Color.FromArgb(0x75, 0x75, 0x75);
+            dl.ValTextFile.ForeColor = tfVal ? BooleanTrueColor : BooleanFalseColor;
 
             dl.ValComments.Text = S(row["Comments"]);
 
