@@ -17,6 +17,7 @@ namespace DRED
         {
             InitializeComponent();
             MaterialSkinManager.Instance.AddFormToManage(this);
+            this.FormClosed += (s, e) => MaterialSkinManager.Instance.RemoveFormToManage(this);
             _isEdit = existing != null;
             this.Text = _isEdit ? "Edit Record" : "Add Record";
             lblAuditInfo.Visible = false;

@@ -47,6 +47,7 @@ namespace DRED
         {
             InitializeAdvancedForm();
             MaterialSkinManager.Instance.AddFormToManage(this);
+            this.FormClosed += (s, e) => MaterialSkinManager.Instance.RemoveFormToManage(this);
         }
 
         private void InitializeAdvancedForm()
