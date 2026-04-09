@@ -57,6 +57,10 @@ namespace DRED
             public System.Windows.Forms.Label EmptyStateLabel = null!;
             public System.Windows.Forms.Panel ContentPanel    = null!;
             public MaterialSkin.Controls.MaterialButton BtnDetailEdit = null!, BtnDetailDelete = null!;
+            // Section header labels (re-colored after MaterialSkinManager theme resets)
+            public System.Windows.Forms.Label HdrDeviceInfo   = null!, HdrSerialRange  = null!,
+                                              HdrPurchaseInfo = null!, HdrIdentifiers  = null!,
+                                              HdrComments     = null!;
         }
 
         // ── Constructor ──────────────────────────────────────────────────
@@ -325,6 +329,21 @@ namespace DRED
                 BuildDetailForTab(i, _detailPanels[i], TabAccentColors[i]);
         }
 
+        private void ReapplyDetailAccentColors()
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                var dl = _detailLabels[i];
+                if (dl == null) continue;
+                var accent = TabAccentColors[i];
+                dl.HdrDeviceInfo.ForeColor   = accent;
+                dl.HdrSerialRange.ForeColor  = accent;
+                dl.HdrPurchaseInfo.ForeColor = accent;
+                dl.HdrIdentifiers.ForeColor  = accent;
+                dl.HdrComments.ForeColor     = accent;
+            }
+        }
+
         private void BuildDetailForTab(int tabIndex, System.Windows.Forms.Panel scrollPanel, Color accentColor)
         {
             var dl = new DetailLabels();
@@ -375,7 +394,7 @@ namespace DRED
             contentPanel.Controls.Add(outerGrid);
 
             // ── Helper: create a section card ────────────────────────────
-            System.Windows.Forms.TableLayoutPanel MakeCard(string title)
+            (System.Windows.Forms.TableLayoutPanel card, System.Windows.Forms.Label hdr) MakeCard(string title)
             {
                 var card = new System.Windows.Forms.TableLayoutPanel
                 {
@@ -405,7 +424,7 @@ namespace DRED
                 card.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26));
                 card.Controls.Add(hdr, 0, 0);
                 card.SetColumnSpan(hdr, 2);
-                return card;
+                return (card, hdr);
             }
 
             // ── Helper: add a field row to a card ────────────────────────
@@ -437,7 +456,8 @@ namespace DRED
             }
 
             // ── DEVICE INFORMATION (col 0, row 0) ────────────────────────
-            var devCard = MakeCard("DEVICE INFORMATION");
+            var (devCard, devHdr) = MakeCard("DEVICE INFORMATION");
+            dl.HdrDeviceInfo = devHdr;
             dl.ValOpCo2   = AddField(devCard, "OpCo2:");
             dl.ValStatus  = AddField(devCard, "Status:");
             dl.ValMFR     = AddField(devCard, "MFR:");
@@ -445,14 +465,16 @@ namespace DRED
             outerGrid.Controls.Add(devCard, 0, 0);
 
             // ── SERIAL RANGE & QUANTITY (col 1, row 0) ───────────────────
-            var serCard = MakeCard("SERIAL RANGE & QUANTITY");
+            var (serCard, serHdr) = MakeCard("SERIAL RANGE & QUANTITY");
+            dl.HdrSerialRange = serHdr;
             dl.ValBegSer = AddField(serCard, "Beg Ser:");
             dl.ValEndSer = AddField(serCard, "End Ser:");
             dl.ValQty    = AddField(serCard, "Qty:");
             outerGrid.Controls.Add(serCard, 1, 0);
 
             // ── PURCHASE INFORMATION (col 0, row 1) ──────────────────────
-            var purCard = MakeCard("PURCHASE INFORMATION");
+            var (purCard, purHdr) = MakeCard("PURCHASE INFORMATION");
+            dl.HdrPurchaseInfo = purHdr;
             dl.ValPODate   = AddField(purCard, "PO Date:");
             dl.ValPONumber = AddField(purCard, "PO Number:");
             dl.ValVintage  = AddField(purCard, "Vintage:");
@@ -461,7 +483,8 @@ namespace DRED
             outerGrid.Controls.Add(purCard, 0, 1);
 
             // ── IDENTIFIERS (col 1, row 1) ───────────────────────────────
-            var idCard = MakeCard("IDENTIFIERS");
+            var (idCard, idHdr) = MakeCard("IDENTIFIERS");
+            dl.HdrIdentifiers = idHdr;
             dl.ValCID      = AddField(idCard, "CID:");
             dl.ValMENumber = AddField(idCard, "M.E. #:");
             dl.ValPurCode  = AddField(idCard, "Pur Code:");
@@ -469,7 +492,8 @@ namespace DRED
             outerGrid.Controls.Add(idCard, 1, 1);
 
             // ── COMMENTS & NOTES (full width, row 2) ─────────────────────
-            var commCard = MakeCard("COMMENTS & NOTES");
+            var (commCard, commHdr) = MakeCard("COMMENTS & NOTES");
+            dl.HdrComments = commHdr;
             int commRow = commCard.RowCount++;
             commCard.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54));
             var commLabel = new System.Windows.Forms.Label
@@ -657,6 +681,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
+                ReapplyDetailAccentColors();
             }
         }
 
@@ -699,6 +724,7 @@ namespace DRED
             {
                 _dialogOpen = false;
                 DatabaseHelper.UnlockRecord(CurrentTable, id);
+                ReapplyDetailAccentColors();
             }
         }
 
@@ -728,11 +754,18 @@ namespace DRED
 
         private void btnSettings_Click(object sender, EventArgs e)
         {
-            using var form = new SettingsForm();
-            if (form.ShowDialog(this) == DialogResult.OK)
+            try
             {
-                UpdateRefreshTimer();
-                RefreshCurrentTab();
+                using var form = new SettingsForm();
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    UpdateRefreshTimer();
+                    RefreshCurrentTab();
+                }
+            }
+            finally
+            {
+                ReapplyDetailAccentColors();
             }
         }
 
@@ -751,6 +784,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
+                ReapplyDetailAccentColors();
             }
         }
 
