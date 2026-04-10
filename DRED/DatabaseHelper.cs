@@ -303,7 +303,7 @@ CREATE TABLE [RecordLocks] (
             string sql = $"SELECT * FROM [{tableName}]";
             if (whereParts.Count > 0)
                 sql += " WHERE " + string.Join(" AND ", whereParts);
-            sql += " ORDER BY [Id]";
+            sql += " ORDER BY [Id] DESC";
 
             using var cmd = new OleDbCommand(sql, conn);
             for (int i = 0; i < paramValues.Count; i++)

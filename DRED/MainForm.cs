@@ -161,16 +161,48 @@ namespace DRED
             AdvancedSearchCriteria? advancedCriteria = null)
         {
             if (tabIndex < 0 || tabIndex >= tabControl.TabPages.Count) return;
+
+            // Preserve current selection identity and scroll position before refresh
+            var lb = _listBoxes[tabIndex];
+            object? prevId = null;
+            int prevTopIndex = lb.TopIndex;
+            if (lb.SelectedItem is ListItem prevItem && _dataTables[tabIndex] != null)
+            {
+                var prevRow = _dataTables[tabIndex]!.Rows[prevItem.RowIndex];
+                prevId = prevRow["Id"];
+            }
+
             string table = TabTableNames[tabIndex];
             DataTable dt = DatabaseHelper.GetTableData(table, filter, filterColumn, advancedCriteria);
             _dataTables[tabIndex] = dt;
-            PopulateListBox(_listBoxes[tabIndex], dt);
+            PopulateListBox(lb, dt);
             UpdateStatusBar(dt.Rows.Count);
 
-            if (_listBoxes[tabIndex].Items.Count > 0)
-                _listBoxes[tabIndex].SelectedIndex = 0;
+            if (lb.Items.Count > 0)
+            {
+                // Try to re-select the same record by Id; fall back to index 0
+                int restoredIndex = 0;
+                if (prevId != null)
+                {
+                    for (int i = 0; i < lb.Items.Count; i++)
+                    {
+                        if (lb.Items[i] is ListItem li && li.RowIndex < dt.Rows.Count
+                            && dt.Rows[li.RowIndex]["Id"].Equals(prevId))
+                        {
+                            restoredIndex = i;
+                            break;
+                        }
+                    }
+                }
+                lb.SelectedIndex = restoredIndex;
+                // Restore scroll position (WinForms clamps TopIndex; only restore if Id was found)
+                if (prevId != null)
+                    lb.TopIndex = prevTopIndex;
+            }
             else
+            {
                 ShowEmptyDetailState(tabIndex);
+            }
         }
 
         // ── Status bar ───────────────────────────────────────────────────
