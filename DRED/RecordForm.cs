@@ -215,6 +215,18 @@ namespace DRED
                 TryAutoCalcQty();
         }
 
+        private void txtOOSSerials_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if (e.Control)
+                    txtOOSSerials.SelectedText = "\n";
+                // Always suppress plain Enter (prevent AcceptButton) and consume Ctrl+Enter after inserting newline
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+        }
+
         private static string? NullIfEmpty(string? s) =>
             string.IsNullOrWhiteSpace(s) ? null : s.Trim();
     }

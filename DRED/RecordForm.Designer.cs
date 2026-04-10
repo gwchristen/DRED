@@ -39,6 +39,7 @@ namespace DRED
             this.chkAutoQty        = new MaterialSkin.Controls.MaterialCheckbox();
             this.lblOOSSerials     = new System.Windows.Forms.Label();
             this.txtOOSSerials     = new System.Windows.Forms.RichTextBox();
+            this.lblOOSHint        = new System.Windows.Forms.Label();
 
             this.lblPODate         = new System.Windows.Forms.Label();
             this.txtPODate         = new MaterialSkin.Controls.MaterialTextBox2();
@@ -147,7 +148,7 @@ namespace DRED
             // Span qty panel across remaining 3 columns
             tblSerial.SetColumnSpan(qtyPanel, 3);
             // Row 2: OOS Serials (multi-line, full width)
-            tblSerial.RowCount = 3;
+            tblSerial.RowCount = 4;
             tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 90F));
             AddLabelToCard(tblSerial, lblOOSSerials, "OOS Serials:", labelFore, 2, 0);
             this.txtOOSSerials.Multiline = true;
@@ -159,8 +160,19 @@ namespace DRED
             this.txtOOSSerials.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtOOSSerials.Margin = new System.Windows.Forms.Padding(0, 4, 4, 4);
             this.txtOOSSerials.TextChanged += new System.EventHandler(this.OOSSerials_TextChanged);
+            this.txtOOSSerials.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtOOSSerials_KeyDown);
             tblSerial.Controls.Add(this.txtOOSSerials, 1, 2);
             tblSerial.SetColumnSpan(this.txtOOSSerials, 3);
+            // Row 3: OOS Serials hint
+            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            this.lblOOSHint.Text = "One per line \u2022 Ctrl+Enter for new line";
+            this.lblOOSHint.Font = new System.Drawing.Font("Segoe UI", 7.5f);
+            this.lblOOSHint.ForeColor = System.Drawing.Color.FromArgb(0x99, 0x99, 0x99);
+            this.lblOOSHint.AutoSize = true;
+            this.lblOOSHint.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.lblOOSHint.Margin = new System.Windows.Forms.Padding(0, 2, 0, 0);
+            tblSerial.Controls.Add(this.lblOOSHint, 1, 3);
+            tblSerial.SetColumnSpan(this.lblOOSHint, 3);
 
             pnlSerialRange = MakeCard(cardBack, accentBorder, lblSerialHeader, tblSerial);
 
@@ -456,6 +468,8 @@ namespace DRED
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
             txt.Margin = new System.Windows.Forms.Padding(0, 2, 4, 2);
+            txt.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            txt.ForeColor = System.Drawing.Color.FromArgb(0xF1, 0xF1, 0xF1);
         }
 
         // ── Field declarations ────────────────────────────────────────────
@@ -483,6 +497,7 @@ namespace DRED
         private MaterialSkin.Controls.MaterialCheckbox chkAutoQty = null!;
         private System.Windows.Forms.Label lblOOSSerials = null!;
         private System.Windows.Forms.RichTextBox txtOOSSerials = null!;
+        private System.Windows.Forms.Label lblOOSHint = null!;
         private System.Windows.Forms.Label lblPODate = null!;
         private MaterialSkin.Controls.MaterialTextBox2 txtPODate = null!;
         private System.Windows.Forms.Label lblVintage = null!;
