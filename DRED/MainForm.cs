@@ -551,7 +551,7 @@ namespace DRED
             dl.ValPODate   = AddField(purCard, "PO Date:");
             dl.ValPONumber = AddField(purCard, "PO Number:");
             dl.ValVintage  = AddField(purCard, "Vintage:");
-            dl.ValRecvDate = AddField(purCard, "Recv Date:");
+            dl.ValRecvDate = AddField(purCard, "Est Date:");
             dl.ValUnitCost = AddField(purCard, "Unit Cost:");
             outerGrid.Controls.Add(purCard, 0, 1);
 

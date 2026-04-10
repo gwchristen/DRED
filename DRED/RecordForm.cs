@@ -12,6 +12,7 @@ namespace DRED
         private const string CurrencyFormat = "$#,##0.00";
         private readonly bool _isEdit;
         private bool _suppressQtyAutoCalc = false;
+        private DateTime? _originalRecvDate = null;
 
         public RecordForm(RecordData? existing = null)
         {
@@ -50,7 +51,8 @@ namespace DRED
             // PO Date: if value exists, show it; else leave blank
             txtPODate.Text = r.PODate.HasValue ? r.PODate.Value.ToString("MM/dd/yyyy") : "";
 
-            // Recv Date: checkbox only; date is always today when checked
+            // Recv Date: store the original date so editing doesn't overwrite it
+            _originalRecvDate = r.RecvDate;
             chkRecvDate.Checked = r.RecvDate.HasValue;
 
             // Audit info
@@ -114,7 +116,7 @@ namespace DRED
                 PODate   = poDate,
                 Vintage  = NullIfEmpty(txtVintage.Text),
                 PONumber = NullIfEmpty(txtPONumber.Text),
-                RecvDate = chkRecvDate.Checked ? DateTime.Today : (DateTime?)null,
+                RecvDate = chkRecvDate.Checked ? (_originalRecvDate ?? DateTime.Today) : (DateTime?)null,
                 UnitCost = unitCost,
                 CID      = NullIfEmpty(txtCID.Text),
                 MENumber = NullIfEmpty(txtMENumber.Text),
@@ -139,13 +141,17 @@ namespace DRED
         {
             if (chkRecvDate.Checked)
             {
-                lblRecvDateDisplay.Text = DateTime.Today.ToShortDateString();
+                // Show original date if editing an existing record; otherwise use today
+                DateTime displayDate = _originalRecvDate ?? DateTime.Today;
+                lblRecvDateDisplay.Text = displayDate.ToShortDateString();
                 lblRecvDateDisplay.Visible = true;
             }
             else
             {
                 lblRecvDateDisplay.Text = "";
                 lblRecvDateDisplay.Visible = false;
+                // User explicitly unchecked — clear the original date so a re-check uses today
+                _originalRecvDate = null;
             }
         }
 

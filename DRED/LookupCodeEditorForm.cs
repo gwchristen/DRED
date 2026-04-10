@@ -17,8 +17,12 @@ namespace DRED
         private TextBox    txtDevCode  = null!;
         private TextBox    txtLookup   = null!;
         private MaterialButton btnAdd     = null!;
+        private MaterialButton btnEdit    = null!;
         private MaterialButton btnDelete  = null!;
         private MaterialButton btnClose   = null!;
+
+        // When non-null, we are in edit mode: this holds the original (dev, lc) being edited
+        private (string dev, string lc)? _pendingEdit = null;
 
         public LookupCodeEditorForm()
         {
@@ -65,59 +69,70 @@ namespace DRED
             lvMappings.Columns.Add("Device Code", 180, HorizontalAlignment.Left);
             lvMappings.Columns.Add("Lookup Code", 180, HorizontalAlignment.Left);
 
-            // ── Input panel (add new mapping) ─────────────────────────────
-            var pnlInput = new Panel
+            // ── Input panel (add/edit mapping) ────────────────────────────
+            var pnlInput = new FlowLayoutPanel
             {
-                Dock      = DockStyle.Bottom,
-                Height    = 52,
-                BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
+                Dock          = DockStyle.Bottom,
+                Height        = 52,
+                BackColor     = Color.FromArgb(0x2D, 0x2D, 0x30),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents  = false,
+                Padding       = new Padding(8, 10, 8, 0),
             };
 
             var lblDev = new Label
             {
                 Text      = "Dev Code:",
-                Location  = new Point(8, 16),
-                AutoSize  = true,
+                AutoSize  = false,
+                Width     = 68,
+                Height    = 26,
+                TextAlign = ContentAlignment.MiddleLeft,
                 ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
                 Font      = new Font("Segoe UI", 9F),
+                Margin    = new Padding(0, 2, 4, 0),
             };
             txtDevCode = new TextBox
             {
-                Location    = new Point(80, 13),
-                Width       = 70,
+                Width       = 72,
+                Height      = 26,
                 MaxLength   = 5,
                 BackColor   = Color.FromArgb(0x32, 0x32, 0x32),
                 ForeColor   = Color.FromArgb(0xF1, 0xF1, 0xF1),
                 BorderStyle = BorderStyle.FixedSingle,
                 Font        = new Font("Consolas", 10F),
+                Margin      = new Padding(0, 2, 12, 0),
             };
 
             var lblLkp = new Label
             {
                 Text      = "Lookup:",
-                Location  = new Point(162, 16),
-                AutoSize  = true,
+                AutoSize  = false,
+                Width     = 54,
+                Height    = 26,
+                TextAlign = ContentAlignment.MiddleLeft,
                 ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
                 Font      = new Font("Segoe UI", 9F),
+                Margin    = new Padding(0, 2, 4, 0),
             };
             txtLookup = new TextBox
             {
-                Location    = new Point(218, 13),
-                Width       = 50,
+                Width       = 54,
+                Height      = 26,
                 MaxLength   = 2,
                 BackColor   = Color.FromArgb(0x32, 0x32, 0x32),
                 ForeColor   = Color.FromArgb(0xF1, 0xF1, 0xF1),
                 BorderStyle = BorderStyle.FixedSingle,
                 Font        = new Font("Consolas", 10F),
+                Margin      = new Padding(0, 2, 12, 0),
             };
 
             btnAdd = new MaterialButton
             {
-                Text     = "Add",
-                Location = new Point(280, 8),
-                Type     = MaterialButton.MaterialButtonType.Contained,
+                Text         = "Add",
+                Type         = MaterialButton.MaterialButtonType.Contained,
                 HighEmphasis = true,
-                AutoSize = true,
+                AutoSize     = true,
+                Margin       = new Padding(0, 0, 4, 0),
             };
             btnAdd.Click += BtnAdd_Click;
 
@@ -131,24 +146,33 @@ namespace DRED
                 BackColor = Color.FromArgb(0x25, 0x25, 0x28),
             };
 
+            btnEdit = new MaterialButton
+            {
+                Text     = "Edit Selected",
+                Location = new Point(8, 8),
+                Type     = MaterialButton.MaterialButtonType.Outlined,
+                AutoSize = true,
+            };
             btnDelete = new MaterialButton
             {
                 Text     = "Delete Selected",
-                Location = new Point(8, 8),
+                Location = new Point(140, 8),
                 Type     = MaterialButton.MaterialButtonType.Outlined,
                 AutoSize = true,
             };
             btnClose = new MaterialButton
             {
                 Text     = "Close",
-                Location = new Point(180, 8),
+                Location = new Point(290, 8),
                 Type     = MaterialButton.MaterialButtonType.Text,
                 AutoSize = true,
             };
 
+            btnEdit.Click   += BtnEdit_Click;
             btnDelete.Click += BtnDelete_Click;
             btnClose.Click  += (s, e) => this.Close();
 
+            pnlBtn.Controls.Add(btnEdit);
             pnlBtn.Controls.Add(btnDelete);
             pnlBtn.Controls.Add(btnClose);
 
@@ -195,10 +219,41 @@ namespace DRED
                 return;
             }
 
+            // If in edit mode, remove the original mapping first
+            if (_pendingEdit.HasValue)
+            {
+                LookupCodeManager.RemoveMapping(_pendingEdit.Value.dev, _pendingEdit.Value.lc);
+                _pendingEdit = null;
+                btnAdd.Text = "Add";
+            }
+
             LookupCodeManager.AddMapping(dev, lc);
             txtDevCode.Text = "";
             txtLookup.Text  = "";
             LoadMappings();
+        }
+
+        private void BtnEdit_Click(object? sender, EventArgs e)
+        {
+            if (lvMappings.SelectedItems.Count != 1)
+            {
+                MessageBox.Show("Please select exactly one row to edit.",
+                    "Edit", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var item = lvMappings.SelectedItems[0];
+            string dev = item.Text;
+            string lc  = item.SubItems[1].Text;
+
+            // Enter edit mode: populate input fields and track what we are editing.
+            // The original mapping is only removed when the user clicks "Update".
+            _pendingEdit = (dev, lc);
+            txtDevCode.Text = dev;
+            txtLookup.Text  = lc;
+            btnAdd.Text = "Update";
+
+            txtDevCode.Focus();
         }
 
         private void BtnDelete_Click(object? sender, EventArgs e)
