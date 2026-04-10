@@ -189,9 +189,9 @@ namespace DRED
         private void AddSearchRow(TableLayoutPanel tlp, int row, string lbl1Text, out MaterialTextBox2 txt1, string lbl2Text, out MaterialTextBox2 txt2)
         {
             var lbl1 = MakeLabel(lbl1Text);
-            txt1 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false };
+            txt1 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1) };
             var lbl2 = MakeLabel(lbl2Text);
-            txt2 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false };
+            txt2 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1) };
             tlp.Controls.Add(lbl1, 0, row);
             tlp.Controls.Add(txt1, 1, row);
             tlp.Controls.Add(lbl2, 2, row);
