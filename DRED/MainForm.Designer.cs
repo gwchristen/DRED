@@ -33,6 +33,8 @@ namespace DRED
             this.mnuSearch           = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuSearchFind       = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuSearchAdvanced   = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuTools            = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuToolsLookupCodes = new System.Windows.Forms.ToolStripMenuItem();
 
             // ── Slim toolbar ─────────────────────────────────────────────
             this.pnlToolbar          = new System.Windows.Forms.FlowLayoutPanel();
@@ -79,7 +81,7 @@ namespace DRED
 
             // ── mainMenu ─────────────────────────────────────────────────
             this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                this.mnuFile, this.mnuEdit, this.mnuSearch });
+                this.mnuFile, this.mnuEdit, this.mnuSearch, this.mnuTools });
             this.mainMenu.Location = new System.Drawing.Point(0, 0);
             this.mainMenu.Name = "mainMenu";
             this.mainMenu.TabIndex = 0;
@@ -138,6 +140,14 @@ namespace DRED
             this.mnuSearchAdvanced.Text = "&Advanced Search...";
             this.mnuSearchAdvanced.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.F;
             this.mnuSearchAdvanced.Click += (s, e) => btnAdvancedSearch_Click(s, e);
+
+            // Tools menu
+            this.mnuTools.Text = "&Tools";
+            this.mnuTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+                mnuToolsLookupCodes });
+
+            this.mnuToolsLookupCodes.Text = "&Lookup Code Editor...";
+            this.mnuToolsLookupCodes.Click += (s, e) => btnLookupCodeEditor_Click(s, e);
 
             // Apply dark theme to menu
             ThemeManager.ApplyDarkMenuStrip(this.mainMenu);
@@ -502,6 +512,8 @@ namespace DRED
         private System.Windows.Forms.ToolStripMenuItem mnuSearch = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuSearchFind = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuSearchAdvanced = null!;
+        private System.Windows.Forms.ToolStripMenuItem mnuTools = null!;
+        private System.Windows.Forms.ToolStripMenuItem mnuToolsLookupCodes = null!;
         private System.Windows.Forms.FlowLayoutPanel pnlToolbar = null!;
         private MaterialSkin.Controls.MaterialButton btnAdd = null!;
         private MaterialSkin.Controls.MaterialButton btnEdit = null!;

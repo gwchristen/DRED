@@ -62,7 +62,7 @@ namespace DRED
             public System.Windows.Forms.Label LblAudit   = null!;
             public System.Windows.Forms.Label EmptyStateLabel = null!;
             public System.Windows.Forms.Panel ContentPanel    = null!;
-            public MaterialSkin.Controls.MaterialButton BtnDetailEdit = null!, BtnDetailDelete = null!;
+            public MaterialSkin.Controls.MaterialButton BtnDetailEdit = null!, BtnDetailDelete = null!, BtnDetailGenerate = null!;
             // Section header labels (re-colored after MaterialSkinManager theme resets)
             public System.Windows.Forms.Label HdrDeviceInfo   = null!, HdrSerialRange  = null!,
                                               HdrPurchaseInfo = null!, HdrIdentifiers  = null!,
@@ -602,8 +602,9 @@ namespace DRED
             outerGrid.SetColumnSpan(auditLabel, 2);
 
             // ── Action buttons (full width, row 4) ───────────────────────
-            var btnDetailEdit   = CreateDetailButton("Edit",   accentColor,                      (s, ev) => btnEdit_Click(s!, ev));
-            var btnDetailDelete = CreateDetailButton("Delete", Color.FromArgb(0xEF, 0x53, 0x50), (s, ev) => btnDelete_Click(s!, ev));
+            var btnDetailEdit     = CreateDetailButton("Edit",     accentColor,                      (s, ev) => btnEdit_Click(s!, ev));
+            var btnDetailDelete   = CreateDetailButton("Delete",   Color.FromArgb(0xEF, 0x53, 0x50), (s, ev) => btnDelete_Click(s!, ev));
+            var btnDetailGenerate = CreateDetailButton("Generate", accentColor,                      (s, ev) => btnGenerate_Click(s!, ev));
             var btnPanel = new System.Windows.Forms.FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.LeftToRight,
@@ -616,10 +617,12 @@ namespace DRED
             };
             btnPanel.Controls.Add(btnDetailEdit);
             btnPanel.Controls.Add(btnDetailDelete);
+            btnPanel.Controls.Add(btnDetailGenerate);
             outerGrid.Controls.Add(btnPanel, 0, 4);
             outerGrid.SetColumnSpan(btnPanel, 2);
-            dl.BtnDetailEdit   = btnDetailEdit;
-            dl.BtnDetailDelete = btnDetailDelete;
+            dl.BtnDetailEdit     = btnDetailEdit;
+            dl.BtnDetailDelete   = btnDetailDelete;
+            dl.BtnDetailGenerate = btnDetailGenerate;
 
             _detailLabels[tabIndex] = dl;
         }
@@ -853,6 +856,98 @@ namespace DRED
             }
             finally
             {
+                ReapplyDetailPanelColors();
+            }
+        }
+
+        private void btnGenerate_Click(object sender, EventArgs e)
+        {
+            var row = GetSelectedRow();
+            if (row == null)
+            {
+                MessageBox.Show("Please select a record to generate serials for.", "Generate Serials",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            int tabIndex = tabControl.SelectedIndex;
+            bool isMeter = tabIndex == 0 || tabIndex == 1;
+
+            string devCode = row["DevCode"] as string ?? "";
+            string mfrCode = row["MFR"]     as string ?? "";
+            string begSer  = row["BegSer"]  as string ?? "";
+            string endSer  = row["EndSer"]  as string ?? "";
+            int    qty     = row["Qty"] is DBNull ? 0 : Convert.ToInt32(row["Qty"]);
+            string? oosRaw = row.Table.Columns.Contains("OOSSerials")
+                ? row["OOSSerials"] as string : null;
+
+            string lookupCode = "";
+            if (isMeter)
+            {
+                var codes = LookupCodeManager.GetLookupCodes(devCode);
+                if (codes.Count == 0)
+                {
+                    // Prompt user to enter manually
+                    using var dlgInput = new LookupCodeInputDialog(devCode);
+                    if (dlgInput.ShowDialog(this) != DialogResult.OK) return;
+                    lookupCode = dlgInput.LookupCode;
+                }
+                else if (codes.Count == 1)
+                {
+                    lookupCode = codes[0];
+                }
+                else
+                {
+                    // Multiple lookup codes — ask user to pick one
+                    using var dlgPick = new LookupCodePickerDialog(devCode, codes);
+                    if (dlgPick.ShowDialog(this) != DialogResult.OK) return;
+                    lookupCode = dlgPick.SelectedCode;
+                }
+            }
+
+            List<string> serials;
+            try
+            {
+                serials = SerialGenerator.Generate(isMeter, devCode, mfrCode, begSer, endSer, qty, oosRaw, lookupCode);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error generating serials:\n{ex.Message}", "Generate Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (serials.Count == 0)
+            {
+                MessageBox.Show("No serials could be generated for this record.", "Generate Serials",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _dialogOpen = true;
+            try
+            {
+                using var preview = new GeneratePreviewForm(serials, devCode);
+                preview.ShowDialog(this);
+            }
+            finally
+            {
+                _dialogOpen = false;
+                ReapplyDetailPanelColors();
+            }
+        }
+
+        private void btnLookupCodeEditor_Click(object sender, EventArgs e)
+        {
+            _dialogOpen = true;
+            try
+            {
+                using var form = new LookupCodeEditorForm();
+                form.ShowDialog(this);
+            }
+            finally
+            {
+                _dialogOpen = false;
                 ReapplyDetailPanelColors();
             }
         }

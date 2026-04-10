@@ -1,0 +1,231 @@
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
+using MaterialSkin.Controls;
+
+namespace DRED
+{
+    /// <summary>
+    /// Allows the user to view, add, edit, and delete device code → lookup code mappings.
+    /// Supports multiple lookup codes per device code.
+    /// </summary>
+    public class LookupCodeEditorForm : Form
+    {
+        private ListView   lvMappings = null!;
+        private TextBox    txtDevCode  = null!;
+        private TextBox    txtLookup   = null!;
+        private MaterialButton btnAdd     = null!;
+        private MaterialButton btnDelete  = null!;
+        private MaterialButton btnClose   = null!;
+
+        public LookupCodeEditorForm()
+        {
+            BuildForm();
+            LoadMappings();
+        }
+
+        private void BuildForm()
+        {
+            this.Text            = "Lookup Code Editor";
+            this.Size            = new Size(480, 540);
+            this.MinimumSize     = new Size(380, 400);
+            this.FormBorderStyle = FormBorderStyle.Sizable;
+            this.StartPosition   = FormStartPosition.CenterParent;
+            this.BackColor       = Color.FromArgb(0x1E, 0x1E, 0x1E);
+            this.ForeColor       = Color.FromArgb(0xF1, 0xF1, 0xF1);
+
+            // ── Header instruction label ─────────────────────────────────
+            var lblInfo = new Label
+            {
+                Text      = "Manage device code → lookup code mappings (one row per mapping):",
+                Dock      = DockStyle.Top,
+                Height    = 36,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding   = new Padding(8, 0, 0, 0),
+                ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
+                BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
+                Font      = new Font("Segoe UI", 9F),
+            };
+
+            // ── ListView ─────────────────────────────────────────────────
+            lvMappings = new ListView
+            {
+                Dock         = DockStyle.Fill,
+                View         = View.Details,
+                FullRowSelect = true,
+                GridLines    = true,
+                MultiSelect  = true,
+                BackColor    = Color.FromArgb(0x1A, 0x1A, 0x1A),
+                ForeColor    = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                BorderStyle  = BorderStyle.None,
+                Font         = new Font("Consolas", 10F),
+            };
+            lvMappings.Columns.Add("Device Code", 180, HorizontalAlignment.Left);
+            lvMappings.Columns.Add("Lookup Code", 180, HorizontalAlignment.Left);
+
+            // ── Input panel (add new mapping) ─────────────────────────────
+            var pnlInput = new Panel
+            {
+                Dock      = DockStyle.Bottom,
+                Height    = 52,
+                BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
+            };
+
+            var lblDev = new Label
+            {
+                Text      = "Dev Code:",
+                Location  = new Point(8, 16),
+                AutoSize  = true,
+                ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
+                Font      = new Font("Segoe UI", 9F),
+            };
+            txtDevCode = new TextBox
+            {
+                Location    = new Point(80, 13),
+                Width       = 70,
+                MaxLength   = 5,
+                BackColor   = Color.FromArgb(0x32, 0x32, 0x32),
+                ForeColor   = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                BorderStyle = BorderStyle.FixedSingle,
+                Font        = new Font("Consolas", 10F),
+            };
+
+            var lblLkp = new Label
+            {
+                Text      = "Lookup:",
+                Location  = new Point(162, 16),
+                AutoSize  = true,
+                ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
+                Font      = new Font("Segoe UI", 9F),
+            };
+            txtLookup = new TextBox
+            {
+                Location    = new Point(218, 13),
+                Width       = 50,
+                MaxLength   = 2,
+                BackColor   = Color.FromArgb(0x32, 0x32, 0x32),
+                ForeColor   = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                BorderStyle = BorderStyle.FixedSingle,
+                Font        = new Font("Consolas", 10F),
+            };
+
+            btnAdd = new MaterialButton
+            {
+                Text     = "Add",
+                Location = new Point(280, 8),
+                Type     = MaterialButton.MaterialButtonType.Contained,
+                HighEmphasis = true,
+                AutoSize = true,
+            };
+            btnAdd.Click += BtnAdd_Click;
+
+            pnlInput.Controls.AddRange(new Control[] { lblDev, txtDevCode, lblLkp, txtLookup, btnAdd });
+
+            // ── Bottom button panel ───────────────────────────────────────
+            var pnlBtn = new Panel
+            {
+                Dock      = DockStyle.Bottom,
+                Height    = 46,
+                BackColor = Color.FromArgb(0x25, 0x25, 0x28),
+            };
+
+            btnDelete = new MaterialButton
+            {
+                Text     = "Delete Selected",
+                Location = new Point(8, 8),
+                Type     = MaterialButton.MaterialButtonType.Outlined,
+                AutoSize = true,
+            };
+            btnClose = new MaterialButton
+            {
+                Text     = "Close",
+                Location = new Point(180, 8),
+                Type     = MaterialButton.MaterialButtonType.Text,
+                AutoSize = true,
+            };
+
+            btnDelete.Click += BtnDelete_Click;
+            btnClose.Click  += (s, e) => this.Close();
+
+            pnlBtn.Controls.Add(btnDelete);
+            pnlBtn.Controls.Add(btnClose);
+
+            this.Controls.Add(lvMappings);
+            this.Controls.Add(pnlInput);
+            this.Controls.Add(pnlBtn);
+            this.Controls.Add(lblInfo);
+
+            this.CancelButton = btnClose;
+        }
+
+        private void LoadMappings()
+        {
+            lvMappings.Items.Clear();
+            foreach (var (dev, lc) in LookupCodeManager.GetAll())
+            {
+                var item = new ListViewItem(dev);
+                item.SubItems.Add(lc);
+                lvMappings.Items.Add(item);
+            }
+        }
+
+        private void BtnAdd_Click(object? sender, EventArgs e)
+        {
+            string dev = txtDevCode.Text.Trim().ToUpperInvariant();
+            string lc  = txtLookup.Text.Trim().ToUpperInvariant();
+
+            if (dev.Length == 0 || lc.Length == 0)
+            {
+                MessageBox.Show("Please enter both a device code and a lookup code.",
+                    "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (dev.Length != 5)
+            {
+                MessageBox.Show("Device code must be exactly 5 characters.",
+                    "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            if (lc.Length != 2)
+            {
+                MessageBox.Show("Lookup code must be exactly 2 characters.",
+                    "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            LookupCodeManager.AddMapping(dev, lc);
+            txtDevCode.Text = "";
+            txtLookup.Text  = "";
+            LoadMappings();
+        }
+
+        private void BtnDelete_Click(object? sender, EventArgs e)
+        {
+            if (lvMappings.SelectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select one or more rows to delete.",
+                    "Delete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (MessageBox.Show(
+                    $"Delete {lvMappings.SelectedItems.Count} selected mapping(s)?",
+                    "Confirm Delete",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes)
+                return;
+
+            // Collect all (dev, lc) pairs to remove, then remove them
+            var toRemove = new List<(string dev, string lc)>();
+            foreach (ListViewItem item in lvMappings.SelectedItems)
+                toRemove.Add((item.Text, item.SubItems[1].Text));
+
+            foreach (var (dev, lc) in toRemove)
+                LookupCodeManager.RemoveMapping(dev, lc);
+
+            LoadMappings();
+        }
+    }
+}
