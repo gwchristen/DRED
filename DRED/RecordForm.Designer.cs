@@ -194,8 +194,8 @@ namespace DRED
             this.txtUnitCost.Enter += new System.EventHandler(this.txtUnitCost_Enter);
             this.txtUnitCost.Leave += new System.EventHandler(this.txtUnitCost_Leave);
             tblPurchase.Controls.Add(txtUnitCost, 3, 1);
-            // Row 2: Recv Date alone
-            AddLabelToCard(tblPurchase, lblRecvDate, "Recv Date:", labelFore, 2, 0);
+            // Row 2: Est Date alone
+            AddLabelToCard(tblPurchase, lblRecvDate, "Est Date:", labelFore, 2, 0);
             var recvPanel = new System.Windows.Forms.FlowLayoutPanel
             {
                 Dock = System.Windows.Forms.DockStyle.Fill,
@@ -203,7 +203,7 @@ namespace DRED
                 BackColor = System.Drawing.Color.Transparent,
                 Margin = System.Windows.Forms.Padding.Empty,
             };
-            this.chkRecvDate.Text = "Received";
+            this.chkRecvDate.Text = "Established";
             this.chkRecvDate.AutoSize = true;
             this.chkRecvDate.TabIndex = 12;
             this.chkRecvDate.CheckedChanged += new System.EventHandler(this.chkRecvDate_CheckedChanged);

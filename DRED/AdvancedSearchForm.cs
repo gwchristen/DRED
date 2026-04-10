@@ -118,9 +118,9 @@ namespace DRED
             row++;
 
             // Recv Date range
-            chkRecvDateFrom = new MaterialCheckbox { Text = "Recv Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
+            chkRecvDateFrom = new MaterialCheckbox { Text = "Est Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
             dtpRecvDateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
-            chkRecvDateTo = new MaterialCheckbox { Text = "Recv Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
+            chkRecvDateTo = new MaterialCheckbox { Text = "Est Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
             dtpRecvDateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
             chkRecvDateFrom.CheckedChanged += (s, e) => dtpRecvDateFrom.Enabled = chkRecvDateFrom.Checked;
             chkRecvDateTo.CheckedChanged += (s, e) => dtpRecvDateTo.Enabled = chkRecvDateTo.Checked;
