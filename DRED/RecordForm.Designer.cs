@@ -97,14 +97,14 @@ namespace DRED
             var lblDevHeader = MakeCardHeader("DEVICE INFORMATION", headerFore);
             // Row 0: OpCo2 | Status
             AddLabelToCard(tblDevice, lblOpCo2, "OpCo2:", labelFore, 0, 0);
-            ConfigureMaterialText(txtOpCo2, 0); tblDevice.Controls.Add(txtOpCo2, 1, 0);
+            ConfigureDarkTextBox(txtOpCo2, 0); tblDevice.Controls.Add(txtOpCo2, 1, 0);
             AddLabelToCard(tblDevice, lblStatus, "Status:", labelFore, 0, 2);
-            ConfigureMaterialText(txtStatus, 1); tblDevice.Controls.Add(txtStatus, 3, 0);
+            ConfigureDarkTextBox(txtStatus, 1); tblDevice.Controls.Add(txtStatus, 3, 0);
             // Row 1: MFR | DevCode
             AddLabelToCard(tblDevice, lblMFR, "MFR:", labelFore, 1, 0);
-            ConfigureMaterialText(txtMFR, 2); tblDevice.Controls.Add(txtMFR, 1, 1);
+            ConfigureDarkTextBox(txtMFR, 2); tblDevice.Controls.Add(txtMFR, 1, 1);
             AddLabelToCard(tblDevice, lblDevCode, "Dev Code:", labelFore, 1, 2);
-            ConfigureMaterialText(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
+            ConfigureDarkTextBox(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
 
             pnlDeviceInfo = MakeCard(cardBack, accentBorder, lblDevHeader, tblDevice);
 
@@ -113,11 +113,11 @@ namespace DRED
             var lblSerialHeader = MakeCardHeader("SERIAL RANGE & QUANTITY", headerFore);
             // Row 0: BegSer | EndSer
             AddLabelToCard(tblSerial, lblBegSer, "Beg Ser:", labelFore, 0, 0);
-            ConfigureMaterialText(txtBegSer, 4);
+            ConfigureDarkTextBox(txtBegSer, 4);
             txtBegSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
             tblSerial.Controls.Add(txtBegSer, 1, 0);
             AddLabelToCard(tblSerial, lblEndSer, "End Ser:", labelFore, 0, 2);
-            ConfigureMaterialText(txtEndSer, 5);
+            ConfigureDarkTextBox(txtEndSer, 5);
             txtEndSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
             tblSerial.Controls.Add(txtEndSer, 3, 0);
             // Row 1: Qty (+Auto)
@@ -181,16 +181,16 @@ namespace DRED
             var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
             // Row 0: PO Date | txtPODate | PO Number | txtPONumber
             AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
-            ConfigureMaterialText(txtPODate, 8);
+            ConfigureDarkTextBox(txtPODate, 8);
             tblPurchase.Controls.Add(this.txtPODate, 1, 0);
             AddLabelToCard(tblPurchase, lblPONumber, "PO Number:", labelFore, 0, 2);
-            ConfigureMaterialText(txtPONumber, 9);
+            ConfigureDarkTextBox(txtPONumber, 9);
             tblPurchase.Controls.Add(txtPONumber, 3, 0);
             // Row 1: Vintage | txtVintage | Unit Cost | txtUnitCost
             AddLabelToCard(tblPurchase, lblVintage, "Vintage:", labelFore, 1, 0);
-            ConfigureMaterialText(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
+            ConfigureDarkTextBox(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
             AddLabelToCard(tblPurchase, lblUnitCost, "Unit Cost:", labelFore, 1, 2);
-            ConfigureMaterialText(txtUnitCost, 11);
+            ConfigureDarkTextBox(txtUnitCost, 11);
             this.txtUnitCost.Enter += new System.EventHandler(this.txtUnitCost_Enter);
             this.txtUnitCost.Leave += new System.EventHandler(this.txtUnitCost_Leave);
             tblPurchase.Controls.Add(txtUnitCost, 3, 1);
@@ -223,12 +223,12 @@ namespace DRED
             var lblIdentHeader = MakeCardHeader("IDENTIFIERS", headerFore);
             // Row 0: CID | ME Number
             AddLabelToCard(tblIdent, lblCID, "CID:", labelFore, 0, 0);
-            ConfigureMaterialText(txtCID, 14); tblIdent.Controls.Add(txtCID, 1, 0);
+            ConfigureDarkTextBox(txtCID, 14); tblIdent.Controls.Add(txtCID, 1, 0);
             AddLabelToCard(tblIdent, lblMENumber, "M.E. #:", labelFore, 0, 2);
-            ConfigureMaterialText(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
+            ConfigureDarkTextBox(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
             // Row 1: Pur Code | Established (checkbox)
             AddLabelToCard(tblIdent, lblPurCode, "Pur. Code:", labelFore, 1, 0);
-            ConfigureMaterialText(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
+            ConfigureDarkTextBox(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
             AddLabelToCard(tblIdent, lblEst, "Established:", labelFore, 1, 2);
             this.chkEst.Text = "";
             this.chkEst.AutoSize = true;
@@ -461,7 +461,7 @@ namespace DRED
             tbl.Controls.Add(lbl, col, row);
         }
 
-        private static void ConfigureMaterialText(System.Windows.Forms.TextBox txt, int tabIndex)
+        private static void ConfigureDarkTextBox(System.Windows.Forms.TextBox txt, int tabIndex)
         {
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
