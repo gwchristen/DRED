@@ -10,17 +10,17 @@ namespace DRED
     {
         public AdvancedSearchCriteria? Criteria { get; private set; }
 
-        private MaterialTextBox2 txtOpCo2 = null!;
-        private MaterialTextBox2 txtStatus = null!;
-        private MaterialTextBox2 txtMFR = null!;
-        private MaterialTextBox2 txtDevCode = null!;
-        private MaterialTextBox2 txtBegSer = null!;
-        private MaterialTextBox2 txtEndSer = null!;
-        private MaterialTextBox2 txtPONumber = null!;
-        private MaterialTextBox2 txtVintage = null!;
-        private MaterialTextBox2 txtCID = null!;
-        private MaterialTextBox2 txtMENumber = null!;
-        private MaterialTextBox2 txtPurCode = null!;
+        private TextBox txtOpCo2 = null!;
+        private TextBox txtStatus = null!;
+        private TextBox txtMFR = null!;
+        private TextBox txtDevCode = null!;
+        private TextBox txtBegSer = null!;
+        private TextBox txtEndSer = null!;
+        private TextBox txtPONumber = null!;
+        private TextBox txtVintage = null!;
+        private TextBox txtCID = null!;
+        private TextBox txtMENumber = null!;
+        private TextBox txtPurCode = null!;
         private MaterialCheckbox chkEstFilter = null!;
         private MaterialCheckbox chkTextFileFilter = null!;
         private RichTextBox txtComments = null!;
@@ -186,12 +186,12 @@ namespace DRED
                 ForeColor = Color.White,
             };
 
-        private void AddSearchRow(TableLayoutPanel tlp, int row, string lbl1Text, out MaterialTextBox2 txt1, string lbl2Text, out MaterialTextBox2 txt2)
+        private void AddSearchRow(TableLayoutPanel tlp, int row, string lbl1Text, out TextBox txt1, string lbl2Text, out TextBox txt2)
         {
             var lbl1 = MakeLabel(lbl1Text);
-            txt1 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1) };
+            txt1 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1), BorderStyle = BorderStyle.FixedSingle };
             var lbl2 = MakeLabel(lbl2Text);
-            txt2 = new MaterialTextBox2 { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), UseTallSize = false, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1) };
+            txt2 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1), BorderStyle = BorderStyle.FixedSingle };
             tlp.Controls.Add(lbl1, 0, row);
             tlp.Controls.Add(txt1, 1, row);
             tlp.Controls.Add(lbl2, 2, row);

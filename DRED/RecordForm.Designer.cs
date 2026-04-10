@@ -22,18 +22,18 @@ namespace DRED
             this.pnlCommentsCard   = new System.Windows.Forms.Panel();
 
             this.lblOpCo2          = new System.Windows.Forms.Label();
-            this.txtOpCo2          = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtOpCo2          = new System.Windows.Forms.TextBox();
             this.lblStatus         = new System.Windows.Forms.Label();
-            this.txtStatus         = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtStatus         = new System.Windows.Forms.TextBox();
             this.lblMFR            = new System.Windows.Forms.Label();
-            this.txtMFR            = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtMFR            = new System.Windows.Forms.TextBox();
             this.lblDevCode        = new System.Windows.Forms.Label();
-            this.txtDevCode        = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtDevCode        = new System.Windows.Forms.TextBox();
 
             this.lblBegSer         = new System.Windows.Forms.Label();
-            this.txtBegSer         = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtBegSer         = new System.Windows.Forms.TextBox();
             this.lblEndSer         = new System.Windows.Forms.Label();
-            this.txtEndSer         = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtEndSer         = new System.Windows.Forms.TextBox();
             this.lblQty            = new System.Windows.Forms.Label();
             this.nudQty            = new System.Windows.Forms.NumericUpDown();
             this.chkAutoQty        = new MaterialSkin.Controls.MaterialCheckbox();
@@ -42,23 +42,23 @@ namespace DRED
             this.lblOOSHint        = new System.Windows.Forms.Label();
 
             this.lblPODate         = new System.Windows.Forms.Label();
-            this.txtPODate         = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtPODate         = new System.Windows.Forms.TextBox();
             this.lblPONumber       = new System.Windows.Forms.Label();
-            this.txtPONumber       = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtPONumber       = new System.Windows.Forms.TextBox();
             this.lblVintage        = new System.Windows.Forms.Label();
-            this.txtVintage        = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtVintage        = new System.Windows.Forms.TextBox();
             this.lblRecvDate       = new System.Windows.Forms.Label();
             this.chkRecvDate       = new MaterialSkin.Controls.MaterialCheckbox();
             this.lblRecvDateDisplay = new System.Windows.Forms.Label();
             this.lblUnitCost       = new System.Windows.Forms.Label();
-            this.txtUnitCost       = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtUnitCost       = new System.Windows.Forms.TextBox();
 
             this.lblCID            = new System.Windows.Forms.Label();
-            this.txtCID            = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtCID            = new System.Windows.Forms.TextBox();
             this.lblMENumber       = new System.Windows.Forms.Label();
-            this.txtMENumber       = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtMENumber       = new System.Windows.Forms.TextBox();
             this.lblPurCode        = new System.Windows.Forms.Label();
-            this.txtPurCode        = new MaterialSkin.Controls.MaterialTextBox2();
+            this.txtPurCode        = new System.Windows.Forms.TextBox();
             this.lblEst            = new System.Windows.Forms.Label();
             this.chkEst            = new MaterialSkin.Controls.MaterialCheckbox();
             this.lblTextFile       = new System.Windows.Forms.Label();
@@ -97,14 +97,14 @@ namespace DRED
             var lblDevHeader = MakeCardHeader("DEVICE INFORMATION", headerFore);
             // Row 0: OpCo2 | Status
             AddLabelToCard(tblDevice, lblOpCo2, "OpCo2:", labelFore, 0, 0);
-            ConfigureMaterialText(txtOpCo2, 0); tblDevice.Controls.Add(txtOpCo2, 1, 0);
+            ConfigureDarkTextBox(txtOpCo2, 0); tblDevice.Controls.Add(txtOpCo2, 1, 0);
             AddLabelToCard(tblDevice, lblStatus, "Status:", labelFore, 0, 2);
-            ConfigureMaterialText(txtStatus, 1); tblDevice.Controls.Add(txtStatus, 3, 0);
+            ConfigureDarkTextBox(txtStatus, 1); tblDevice.Controls.Add(txtStatus, 3, 0);
             // Row 1: MFR | DevCode
             AddLabelToCard(tblDevice, lblMFR, "MFR:", labelFore, 1, 0);
-            ConfigureMaterialText(txtMFR, 2); tblDevice.Controls.Add(txtMFR, 1, 1);
+            ConfigureDarkTextBox(txtMFR, 2); tblDevice.Controls.Add(txtMFR, 1, 1);
             AddLabelToCard(tblDevice, lblDevCode, "Dev Code:", labelFore, 1, 2);
-            ConfigureMaterialText(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
+            ConfigureDarkTextBox(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
 
             pnlDeviceInfo = MakeCard(cardBack, accentBorder, lblDevHeader, tblDevice);
 
@@ -113,11 +113,11 @@ namespace DRED
             var lblSerialHeader = MakeCardHeader("SERIAL RANGE & QUANTITY", headerFore);
             // Row 0: BegSer | EndSer
             AddLabelToCard(tblSerial, lblBegSer, "Beg Ser:", labelFore, 0, 0);
-            ConfigureMaterialText(txtBegSer, 4);
+            ConfigureDarkTextBox(txtBegSer, 4);
             txtBegSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
             tblSerial.Controls.Add(txtBegSer, 1, 0);
             AddLabelToCard(tblSerial, lblEndSer, "End Ser:", labelFore, 0, 2);
-            ConfigureMaterialText(txtEndSer, 5);
+            ConfigureDarkTextBox(txtEndSer, 5);
             txtEndSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
             tblSerial.Controls.Add(txtEndSer, 3, 0);
             // Row 1: Qty (+Auto)
@@ -181,17 +181,16 @@ namespace DRED
             var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
             // Row 0: PO Date | txtPODate | PO Number | txtPONumber
             AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
-            ConfigureMaterialText(txtPODate, 8);
-            this.txtPODate.Hint = "MM/dd/yyyy";
+            ConfigureDarkTextBox(txtPODate, 8);
             tblPurchase.Controls.Add(this.txtPODate, 1, 0);
             AddLabelToCard(tblPurchase, lblPONumber, "PO Number:", labelFore, 0, 2);
-            ConfigureMaterialText(txtPONumber, 9);
+            ConfigureDarkTextBox(txtPONumber, 9);
             tblPurchase.Controls.Add(txtPONumber, 3, 0);
             // Row 1: Vintage | txtVintage | Unit Cost | txtUnitCost
             AddLabelToCard(tblPurchase, lblVintage, "Vintage:", labelFore, 1, 0);
-            ConfigureMaterialText(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
+            ConfigureDarkTextBox(txtVintage, 10); tblPurchase.Controls.Add(txtVintage, 1, 1);
             AddLabelToCard(tblPurchase, lblUnitCost, "Unit Cost:", labelFore, 1, 2);
-            ConfigureMaterialText(txtUnitCost, 11);
+            ConfigureDarkTextBox(txtUnitCost, 11);
             this.txtUnitCost.Enter += new System.EventHandler(this.txtUnitCost_Enter);
             this.txtUnitCost.Leave += new System.EventHandler(this.txtUnitCost_Leave);
             tblPurchase.Controls.Add(txtUnitCost, 3, 1);
@@ -224,12 +223,12 @@ namespace DRED
             var lblIdentHeader = MakeCardHeader("IDENTIFIERS", headerFore);
             // Row 0: CID | ME Number
             AddLabelToCard(tblIdent, lblCID, "CID:", labelFore, 0, 0);
-            ConfigureMaterialText(txtCID, 14); tblIdent.Controls.Add(txtCID, 1, 0);
+            ConfigureDarkTextBox(txtCID, 14); tblIdent.Controls.Add(txtCID, 1, 0);
             AddLabelToCard(tblIdent, lblMENumber, "M.E. #:", labelFore, 0, 2);
-            ConfigureMaterialText(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
+            ConfigureDarkTextBox(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
             // Row 1: Pur Code | Established (checkbox)
             AddLabelToCard(tblIdent, lblPurCode, "Pur. Code:", labelFore, 1, 0);
-            ConfigureMaterialText(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
+            ConfigureDarkTextBox(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
             AddLabelToCard(tblIdent, lblEst, "Established:", labelFore, 1, 2);
             this.chkEst.Text = "";
             this.chkEst.AutoSize = true;
@@ -462,14 +461,14 @@ namespace DRED
             tbl.Controls.Add(lbl, col, row);
         }
 
-        private static void ConfigureMaterialText(MaterialSkin.Controls.MaterialTextBox2 txt, int tabIndex)
+        private static void ConfigureDarkTextBox(System.Windows.Forms.TextBox txt, int tabIndex)
         {
-            txt.UseTallSize = false;
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
             txt.Margin = new System.Windows.Forms.Padding(0, 2, 4, 2);
             txt.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
             txt.ForeColor = System.Drawing.Color.FromArgb(0xF1, 0xF1, 0xF1);
+            txt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
         }
 
         // ── Field declarations ────────────────────────────────────────────
@@ -481,17 +480,17 @@ namespace DRED
         private System.Windows.Forms.Panel pnlCommentsCard = null!;
         private System.Windows.Forms.TableLayoutPanel tableLayoutPanel = null!;
         private System.Windows.Forms.Label lblOpCo2 = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtOpCo2 = null!;
+        private System.Windows.Forms.TextBox txtOpCo2 = null!;
         private System.Windows.Forms.Label lblStatus = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtStatus = null!;
+        private System.Windows.Forms.TextBox txtStatus = null!;
         private System.Windows.Forms.Label lblMFR = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtMFR = null!;
+        private System.Windows.Forms.TextBox txtMFR = null!;
         private System.Windows.Forms.Label lblDevCode = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtDevCode = null!;
+        private System.Windows.Forms.TextBox txtDevCode = null!;
         private System.Windows.Forms.Label lblBegSer = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtBegSer = null!;
+        private System.Windows.Forms.TextBox txtBegSer = null!;
         private System.Windows.Forms.Label lblEndSer = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtEndSer = null!;
+        private System.Windows.Forms.TextBox txtEndSer = null!;
         private System.Windows.Forms.Label lblQty = null!;
         private System.Windows.Forms.NumericUpDown nudQty = null!;
         private MaterialSkin.Controls.MaterialCheckbox chkAutoQty = null!;
@@ -499,22 +498,22 @@ namespace DRED
         private System.Windows.Forms.RichTextBox txtOOSSerials = null!;
         private System.Windows.Forms.Label lblOOSHint = null!;
         private System.Windows.Forms.Label lblPODate = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtPODate = null!;
+        private System.Windows.Forms.TextBox txtPODate = null!;
         private System.Windows.Forms.Label lblVintage = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtVintage = null!;
+        private System.Windows.Forms.TextBox txtVintage = null!;
         private System.Windows.Forms.Label lblPONumber = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtPONumber = null!;
+        private System.Windows.Forms.TextBox txtPONumber = null!;
         private System.Windows.Forms.Label lblRecvDate = null!;
         private MaterialSkin.Controls.MaterialCheckbox chkRecvDate = null!;
         private System.Windows.Forms.Label lblRecvDateDisplay = null!;
         private System.Windows.Forms.Label lblUnitCost = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtUnitCost = null!;
+        private System.Windows.Forms.TextBox txtUnitCost = null!;
         private System.Windows.Forms.Label lblCID = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtCID = null!;
+        private System.Windows.Forms.TextBox txtCID = null!;
         private System.Windows.Forms.Label lblMENumber = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtMENumber = null!;
+        private System.Windows.Forms.TextBox txtMENumber = null!;
         private System.Windows.Forms.Label lblPurCode = null!;
-        private MaterialSkin.Controls.MaterialTextBox2 txtPurCode = null!;
+        private System.Windows.Forms.TextBox txtPurCode = null!;
         private System.Windows.Forms.Label lblEst = null!;
         private MaterialSkin.Controls.MaterialCheckbox chkEst = null!;
         private System.Windows.Forms.Label lblTextFile = null!;
