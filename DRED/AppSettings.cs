@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 
 namespace DRED
@@ -17,6 +19,8 @@ namespace DRED
 
         public static string DatabasePath { get; set; } = string.Empty;
         public static int AutoRefreshInterval { get; set; } = 60;
+        public static string LockPin { get; set; } = "1234";
+        public static List<string> AuthorizedUsers { get; set; } = new();
 
         public static void Load()
         {
@@ -30,6 +34,12 @@ namespace DRED
                     {
                         DatabasePath = data.DatabasePath ?? string.Empty;
                         AutoRefreshInterval = data.AutoRefreshInterval;
+                        LockPin = string.IsNullOrWhiteSpace(data.LockPin) ? "1234" : data.LockPin;
+                        AuthorizedUsers = data.AuthorizedUsers?
+                            .Where(u => !string.IsNullOrWhiteSpace(u))
+                            .Select(u => u.Trim())
+                            .Distinct(StringComparer.OrdinalIgnoreCase)
+                            .ToList() ?? new List<string>();
                     }
                 }
             }
@@ -48,6 +58,12 @@ namespace DRED
                 {
                     DatabasePath = DatabasePath,
                     AutoRefreshInterval = AutoRefreshInterval,
+                    LockPin = string.IsNullOrWhiteSpace(LockPin) ? "1234" : LockPin,
+                    AuthorizedUsers = AuthorizedUsers
+                        .Where(u => !string.IsNullOrWhiteSpace(u))
+                        .Select(u => u.Trim())
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList(),
                 };
                 string json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(SettingsFilePath, json);
@@ -66,6 +82,8 @@ namespace DRED
         {
             public string? DatabasePath { get; set; }
             public int AutoRefreshInterval { get; set; } = 60;
+            public string LockPin { get; set; } = "1234";
+            public List<string> AuthorizedUsers { get; set; } = new();
         }
     }
 }
