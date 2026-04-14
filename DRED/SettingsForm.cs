@@ -61,6 +61,12 @@ namespace DRED
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            if (pin.Length < 4)
+            {
+                MessageBox.Show("Lock PIN must be at least 4 characters.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
             AppSettings.DatabasePath = path;
             AppSettings.AutoRefreshInterval = (int)nudAutoRefresh.Value;
