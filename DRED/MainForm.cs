@@ -119,11 +119,12 @@ namespace DRED
                             }
                         }
                     }
+
+                    RefreshCurrentTab();
                 }));
             };
 
             _initialized = true;
-            RefreshCurrentTab();
         }
 
         // ── Timer / refresh ──────────────────────────────────────────────
