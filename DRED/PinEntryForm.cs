@@ -1,4 +1,6 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Windows.Forms;
 
 namespace DRED
@@ -12,7 +14,7 @@ namespace DRED
 
         private void btnOK_Click(object sender, EventArgs e)
         {
-            if (txtPin.Text == AppSettings.LockPin)
+            if (IsPinMatch(txtPin.Text, AppSettings.LockPin))
             {
                 DialogResult = DialogResult.OK;
                 Close();
@@ -26,6 +28,13 @@ namespace DRED
                 MessageBoxIcon.Warning);
             txtPin.SelectAll();
             txtPin.Focus();
+        }
+
+        private static bool IsPinMatch(string enteredPin, string configuredPin)
+        {
+            byte[] enteredBytes = Encoding.UTF8.GetBytes(enteredPin ?? string.Empty);
+            byte[] configuredBytes = Encoding.UTF8.GetBytes(configuredPin ?? string.Empty);
+            return CryptographicOperations.FixedTimeEquals(enteredBytes, configuredBytes);
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
