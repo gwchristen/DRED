@@ -42,6 +42,7 @@ namespace DRED
         private bool _dialogOpen  = false;
         private System.Windows.Forms.Timer _refreshTimer = null!;
         private bool _initialized = false;
+        private bool _isUnlocked = false;
 
         // ── Nested types ─────────────────────────────────────────────────
 
@@ -88,6 +89,8 @@ namespace DRED
             cboFilterColumn.SelectedIndexChanged += cboFilterColumn_SelectedIndexChanged;
 
             InitializeDetailPanels();
+            _isUnlocked = IsCurrentUserAuthorized();
+            ApplyLockState();
 
             _refreshTimer = new System.Windows.Forms.Timer();
             _refreshTimer.Tick += (s, e) => { if (!_dialogOpen) RefreshCurrentTab(); };
@@ -212,7 +215,45 @@ namespace DRED
         {
             lblStatusRecords.Text    = $"Records: {recordCount}";
             lblStatusConnection.Text = $"Connected: {AppSettings.DatabasePath}";
-            lblStatusUser.Text       = $"User: {Environment.UserName}";
+            UpdateUserLockStatusLabel();
+        }
+
+        private void UpdateUserLockStatusLabel()
+        {
+            lblStatusUser.Text = $"User: {Environment.UserName} {(_isUnlocked ? "🔓" : "🔒")}";
+        }
+
+        private bool IsCurrentUserAuthorized()
+        {
+            string currentUser = Environment.UserName;
+            return AppSettings.AuthorizedUsers.Any(u =>
+                string.Equals(u, currentUser, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void ApplyLockState()
+        {
+            bool enabled = _isUnlocked;
+
+            btnUnlock.Text = enabled ? "🔓 Lock" : "🔒 Unlock";
+            btnAdd.Enabled = enabled;
+            btnEdit.Enabled = enabled;
+            btnDelete.Enabled = enabled;
+
+            mnuFileSettings.Enabled = enabled;
+            mnuFileImport.Enabled = enabled;
+            mnuTools.Enabled = enabled;
+            mnuEdit.Enabled = enabled;
+
+            for (int i = 0; i < _detailLabels.Length; i++)
+            {
+                var detailLabels = _detailLabels[i];
+                if (detailLabels == null) continue;
+
+                detailLabels.BtnDetailEdit.Enabled = enabled;
+                detailLabels.BtnDetailDelete.Enabled = enabled;
+            }
+
+            UpdateUserLockStatusLabel();
         }
 
         // ── ListBox population ───────────────────────────────────────────
@@ -344,6 +385,7 @@ namespace DRED
 
         private void listBox_DoubleClick(object sender, EventArgs e)
         {
+            if (!_isUnlocked) return;
             btnEdit_Click(sender, e);
         }
 
@@ -852,6 +894,11 @@ namespace DRED
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
                     UpdateRefreshTimer();
+                    if (!_isUnlocked && IsCurrentUserAuthorized())
+                    {
+                        _isUnlocked = true;
+                        ApplyLockState();
+                    }
                     RefreshCurrentTab();
                 }
             }
@@ -1093,11 +1140,13 @@ namespace DRED
                 {
                     case Keys.N:
                         e.Handled = true;
-                        btnAdd_Click(this, EventArgs.Empty);
+                        if (_isUnlocked)
+                            btnAdd_Click(this, EventArgs.Empty);
                         return;
                     case Keys.E:
                         e.Handled = true;
-                        btnEdit_Click(this, EventArgs.Empty);
+                        if (_isUnlocked)
+                            btnEdit_Click(this, EventArgs.Empty);
                         return;
                     case Keys.R:
                         e.Handled = true;
@@ -1113,11 +1162,13 @@ namespace DRED
                         return;
                     case Keys.I:
                         e.Handled = true;
-                        btnImport_Click(this, EventArgs.Empty);
+                        if (_isUnlocked)
+                            btnImport_Click(this, EventArgs.Empty);
                         return;
                     case Keys.Oemcomma:
                         e.Handled = true;
-                        btnSettings_Click(this, EventArgs.Empty);
+                        if (_isUnlocked)
+                            btnSettings_Click(this, EventArgs.Empty);
                         return;
                 }
             }
@@ -1132,7 +1183,8 @@ namespace DRED
                     if (!txtSearch.Focused)
                     {
                         e.Handled = true;
-                        btnDelete_Click(this, EventArgs.Empty);
+                        if (_isUnlocked)
+                            btnDelete_Click(this, EventArgs.Empty);
                     }
                     return;
                 case Keys.Escape:
@@ -1141,6 +1193,23 @@ namespace DRED
                     _advancedCriteria = null;
                     RefreshCurrentTab();
                     return;
+            }
+        }
+
+        private void btnUnlock_Click(object sender, EventArgs e)
+        {
+            if (_isUnlocked)
+            {
+                _isUnlocked = false;
+                ApplyLockState();
+                return;
+            }
+
+            using var pinForm = new PinEntryForm();
+            if (pinForm.ShowDialog(this) == DialogResult.OK)
+            {
+                _isUnlocked = true;
+                ApplyLockState();
             }
         }
 

@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace DRED
@@ -11,6 +13,8 @@ namespace DRED
             InitializeComponent();
             txtDatabasePath.Text = AppSettings.DatabasePath;
             nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
+            txtLockPin.Text = AppSettings.LockPin;
+            LoadAuthorizedUsers();
         }
 
         private void btnBrowse_Click(object sender, EventArgs e)
@@ -50,8 +54,18 @@ namespace DRED
                 return;
             }
 
+            string pin = txtLockPin.Text.Trim();
+            if (string.IsNullOrWhiteSpace(pin))
+            {
+                MessageBox.Show("Lock PIN cannot be empty.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             AppSettings.DatabasePath = path;
             AppSettings.AutoRefreshInterval = (int)nudAutoRefresh.Value;
+            AppSettings.LockPin = pin;
+            AppSettings.AuthorizedUsers = GetAuthorizedUsersFromList();
             AppSettings.Save();
 
             try
@@ -77,6 +91,50 @@ namespace DRED
             DialogResult = DialogResult.Cancel;
             Close();
         }
+
+        private void LoadAuthorizedUsers()
+        {
+            lstAuthorizedUsers.Items.Clear();
+            foreach (string user in AppSettings.AuthorizedUsers
+                         .Where(u => !string.IsNullOrWhiteSpace(u))
+                         .Select(u => u.Trim())
+                         .Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                lstAuthorizedUsers.Items.Add(user);
+            }
+        }
+
+        private List<string> GetAuthorizedUsersFromList()
+        {
+            return lstAuthorizedUsers.Items
+                .Cast<object>()
+                .Select(item => item.ToString() ?? string.Empty)
+                .Where(user => !string.IsNullOrWhiteSpace(user))
+                .Select(user => user.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private void btnAddUser_Click(object sender, EventArgs e)
+        {
+            string user = txtAuthorizedUser.Text.Trim();
+            if (string.IsNullOrWhiteSpace(user))
+                return;
+
+            bool exists = lstAuthorizedUsers.Items
+                .Cast<object>()
+                .Any(item => string.Equals(item.ToString(), user, StringComparison.OrdinalIgnoreCase));
+            if (!exists)
+                lstAuthorizedUsers.Items.Add(user);
+
+            txtAuthorizedUser.Text = string.Empty;
+            txtAuthorizedUser.Focus();
+        }
+
+        private void btnRemoveUser_Click(object sender, EventArgs e)
+        {
+            if (lstAuthorizedUsers.SelectedIndex >= 0)
+                lstAuthorizedUsers.Items.RemoveAt(lstAuthorizedUsers.SelectedIndex);
+        }
     }
 }
-

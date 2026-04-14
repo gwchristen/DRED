@@ -41,6 +41,8 @@ namespace DRED
             this.btnAdd              = new MaterialSkin.Controls.MaterialButton();
             this.btnRefresh          = new MaterialSkin.Controls.MaterialButton();
             this.btnAdvancedSearch   = new MaterialSkin.Controls.MaterialButton();
+            this.pnlToolbarSpacer    = new System.Windows.Forms.Panel();
+            this.btnUnlock           = new MaterialSkin.Controls.MaterialButton();
 
             // ── Hidden buttons kept for event wiring compatibility ────────
             this.btnEdit             = new MaterialSkin.Controls.MaterialButton();
@@ -162,9 +164,15 @@ namespace DRED
             SetMaterialButton(btnAdd,           "Add",              MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained, true,  this.btnAdd_Click);
             SetMaterialButton(btnRefresh,       "Refresh",          MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnRefresh_Click);
             SetMaterialButton(btnAdvancedSearch, "Advanced Search",  MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnAdvancedSearch_Click);
+            SetMaterialButton(btnUnlock,        "🔒 Unlock",        MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnUnlock_Click);
             btnAdd.AccessibleName            = "Add new record";
             btnRefresh.AccessibleName        = "Refresh current tab";
             btnAdvancedSearch.AccessibleName = "Open advanced search";
+            btnUnlock.AccessibleName         = "Lock or unlock protected actions";
+
+            this.pnlToolbarSpacer.Size = new System.Drawing.Size(0, 32);
+            this.pnlToolbarSpacer.Margin = new System.Windows.Forms.Padding(0);
+            this.pnlToolbarSpacer.BackColor = System.Drawing.Color.Transparent;
 
             // Hidden buttons kept for programmatic access / keyboard handler compatibility
             SetMaterialButton(btnEdit,     "Edit",        MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined, false, this.btnEdit_Click);
@@ -181,7 +189,20 @@ namespace DRED
             btnSettings.Visible  = false;
 
             this.pnlToolbar.Controls.AddRange(new System.Windows.Forms.Control[] {
-                btnAdd, btnRefresh, btnAdvancedSearch });
+                btnAdd, btnRefresh, btnAdvancedSearch, pnlToolbarSpacer, btnUnlock });
+
+            this.pnlToolbar.Resize += (s, e) =>
+            {
+                int reserved = pnlToolbar.Padding.Left + pnlToolbar.Padding.Right;
+                foreach (System.Windows.Forms.Control c in pnlToolbar.Controls)
+                {
+                    if (c == pnlToolbarSpacer) continue;
+                    reserved += c.Width + c.Margin.Left + c.Margin.Right;
+                }
+
+                int spacer = pnlToolbar.ClientSize.Width - reserved;
+                pnlToolbarSpacer.Width = System.Math.Max(0, spacer);
+            };
 
             // ── pnlSearch ────────────────────────────────────────────────
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Top;
@@ -516,6 +537,8 @@ namespace DRED
         private System.Windows.Forms.ToolStripMenuItem mnuToolsLookupCodes = null!;
         private System.Windows.Forms.FlowLayoutPanel pnlToolbar = null!;
         private MaterialSkin.Controls.MaterialButton btnAdd = null!;
+        private System.Windows.Forms.Panel pnlToolbarSpacer = null!;
+        private MaterialSkin.Controls.MaterialButton btnUnlock = null!;
         private MaterialSkin.Controls.MaterialButton btnEdit = null!;
         private MaterialSkin.Controls.MaterialButton btnDelete = null!;
         private MaterialSkin.Controls.MaterialButton btnRefresh = null!;
