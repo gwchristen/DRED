@@ -19,6 +19,7 @@ namespace DRED
         private RichTextBox txtPreview   = null!;
         private Label       lblCount     = null!;
         private MaterialButton btnSave   = null!;
+        private MaterialButton btnCopy   = null!;
         private MaterialButton btnClose  = null!;
 
         public GeneratePreviewForm(List<string> serials, string devCode)
@@ -84,15 +85,24 @@ namespace DRED
             btnClose = new MaterialButton
             {
                 Text     = "Close",
+                Location = new Point(232, 8),
+                Type     = MaterialButton.MaterialButtonType.Outlined,
+                AutoSize = true,
+            };
+            btnCopy = new MaterialButton
+            {
+                Text     = "Copy",
                 Location = new Point(120, 8),
                 Type     = MaterialButton.MaterialButtonType.Outlined,
                 AutoSize = true,
             };
 
             btnSave.Click  += BtnSave_Click;
+            btnCopy.Click  += BtnCopy_Click;
             btnClose.Click += (s, e) => this.Close();
 
             pnlBtn.Controls.Add(btnSave);
+            pnlBtn.Controls.Add(btnCopy);
             pnlBtn.Controls.Add(btnClose);
 
             this.Controls.Add(txtPreview);
@@ -100,6 +110,27 @@ namespace DRED
             this.Controls.Add(pnlBtn);
 
             this.CancelButton = btnClose;
+        }
+
+        private void BtnCopy_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                Clipboard.SetText(string.Join(Environment.NewLine, _serials));
+                MessageBox.Show(
+                    $"Copied {_serials.Count} serial(s) to clipboard.",
+                    "Copied",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to copy to clipboard:\n{ex.Message}",
+                    "Copy Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void BtnSave_Click(object? sender, EventArgs e)

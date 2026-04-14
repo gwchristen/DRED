@@ -57,6 +57,7 @@ namespace DRED
             this.txtSearch           = new MaterialSkin.Controls.MaterialTextBox2();
             this.cboFilterColumn     = new MaterialSkin.Controls.MaterialComboBox();
             this.btnClearSearch      = new MaterialSkin.Controls.MaterialButton();
+            this.lblFilterActive     = new System.Windows.Forms.Label();
 
             // ── Tab control ──────────────────────────────────────────────
             this.tabControl          = new MaterialSkin.Controls.MaterialTabControl();
@@ -206,7 +207,7 @@ namespace DRED
 
             // ── pnlSearch ────────────────────────────────────────────────
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlSearch.Height = 54;
+            this.pnlSearch.Height = 74;
             this.pnlSearch.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
             this.pnlSearch.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
 
@@ -233,6 +234,13 @@ namespace DRED
             this.btnClearSearch.AccessibleName = "Clear search";
             this.btnClearSearch.Click += new System.EventHandler(this.btnClearSearch_Click);
 
+            this.lblFilterActive.AutoSize = true;
+            this.lblFilterActive.Location = new System.Drawing.Point(12, 48);
+            this.lblFilterActive.ForeColor = System.Drawing.Color.FromArgb(144, 202, 249);
+            this.lblFilterActive.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this.lblFilterActive.Text = "🔍 Advanced filter active";
+            this.lblFilterActive.Visible = false;
+
             // Position cboFilterColumn and resize txtSearch whenever the search panel changes size.
             // This replaces the unreliable Anchor=Right approach (whose distances are computed
             // when the parent panel has width=0 during InitializeComponent, causing the control
@@ -248,11 +256,13 @@ namespace DRED
                 cboFilterColumn.Location  = new System.Drawing.Point(cboLeft, 9);
                 txtSearch.Width           = cboLeft - leftMargin - gap;
                 btnClearSearch.Location   = new System.Drawing.Point(cboLeft - leftMargin - 36, 10);
+                lblFilterActive.MaximumSize = new System.Drawing.Size(cboLeft - leftMargin - gap, 0);
             };
 
             this.pnlSearch.Controls.Add(this.txtSearch);
             this.pnlSearch.Controls.Add(this.cboFilterColumn);
             this.pnlSearch.Controls.Add(this.btnClearSearch);
+            this.pnlSearch.Controls.Add(this.lblFilterActive);
 
             // ── tabControl ───────────────────────────────────────────────
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -551,6 +561,7 @@ namespace DRED
         private MaterialSkin.Controls.MaterialTextBox2 txtSearch = null!;
         private MaterialSkin.Controls.MaterialComboBox cboFilterColumn = null!;
         private MaterialSkin.Controls.MaterialButton btnClearSearch = null!;
+        private System.Windows.Forms.Label lblFilterActive = null!;
         private MaterialSkin.Controls.MaterialTabControl tabControl = null!;
         private System.Windows.Forms.Panel tabSelector = null!;
         private System.Windows.Forms.TabPage tabOHMeters = null!;
