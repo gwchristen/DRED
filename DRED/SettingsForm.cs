@@ -12,6 +12,7 @@ namespace DRED
         {
             InitializeComponent();
             txtDatabasePath.Text = AppSettings.DatabasePath;
+            txtLookupCodesPath.Text = AppSettings.LookupCodesPath;
             nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
             nudBackupInterval.Value = Math.Clamp(AppSettings.BackupIntervalHours, 0, 168);
             nudMaxBackups.Value = Math.Clamp(AppSettings.MaxBackupCount, 1, 100);
@@ -74,12 +75,16 @@ namespace DRED
             }
 
             AppSettings.DatabasePath = path;
+            string previousLookupCodesPath = AppSettings.LookupCodesPath;
+            AppSettings.LookupCodesPath = txtLookupCodesPath.Text.Trim();
             AppSettings.AutoRefreshInterval = (int)nudAutoRefresh.Value;
             AppSettings.BackupIntervalHours = (int)nudBackupInterval.Value;
             AppSettings.MaxBackupCount = (int)nudMaxBackups.Value;
             AppSettings.LockPin = pin;
             AppSettings.AuthorizedUsers = GetAuthorizedUsersFromList();
             AppSettings.Save();
+            if (!string.Equals(previousLookupCodesPath, AppSettings.LookupCodesPath, StringComparison.OrdinalIgnoreCase))
+                LookupCodeManager.ResetCache();
 
             try
             {
@@ -148,6 +153,34 @@ namespace DRED
         {
             if (lstAuthorizedUsers.SelectedIndex >= 0)
                 lstAuthorizedUsers.Items.RemoveAt(lstAuthorizedUsers.SelectedIndex);
+        }
+
+        private void btnBrowseLookupCodes_Click(object sender, EventArgs e)
+        {
+            using var dlg = new OpenFileDialog
+            {
+                Title = "Select Lookup Codes JSON File",
+                Filter = "JSON Files (*.json)|*.json|All Files (*.*)|*.*",
+                DefaultExt = "json",
+                CheckFileExists = false,
+                FileName = "lookup_codes.json",
+            };
+
+            if (!string.IsNullOrWhiteSpace(txtLookupCodesPath.Text))
+            {
+                try
+                {
+                    dlg.InitialDirectory = Path.GetDirectoryName(txtLookupCodesPath.Text) ?? "";
+                    dlg.FileName = Path.GetFileName(txtLookupCodesPath.Text);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError("Failed to initialize lookup codes browse dialog path.", ex);
+                }
+            }
+
+            if (dlg.ShowDialog() == DialogResult.OK)
+                txtLookupCodesPath.Text = dlg.FileName;
         }
     }
 }

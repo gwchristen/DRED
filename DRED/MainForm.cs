@@ -23,8 +23,6 @@ namespace DRED
             Color.FromArgb(0xAB, 0x47, 0xBC), // Purple - I&M Transformers
         };
 
-        private static readonly Color BooleanTrueColor  = Color.FromArgb(0x66, 0xBB, 0x6A); // Material Green 400
-        private static readonly Color BooleanFalseColor = Color.FromArgb(0xEF, 0x53, 0x50); // Material Red 400
         private static readonly Color SearchPanelDefaultColor = ThemeManager.SearchPanelColor;
         private static readonly Color SearchPanelFilteredColor = ThemeManager.SearchPanelFilteredColor;
 
@@ -33,8 +31,10 @@ namespace DRED
         private System.Windows.Forms.ListBox[] _listBoxes   = new System.Windows.Forms.ListBox[4];
         private System.Windows.Forms.Panel[]   _detailPanels = new System.Windows.Forms.Panel[4];
         private System.Data.DataTable?[]       _dataTables   = new System.Data.DataTable?[4];
-        private DetailLabels[]                 _detailLabels = new DetailLabels[4];
         private int[]                          _hoveredListItem = { -1, -1, -1, -1 };
+        private readonly DetailPanelManager _detailPanelManager = new();
+        private readonly DashboardManager _dashboardManager;
+        private KeyboardShortcutHandler _shortcutHandler = null!;
 
         private const int  ListItemHeight     = 58;
 
@@ -61,46 +61,10 @@ namespace DRED
         private bool _initialized = false;
         private bool _isUnlocked = false;
         private System.Windows.Forms.Panel _dashboardHostPanel = null!;
-        private DashboardLabels? _dashboardLabels;
 
         // ── Nested types ─────────────────────────────────────────────────
 
         private record ListItem(string DevCode, string Qty, string PONumber, string RecvDate, int RowIndex);
-
-        private sealed class DetailLabels
-        {
-            public System.Windows.Forms.Label ValOpCo2   = null!, ValStatus   = null!,
-                                              ValMFR      = null!, ValDevCode  = null!;
-            public System.Windows.Forms.Label ValBegSer  = null!, ValEndSer   = null!, ValQty = null!,
-                                              ValOOSSerials = null!;
-            public System.Windows.Forms.Label ValPODate  = null!, ValPONumber = null!,
-                                              ValVintage  = null!, ValRecvDate = null!, ValUnitCost = null!;
-            public System.Windows.Forms.Label ValCID     = null!, ValMENumber = null!,
-                                              ValPurCode  = null!, ValEst      = null!,
-                                              ValTextFile = null!;
-            public System.Windows.Forms.Label ValComments = null!;
-            public System.Windows.Forms.Label LblAudit   = null!;
-            public System.Windows.Forms.Label EmptyStateLabel = null!;
-            public System.Windows.Forms.Panel ContentPanel    = null!;
-            public MaterialSkin.Controls.MaterialButton BtnDetailEdit = null!, BtnDetailDelete = null!, BtnDetailGenerate = null!;
-            // Section header labels (re-colored after MaterialSkinManager theme resets)
-            public System.Windows.Forms.Label HdrDeviceInfo   = null!, HdrSerialRange  = null!,
-                                              HdrPurchaseInfo = null!, HdrIdentifiers  = null!,
-                                              HdrComments     = null!;
-            // Field name labels ("OpCo2:", "Status:", etc.) and value labels — tracked so
-            // ReapplyDetailPanelColors() can restore them after MaterialSkinManager resets them.
-            public List<System.Windows.Forms.Label> FieldNameLabels = new();
-            public List<System.Windows.Forms.Label> ValueLabels     = new();
-        }
-
-        private sealed class DashboardLabels
-        {
-            public System.Windows.Forms.Label TotalRecords = null!;
-            public System.Windows.Forms.Label PerTable = null!;
-            public System.Windows.Forms.Label RecentActivity = null!;
-            public System.Windows.Forms.Label StatusCounts = null!;
-            public System.Windows.Forms.Label OpCoCounts = null!;
-        }
 
         // ── Constructor ──────────────────────────────────────────────────
 
@@ -109,6 +73,7 @@ namespace DRED
             InitializeComponent();
             MaterialSkinManager.Instance.AddFormToManage(this);
             Logger.Log("Main form initialized.");
+            _dashboardManager = new DashboardManager(TabTableNames, TabAccentColors[0], UpdateDashboardStatusBar);
 
             cboFilterColumn.Items.AddRange(new object[] {
                 "All Columns", "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer",
@@ -117,8 +82,38 @@ namespace DRED
             cboFilterColumn.SelectedIndex = 0;
             cboFilterColumn.SelectedIndexChanged += cboFilterColumn_SelectedIndexChanged;
 
-            InitializeDetailPanels();
-            InitializeDashboard();
+            _detailPanelManager.Initialize(
+                _detailPanels,
+                new[] { TabAccentColors[1], TabAccentColors[2], TabAccentColors[3], TabAccentColors[4] },
+                (s, e) => btnEdit_Click(s!, e),
+                (s, e) => btnDelete_Click(s!, e),
+                (s, e) => btnGenerate_Click(s!, e));
+            _dashboardManager.Initialize(tabDashboard);
+            _shortcutHandler = new KeyboardShortcutHandler(new KeyboardActions
+            {
+                AddRecord = () => btnAdd_Click(this, EventArgs.Empty),
+                EditRecord = () => btnEdit_Click(this, EventArgs.Empty),
+                DeleteRecord = () => btnDelete_Click(this, EventArgs.Empty),
+                Undo = () => btnUndo_Click(this, EventArgs.Empty),
+                Refresh = RefreshCurrentTab,
+                FocusSearch = () => txtSearch.Focus(),
+                ExportCurrentTab = () => btnExport_Click(this, EventArgs.Empty),
+                ExportAllTabs = () => btnExportAll_Click(this, EventArgs.Empty),
+                ImportFromExcel = () => btnImport_Click(this, EventArgs.Empty),
+                OpenSettings = () => btnSettings_Click(this, EventArgs.Empty),
+                OpenAdvancedSearch = () => btnAdvancedSearch_Click(this, EventArgs.Empty),
+                SelectTab = SelectTabIfAvailable,
+                ClearSearchAndFilters = () =>
+                {
+                    txtSearch.Text = "";
+                    _advancedCriteria = null;
+                    UpdateFilterIndicator();
+                    RefreshCurrentTab();
+                },
+                IsUnlocked = () => _isUnlocked,
+                IsUndoEnabled = () => btnUndo.Enabled,
+                IsSearchFocused = () => txtSearch.Focused,
+            });
             _isUnlocked = IsCurrentUserAuthorized();
             ApplyLockState();
 
@@ -215,7 +210,7 @@ namespace DRED
                 int tabIndex = tabControl.SelectedIndex;
                 if (tabIndex == 0)
                 {
-                    RefreshDashboard();
+                    _dashboardManager.Refresh();
                     return;
                 }
 
@@ -276,7 +271,7 @@ namespace DRED
             }
             else
             {
-                ShowEmptyDetailState(dataTabIndex);
+                _detailPanelManager.ShowEmptyState(dataTabIndex);
             }
         }
 
@@ -325,14 +320,7 @@ namespace DRED
             btnUndo.Enabled = enabled && UndoManager.CanUndo;
             mnuEditUndo.Enabled = enabled && UndoManager.CanUndo;
 
-            for (int i = 0; i < _detailLabels.Length; i++)
-            {
-                var detailLabels = _detailLabels[i];
-                if (detailLabels == null) continue;
-
-                detailLabels.BtnDetailEdit.Enabled = enabled;
-                detailLabels.BtnDetailDelete.Enabled = enabled;
-            }
+            _detailPanelManager.SetEditDeleteEnabled(enabled);
 
             UpdateUserLockStatusLabel();
         }
@@ -482,539 +470,16 @@ namespace DRED
         {
             if (sender is not System.Windows.Forms.ListBox lb) return;
             int tabIndex = (int)(lb.Tag ?? 0);
-            if (lb.SelectedIndex < 0 || _dataTables[tabIndex] == null || _detailLabels == null)
+            if (lb.SelectedIndex < 0 || _dataTables[tabIndex] == null)
             {
-                ShowEmptyDetailState(tabIndex);
+                _detailPanelManager.ShowEmptyState(tabIndex);
                 return;
             }
-            if (lb.SelectedItem is not ListItem item) { ShowEmptyDetailState(tabIndex); return; }
+            if (lb.SelectedItem is not ListItem item) { _detailPanelManager.ShowEmptyState(tabIndex); return; }
             int rowIdx = item.RowIndex;
             var dt = _dataTables[tabIndex]!;
-            if (rowIdx < 0 || rowIdx >= dt.Rows.Count) { ShowEmptyDetailState(tabIndex); return; }
-            PopulateDetailPanel(tabIndex, dt.Rows[rowIdx]);
-        }
-
-        // ── Detail panel initialisation ───────────────────────────────────
-
-        private void InitializeDetailPanels()
-        {
-            _detailLabels = new DetailLabels[4];
-            for (int i = 0; i < 4; i++)
-                BuildDetailForTab(i, _detailPanels[i], TabAccentColors[ToUiTabIndex(i)]);
-        }
-
-        private void ReapplyDetailPanelColors()
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                var dl = _detailLabels[i];
-                if (dl == null) continue;
-
-                var accent         = TabAccentColors[ToUiTabIndex(i)];
-                var fieldNameColor = Color.FromArgb(0x99, 0x99, 0x99);
-                var valueColor     = Color.FromArgb(0xF1, 0xF1, 0xF1);
-
-                // Section headers
-                dl.HdrDeviceInfo.ForeColor   = accent;
-                dl.HdrSerialRange.ForeColor  = accent;
-                dl.HdrPurchaseInfo.ForeColor = accent;
-                dl.HdrIdentifiers.ForeColor  = accent;
-                dl.HdrComments.ForeColor     = accent;
-
-                // Field name labels
-                foreach (var lbl in dl.FieldNameLabels)
-                    lbl.ForeColor = fieldNameColor;
-
-                // Value labels
-                foreach (var lbl in dl.ValueLabels)
-                    lbl.ForeColor = valueColor;
-
-                // Re-apply boolean-specific colors that the bulk reset just overwrote
-                dl.ValEst.ForeColor = dl.ValEst.Text.StartsWith("✔")
-                    ? BooleanTrueColor : BooleanFalseColor;
-                dl.ValTextFile.ForeColor = dl.ValTextFile.Text.StartsWith("✔")
-                    ? BooleanTrueColor : BooleanFalseColor;
-
-                // Audit label
-                dl.LblAudit.ForeColor = Color.FromArgb(0x88, 0x88, 0x88);
-
-                // Empty-state label
-                dl.EmptyStateLabel.ForeColor = Color.FromArgb(0x66, 0x66, 0x66);
-
-                // Panel backgrounds
-                dl.ContentPanel.BackColor = Color.FromArgb(0x2D, 0x2D, 0x30);
-            }
-        }
-
-        private void InitializeDashboard()
-        {
-            if (_dashboardHostPanel == null) return;
-
-            _dashboardHostPanel.Controls.Clear();
-            _dashboardHostPanel.BackColor = ThemeManager.BackgroundColor;
-
-            var grid = new TableLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                ColumnCount = 2,
-                RowCount = 2,
-                BackColor = Color.Transparent,
-                Padding = new Padding(0),
-                Margin = new Padding(0),
-            };
-            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-            var labels = new DashboardLabels();
-            var accent = TabAccentColors[0];
-
-            var totalCard = CreateDashboardCard("TOTAL RECORDS", accent, out labels.TotalRecords);
-            labels.TotalRecords.Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold);
-            labels.PerTable = AddDashboardSecondaryLabel(totalCard);
-            grid.Controls.Add(totalCard, 0, 0);
-
-            var recentCard = CreateDashboardCard("RECENT ACTIVITY", accent, out labels.RecentActivity);
-            grid.Controls.Add(recentCard, 1, 0);
-
-            var statusCard = CreateDashboardCard("RECORDS BY STATUS", accent, out labels.StatusCounts);
-            grid.Controls.Add(statusCard, 0, 1);
-
-            var opcoCard = CreateDashboardCard("RECORDS BY OPCO2", accent, out labels.OpCoCounts);
-            grid.Controls.Add(opcoCard, 1, 1);
-
-            _dashboardHostPanel.Controls.Add(grid);
-            _dashboardLabels = labels;
-        }
-
-        private TableLayoutPanel CreateDashboardCard(string title, Color accent, out Label valueLabel)
-        {
-            var card = new TableLayoutPanel
-            {
-                ColumnCount = 1,
-                RowCount = 2,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Dock = DockStyle.Top,
-                Margin = new Padding(6),
-                Padding = new Padding(12, 10, 12, 12),
-                BackColor = ThemeManager.SurfaceColor,
-            };
-            card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-            var header = new Label
-            {
-                Text = title,
-                ForeColor = accent,
-                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                Margin = new Padding(0, 0, 0, 6),
-            };
-
-            valueLabel = new Label
-            {
-                Text = "—",
-                ForeColor = ThemeManager.TextColor,
-                Font = new Font("Segoe UI", 11F),
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                MaximumSize = new Size(480, 0),
-            };
-
-            card.Controls.Add(header, 0, 0);
-            card.Controls.Add(valueLabel, 0, 1);
-            return card;
-        }
-
-        private Label AddDashboardSecondaryLabel(TableLayoutPanel card)
-        {
-            card.RowCount += 1;
-            card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            var lbl = new Label
-            {
-                Text = "—",
-                ForeColor = ThemeManager.SecondaryTextColor,
-                Font = new Font("Segoe UI", 9F),
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                MaximumSize = new Size(480, 0),
-                Margin = new Padding(0, 8, 0, 0),
-            };
-            card.Controls.Add(lbl, 0, card.RowCount - 1);
-            return lbl;
-        }
-
-        private void RefreshDashboard()
-        {
-            if (_dashboardLabels == null) return;
-
-            var tableData = new Dictionary<string, DataTable>();
-            foreach (string table in TabTableNames)
-                tableData[table] = DatabaseHelper.GetTableData(table);
-
-            int total = tableData.Values.Sum(t => t.Rows.Count);
-            _dashboardLabels.TotalRecords.Text = total.ToString("N0");
-            _dashboardLabels.PerTable.Text = string.Join(Environment.NewLine,
-                tableData.Select(kvp => $"{kvp.Key}: {kvp.Value.Rows.Count:N0}"));
-
-            var recent = tableData
-                .SelectMany(kvp =>
-                    kvp.Value.AsEnumerable()
-                    .Select(row => new
-                    {
-                        Table = kvp.Key,
-                        DevCode = row["DevCode"] as string ?? "(blank)",
-                        Date = GetRecentDate(row)
-                    }))
-                .Where(x => x.Date.HasValue)
-                .OrderByDescending(x => x.Date)
-                .Take(5)
-                .Select(x => $"{x.DevCode} • {x.Table} • {x.Date:MM/dd/yyyy HH:mm}")
-                .ToList();
-            _dashboardLabels.RecentActivity.Text = recent.Count > 0
-                ? string.Join(Environment.NewLine, recent)
-                : "No recent activity.";
-
-            _dashboardLabels.StatusCounts.Text = BuildGroupedCounts(tableData.Values, "Status");
-            _dashboardLabels.OpCoCounts.Text = BuildGroupedCounts(tableData.Values, "OpCo2");
-            UpdateDashboardStatusBar(total);
-            Logger.Log("Dashboard refreshed.");
-        }
-
-        private static DateTime? GetRecentDate(DataRow row)
-        {
-            if (row.Table.Columns.Contains("ModifiedDate") && row["ModifiedDate"] is not DBNull)
-                return Convert.ToDateTime(row["ModifiedDate"]);
-            if (row.Table.Columns.Contains("CreatedDate") && row["CreatedDate"] is not DBNull)
-                return Convert.ToDateTime(row["CreatedDate"]);
-            return null;
-        }
-
-        private static string BuildGroupedCounts(IEnumerable<DataTable> tables, string columnName)
-        {
-            var groups = tables
-                .SelectMany(t => t.AsEnumerable())
-                .Select(r => r.Table.Columns.Contains(columnName) && r[columnName] is not DBNull
-                    ? (r[columnName] as string ?? string.Empty).Trim()
-                    : string.Empty)
-                .Select(v => string.IsNullOrWhiteSpace(v) ? "(blank)" : v)
-                .GroupBy(v => v, StringComparer.OrdinalIgnoreCase)
-                .OrderByDescending(g => g.Count())
-                .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(g => $"{g.Key}: {g.Count():N0}")
-                .ToList();
-
-            return groups.Count > 0 ? string.Join(Environment.NewLine, groups) : "No records.";
-        }
-
-        private void BuildDetailForTab(int tabIndex, System.Windows.Forms.Panel scrollPanel, Color accentColor)
-        {
-            var dl = new DetailLabels();
-
-            // Empty state label
-            var emptyLabel = new System.Windows.Forms.Label
-            {
-                Text      = "Select a record from the list",
-                ForeColor = Color.FromArgb(0x66, 0x66, 0x66),
-                Font      = new Font("Segoe UI", 12F),
-                TextAlign = ContentAlignment.MiddleCenter,
-                Dock      = DockStyle.Fill,
-                Visible   = true,
-                BackColor = Color.Transparent,
-            };
-            dl.EmptyStateLabel = emptyLabel;
-            scrollPanel.Controls.Add(emptyLabel);
-
-            // Content panel — fills the detail panel
-            var contentPanel = new System.Windows.Forms.Panel
-            {
-                Dock      = DockStyle.Fill,
-                Padding   = new Padding(8),
-                BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
-                Visible   = false,
-            };
-            dl.ContentPanel = contentPanel;
-            scrollPanel.Controls.Add(contentPanel);
-
-            // Outer 2-column grid: [50%] [50%], 5 rows
-            var outerGrid = new System.Windows.Forms.TableLayoutPanel
-            {
-                Dock            = DockStyle.Fill,
-                ColumnCount     = 2,
-                RowCount        = 5,
-                BackColor       = Color.Transparent,
-                CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
-                Padding         = Padding.Empty,
-                Margin          = Padding.Empty,
-            };
-            outerGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
-            outerGrid.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50));
-            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize)); // Row 0: devCard | serCard
-            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize)); // Row 1: purCard | idCard
-            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.AutoSize)); // Row 2: commCard (full width)
-            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 24)); // Row 3: audit label
-            outerGrid.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 44)); // Row 4: buttons
-            contentPanel.Controls.Add(outerGrid);
-
-            // ── Helper: create a section card ────────────────────────────
-            (System.Windows.Forms.TableLayoutPanel card, System.Windows.Forms.Label hdr) MakeCard(string title)
-            {
-                var card = new System.Windows.Forms.TableLayoutPanel
-                {
-                    ColumnCount  = 2,
-                    RowCount     = 1,
-                    AutoSize     = true,
-                    AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                    Dock         = DockStyle.Fill,
-                    BackColor    = Color.FromArgb(0x25, 0x25, 0x28),
-                    Margin       = new Padding(4),
-                    Padding      = new Padding(8, 6, 8, 8),
-                    CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.None,
-                };
-                card.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 75));
-                card.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100));
-                // Header
-                var hdr = new System.Windows.Forms.Label
-                {
-                    Text      = title,
-                    ForeColor = accentColor,
-                    Font      = new Font("Segoe UI Semibold", 8.5F, FontStyle.Bold),
-                    Dock      = DockStyle.Fill,
-                    TextAlign = ContentAlignment.BottomLeft,
-                    BackColor = Color.Transparent,
-                    Padding   = new Padding(0, 0, 0, 2),
-                };
-                card.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 26));
-                card.Controls.Add(hdr, 0, 0);
-                card.SetColumnSpan(hdr, 2);
-                return (card, hdr);
-            }
-
-            // ── Helper: add a field row to a card ────────────────────────
-            System.Windows.Forms.Label AddField(System.Windows.Forms.TableLayoutPanel card, string labelText)
-            {
-                int r = card.RowCount++;
-                card.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22));
-                var nm = new System.Windows.Forms.Label
-                {
-                    Text      = labelText,
-                    ForeColor = Color.FromArgb(0x99, 0x99, 0x99),
-                    Font      = new Font("Segoe UI", 8F),
-                    Dock      = DockStyle.Fill,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    BackColor = Color.Transparent,
-                };
-                var vl = new System.Windows.Forms.Label
-                {
-                    Text      = "\u2014",
-                    ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1),
-                    Font      = new Font("Segoe UI", 9F),
-                    Dock      = DockStyle.Fill,
-                    TextAlign = ContentAlignment.MiddleLeft,
-                    BackColor = Color.Transparent,
-                };
-                card.Controls.Add(nm, 0, r);
-                card.Controls.Add(vl, 1, r);
-                dl.FieldNameLabels.Add(nm);
-                dl.ValueLabels.Add(vl);
-                return vl;
-            }
-
-            // ── DEVICE INFORMATION (col 0, row 0) ────────────────────────
-            var (devCard, devHdr) = MakeCard("DEVICE INFORMATION");
-            dl.HdrDeviceInfo = devHdr;
-            dl.ValOpCo2   = AddField(devCard, "OpCo2:");
-            dl.ValStatus  = AddField(devCard, "Status:");
-            dl.ValMFR     = AddField(devCard, "MFR:");
-            dl.ValDevCode = AddField(devCard, "Dev Code:");
-            outerGrid.Controls.Add(devCard, 0, 0);
-
-            // ── SERIAL RANGE & QUANTITY (col 1, row 0) ───────────────────
-            var (serCard, serHdr) = MakeCard("SERIAL RANGE & QUANTITY");
-            dl.HdrSerialRange = serHdr;
-            dl.ValBegSer     = AddField(serCard, "Beg Ser:");
-            dl.ValEndSer     = AddField(serCard, "End Ser:");
-            dl.ValQty        = AddField(serCard, "Qty:");
-            dl.ValOOSSerials = AddField(serCard, "OOS:");
-            outerGrid.Controls.Add(serCard, 1, 0);
-
-            // ── PURCHASE INFORMATION (col 0, row 1) ──────────────────────
-            var (purCard, purHdr) = MakeCard("PURCHASE INFORMATION");
-            dl.HdrPurchaseInfo = purHdr;
-            dl.ValPODate   = AddField(purCard, "PO Date:");
-            dl.ValPONumber = AddField(purCard, "PO Number:");
-            dl.ValVintage  = AddField(purCard, "Vintage:");
-            dl.ValRecvDate = AddField(purCard, "Est Date:");
-            dl.ValUnitCost = AddField(purCard, "Unit Cost:");
-            outerGrid.Controls.Add(purCard, 0, 1);
-
-            // ── IDENTIFIERS (col 1, row 1) ───────────────────────────────
-            var (idCard, idHdr) = MakeCard("IDENTIFIERS");
-            dl.HdrIdentifiers = idHdr;
-            dl.ValCID      = AddField(idCard, "CID:");
-            dl.ValMENumber = AddField(idCard, "M.E. #:");
-            dl.ValPurCode  = AddField(idCard, "Pur Code:");
-            dl.ValEst      = AddField(idCard, "Est.:");
-            dl.ValTextFile = AddField(idCard, "Text File:");
-            outerGrid.Controls.Add(idCard, 1, 1);
-
-            // ── COMMENTS & NOTES (full width, row 2) ─────────────────────
-            var (commCard, commHdr) = MakeCard("COMMENTS & NOTES");
-            dl.HdrComments = commHdr;
-            int commRow = commCard.RowCount++;
-            commCard.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 54));
-            var commLabel = new System.Windows.Forms.Label
-            {
-                Text      = "\u2014",
-                ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1),
-                Font      = new Font("Segoe UI", 9F),
-                Dock      = DockStyle.Fill,
-                TextAlign = ContentAlignment.TopLeft,
-                BackColor = Color.Transparent,
-            };
-            commCard.Controls.Add(commLabel, 0, commRow);
-            commCard.SetColumnSpan(commLabel, 2);
-            dl.ValComments = commLabel;
-            dl.ValueLabels.Add(commLabel);
-            outerGrid.Controls.Add(commCard, 0, 2);
-            outerGrid.SetColumnSpan(commCard, 2);
-
-            // ── Audit label (full width, row 3) ──────────────────────────
-            var auditLabel = new System.Windows.Forms.Label
-            {
-                Text      = "",
-                ForeColor = Color.FromArgb(0x88, 0x88, 0x88),
-                Font      = new Font("Segoe UI", 8F, FontStyle.Italic),
-                Dock      = DockStyle.Fill,
-                TextAlign = ContentAlignment.MiddleLeft,
-                BackColor = Color.Transparent,
-                Margin    = new Padding(8, 0, 0, 0),
-            };
-            dl.LblAudit = auditLabel;
-            outerGrid.Controls.Add(auditLabel, 0, 3);
-            outerGrid.SetColumnSpan(auditLabel, 2);
-
-            // ── Action buttons (full width, row 4) ───────────────────────
-            var btnDetailEdit     = CreateDetailButton("Edit",     accentColor,                      (s, ev) => btnEdit_Click(s!, ev));
-            var btnDetailDelete   = CreateDetailButton("Delete",   Color.FromArgb(0xEF, 0x53, 0x50), (s, ev) => btnDelete_Click(s!, ev));
-            var btnDetailGenerate = CreateDetailButton("Generate", accentColor,                      (s, ev) => btnGenerate_Click(s!, ev));
-            var btnPanel = new System.Windows.Forms.FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents  = false,
-                AutoSize      = false,
-                Dock          = DockStyle.Fill,
-                BackColor     = Color.Transparent,
-                Margin        = Padding.Empty,
-                Padding       = Padding.Empty,
-            };
-            btnPanel.Controls.Add(btnDetailEdit);
-            btnPanel.Controls.Add(btnDetailDelete);
-            btnPanel.Controls.Add(btnDetailGenerate);
-            outerGrid.Controls.Add(btnPanel, 0, 4);
-            outerGrid.SetColumnSpan(btnPanel, 2);
-            dl.BtnDetailEdit     = btnDetailEdit;
-            dl.BtnDetailDelete   = btnDetailDelete;
-            dl.BtnDetailGenerate = btnDetailGenerate;
-
-            _detailLabels[tabIndex] = dl;
-        }
-
-        private MaterialSkin.Controls.MaterialButton CreateDetailButton(
-            string text, Color color, EventHandler handler)
-        {
-            var btn = new MaterialSkin.Controls.MaterialButton
-            {
-                Text           = text,
-                Type           = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,
-                HighEmphasis   = false,
-                UseAccentColor = false,
-                AutoSize       = true,
-            };
-            btn.Click += handler;
-            return btn;
-        }
-
-        // ── Detail panel population ──────────────────────────────────────
-
-        private void PopulateDetailPanel(int tabIndex, DataRow row)
-        {
-            var dl = _detailLabels[tabIndex];
-            if (dl == null) return;
-
-            static string S(object? v) => v is DBNull || v == null ? "\u2014" : v.ToString() ?? "\u2014";
-            static string D(object? v) => v is DBNull || v == null ? "\u2014" : Convert.ToDateTime(v).ToString("MM/dd/yyyy");
-            static string C(object? v) => v is DBNull || v == null ? "\u2014" : Convert.ToDecimal(v).ToString("$#,##0.00");
-
-            dl.ValOpCo2.Text   = S(row["OpCo2"]);
-            dl.ValStatus.Text  = S(row["Status"]);
-            dl.ValMFR.Text     = S(row["MFR"]);
-            dl.ValDevCode.Text = S(row["DevCode"]);
-
-            dl.ValBegSer.Text = S(row["BegSer"]);
-            dl.ValEndSer.Text = S(row["EndSer"]);
-            dl.ValQty.Text    = S(row["Qty"]);
-
-            string oosRaw = row.Table.Columns.Contains("OOSSerials") && !(row["OOSSerials"] is DBNull)
-                ? row["OOSSerials"] as string ?? "" : "";
-            int oosCount = string.IsNullOrEmpty(oosRaw) ? 0
-                : oosRaw.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
-                         .Count(s => !string.IsNullOrWhiteSpace(s));
-            dl.ValOOSSerials.Text = oosCount > 0 ? oosCount.ToString() : "\u2014";
-
-            dl.ValPODate.Text   = D(row["PODate"]);
-            dl.ValPONumber.Text = S(row["PONumber"]);
-            dl.ValVintage.Text  = S(row["Vintage"]);
-            dl.ValRecvDate.Text = D(row["RecvDate"]);
-            dl.ValUnitCost.Text = C(row["UnitCost"]);
-
-            dl.ValCID.Text      = S(row["CID"]);
-            dl.ValMENumber.Text = S(row["MENumber"]);
-            dl.ValPurCode.Text  = S(row["PurCode"]);
-            bool estVal = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]);
-            dl.ValEst.Text = estVal ? "✔ Yes" : "✘ No";
-            dl.ValEst.ForeColor = estVal ? BooleanTrueColor : BooleanFalseColor;
-
-            bool tfVal = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]);
-            dl.ValTextFile.Text = tfVal ? "✔ Yes" : "✘ No";
-            dl.ValTextFile.ForeColor = tfVal ? BooleanTrueColor : BooleanFalseColor;
-
-            dl.ValComments.Text = S(row["Comments"]);
-
-            var auditParts = new List<string>();
-            if (row.Table.Columns.Contains("CreatedBy") &&
-                !(row["CreatedBy"] is DBNull) &&
-                row["CreatedBy"] is string cb && cb.Length > 0)
-            {
-                string cd = row.Table.Columns.Contains("CreatedDate") && !(row["CreatedDate"] is DBNull)
-                    ? Convert.ToDateTime(row["CreatedDate"]).ToString("MM/dd/yyyy") : "";
-                auditParts.Add($"Created by {cb}" + (cd.Length > 0 ? $" on {cd}" : ""));
-            }
-            if (row.Table.Columns.Contains("ModifiedBy") &&
-                !(row["ModifiedBy"] is DBNull) &&
-                row["ModifiedBy"] is string mb && mb.Length > 0)
-            {
-                string md = row.Table.Columns.Contains("ModifiedDate") && !(row["ModifiedDate"] is DBNull)
-                    ? Convert.ToDateTime(row["ModifiedDate"]).ToString("MM/dd/yyyy") : "";
-                auditParts.Add($"Modified by {mb}" + (md.Length > 0 ? $" on {md}" : ""));
-            }
-            dl.LblAudit.Text = string.Join("   \u2022   ", auditParts);
-
-            dl.EmptyStateLabel.Visible = false;
-            dl.ContentPanel.Visible    = true;
-        }
-
-        private void ShowEmptyDetailState(int tabIndex)
-        {
-            if (_detailLabels == null || tabIndex < 0 || tabIndex >= _detailLabels.Length) return;
-            var dl = _detailLabels[tabIndex];
-            if (dl == null) return;
-            dl.ContentPanel.Visible    = false;
-            dl.EmptyStateLabel.Visible = true;
+            if (rowIdx < 0 || rowIdx >= dt.Rows.Count) { _detailPanelManager.ShowEmptyState(tabIndex); return; }
+            _detailPanelManager.PopulateDetail(tabIndex, dt.Rows[rowIdx]);
         }
 
         // ── Tab / search event handlers ───────────────────────────────────
@@ -1113,7 +578,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                ReapplyDetailPanelColors();
+                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -1174,7 +639,7 @@ namespace DRED
             {
                 _dialogOpen = false;
                 DatabaseHelper.UnlockRecord(CurrentTable, id);
-                ReapplyDetailPanelColors();
+                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -1239,7 +704,7 @@ namespace DRED
             }
             finally
             {
-                ReapplyDetailPanelColors();
+                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -1319,7 +784,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                ReapplyDetailPanelColors();
+                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -1334,7 +799,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                ReapplyDetailPanelColors();
+                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -1349,7 +814,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                ReapplyDetailPanelColors();
+                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -1369,7 +834,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                ReapplyDetailPanelColors();
+                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -1498,108 +963,7 @@ namespace DRED
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
-
-            if (e.Control && e.Shift)
-            {
-                switch (e.KeyCode)
-                {
-                    case Keys.F:
-                        e.Handled = true;
-                        btnAdvancedSearch_Click(this, EventArgs.Empty);
-                        return;
-                    case Keys.S:
-                        e.Handled = true;
-                        btnExportAll_Click(this, EventArgs.Empty);
-                        return;
-                }
-            }
-
-            if (e.Control)
-            {
-                switch (e.KeyCode)
-                {
-                    case Keys.N:
-                        e.Handled = true;
-                        if (_isUnlocked)
-                            btnAdd_Click(this, EventArgs.Empty);
-                        return;
-                    case Keys.E:
-                        e.Handled = true;
-                        if (_isUnlocked)
-                            btnEdit_Click(this, EventArgs.Empty);
-                        return;
-                    case Keys.Z:
-                        e.Handled = true;
-                        if (btnUndo.Enabled)
-                            btnUndo_Click(this, EventArgs.Empty);
-                        return;
-                    case Keys.R:
-                        e.Handled = true;
-                        RefreshCurrentTab();
-                        return;
-                    case Keys.F:
-                        e.Handled = true;
-                        txtSearch.Focus();
-                        return;
-                    case Keys.S:
-                        e.Handled = true;
-                        btnExport_Click(this, EventArgs.Empty);
-                        return;
-                    case Keys.I:
-                        e.Handled = true;
-                        if (_isUnlocked)
-                            btnImport_Click(this, EventArgs.Empty);
-                        return;
-                    case Keys.Oemcomma:
-                        e.Handled = true;
-                        if (_isUnlocked)
-                            btnSettings_Click(this, EventArgs.Empty);
-                        return;
-                    case Keys.D1:
-                        e.Handled = true;
-                        SelectTabIfAvailable(0);
-                        return;
-                    case Keys.D2:
-                        e.Handled = true;
-                        SelectTabIfAvailable(1);
-                        return;
-                    case Keys.D3:
-                        e.Handled = true;
-                        SelectTabIfAvailable(2);
-                        return;
-                    case Keys.D4:
-                        e.Handled = true;
-                        SelectTabIfAvailable(3);
-                        return;
-                    case Keys.D5:
-                        e.Handled = true;
-                        SelectTabIfAvailable(4);
-                        return;
-                }
-            }
-
-            switch (e.KeyCode)
-            {
-                case Keys.F5:
-                    e.Handled = true;
-                    RefreshCurrentTab();
-                    return;
-                case Keys.Delete:
-                    if (!txtSearch.Focused)
-                    {
-                        e.Handled = true;
-                        if (_isUnlocked)
-                            btnDelete_Click(this, EventArgs.Empty);
-                    }
-                    return;
-                case Keys.Escape:
-                    e.Handled = true;
-                    txtSearch.Text    = "";
-                    _advancedCriteria = null;
-                    UpdateFilterIndicator();
-                    RefreshCurrentTab();
-                    return;
-            }
+            if (_shortcutHandler.HandleKeyDown(e)) return;
         }
 
         private void UpdateFilterIndicator()
