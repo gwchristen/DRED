@@ -44,18 +44,18 @@ namespace DRED
             var dl = _detailLabels[dataTabIndex];
             if (dl == null) return;
 
-            static string S(object? v) => v is DBNull || v == null ? "—" : v.ToString() ?? "—";
-            static string D(object? v) => v is DBNull || v == null ? "—" : Convert.ToDateTime(v).ToString("MM/dd/yyyy");
-            static string C(object? v) => v is DBNull || v == null ? "—" : Convert.ToDecimal(v).ToString("$#,##0.00");
+            static string FormatString(object? v) => v is DBNull || v == null ? "—" : v.ToString() ?? "—";
+            static string FormatDate(object? v) => v is DBNull || v == null ? "—" : Convert.ToDateTime(v).ToString("MM/dd/yyyy");
+            static string FormatCurrency(object? v) => v is DBNull || v == null ? "—" : Convert.ToDecimal(v).ToString("$#,##0.00");
 
-            dl.ValOpCo2.Text = S(row["OpCo2"]);
-            dl.ValStatus.Text = S(row["Status"]);
-            dl.ValMFR.Text = S(row["MFR"]);
-            dl.ValDevCode.Text = S(row["DevCode"]);
+            dl.ValOpCo2.Text = FormatString(row["OpCo2"]);
+            dl.ValStatus.Text = FormatString(row["Status"]);
+            dl.ValMFR.Text = FormatString(row["MFR"]);
+            dl.ValDevCode.Text = FormatString(row["DevCode"]);
 
-            dl.ValBegSer.Text = S(row["BegSer"]);
-            dl.ValEndSer.Text = S(row["EndSer"]);
-            dl.ValQty.Text = S(row["Qty"]);
+            dl.ValBegSer.Text = FormatString(row["BegSer"]);
+            dl.ValEndSer.Text = FormatString(row["EndSer"]);
+            dl.ValQty.Text = FormatString(row["Qty"]);
 
             string oosRaw = row.Table.Columns.Contains("OOSSerials") && row["OOSSerials"] is not DBNull
                 ? row["OOSSerials"] as string ?? "" : "";
@@ -64,15 +64,15 @@ namespace DRED
                     .Count(s => !string.IsNullOrWhiteSpace(s));
             dl.ValOOSSerials.Text = oosCount > 0 ? oosCount.ToString() : "—";
 
-            dl.ValPODate.Text = D(row["PODate"]);
-            dl.ValPONumber.Text = S(row["PONumber"]);
-            dl.ValVintage.Text = S(row["Vintage"]);
-            dl.ValRecvDate.Text = D(row["RecvDate"]);
-            dl.ValUnitCost.Text = C(row["UnitCost"]);
+            dl.ValPODate.Text = FormatDate(row["PODate"]);
+            dl.ValPONumber.Text = FormatString(row["PONumber"]);
+            dl.ValVintage.Text = FormatString(row["Vintage"]);
+            dl.ValRecvDate.Text = FormatDate(row["RecvDate"]);
+            dl.ValUnitCost.Text = FormatCurrency(row["UnitCost"]);
 
-            dl.ValCID.Text = S(row["CID"]);
-            dl.ValMENumber.Text = S(row["MENumber"]);
-            dl.ValPurCode.Text = S(row["PurCode"]);
+            dl.ValCID.Text = FormatString(row["CID"]);
+            dl.ValMENumber.Text = FormatString(row["MENumber"]);
+            dl.ValPurCode.Text = FormatString(row["PurCode"]);
             bool estVal = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]);
             dl.ValEst.Text = estVal ? "✔ Yes" : "✘ No";
             dl.ValEst.ForeColor = estVal ? BooleanTrueColor : BooleanFalseColor;
@@ -81,7 +81,7 @@ namespace DRED
             dl.ValTextFile.Text = tfVal ? "✔ Yes" : "✘ No";
             dl.ValTextFile.ForeColor = tfVal ? BooleanTrueColor : BooleanFalseColor;
 
-            dl.ValComments.Text = S(row["Comments"]);
+            dl.ValComments.Text = FormatString(row["Comments"]);
 
             var auditParts = new List<string>();
             if (row.Table.Columns.Contains("CreatedBy") &&
@@ -335,9 +335,9 @@ namespace DRED
             outerGrid.Controls.Add(auditLabel, 0, 3);
             outerGrid.SetColumnSpan(auditLabel, 2);
 
-            var btnDetailEdit = CreateDetailButton("Edit", accentColor, _editHandler!);
-            var btnDetailDelete = CreateDetailButton("Delete", Color.FromArgb(0xEF, 0x53, 0x50), _deleteHandler!);
-            var btnDetailGenerate = CreateDetailButton("Generate", accentColor, _generateHandler!);
+            var btnDetailEdit = CreateDetailButton("Edit", _editHandler!);
+            var btnDetailDelete = CreateDetailButton("Delete", _deleteHandler!);
+            var btnDetailGenerate = CreateDetailButton("Generate", _generateHandler!);
             var btnPanel = new FlowLayoutPanel
             {
                 FlowDirection = FlowDirection.LeftToRight,
@@ -360,9 +360,8 @@ namespace DRED
             _detailLabels[tabIndex] = dl;
         }
 
-        private static MaterialButton CreateDetailButton(string text, Color color, EventHandler handler)
+        private static MaterialButton CreateDetailButton(string text, EventHandler handler)
         {
-            _ = color;
             var btn = new MaterialButton
             {
                 Text = text,

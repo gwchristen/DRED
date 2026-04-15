@@ -198,7 +198,9 @@ namespace DRED
 
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                string? newDirectory = Path.GetDirectoryName(newPath);
+                if (!string.IsNullOrWhiteSpace(newDirectory))
+                    Directory.CreateDirectory(newDirectory);
                 File.Copy(legacyPath, newPath);
                 Logger.Log($"Migrated lookup_codes.json from '{legacyPath}' to '{newPath}'.");
             }

@@ -75,7 +75,7 @@ namespace DRED
             }
 
             AppSettings.DatabasePath = path;
-            string previousLookupCodesPath = AppSettings.LookupCodesPath ?? string.Empty;
+            string previousLookupCodesPath = AppSettings.LookupCodesPath;
             AppSettings.LookupCodesPath = txtLookupCodesPath.Text.Trim();
             AppSettings.AutoRefreshInterval = (int)nudAutoRefresh.Value;
             AppSettings.BackupIntervalHours = (int)nudBackupInterval.Value;
