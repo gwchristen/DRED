@@ -24,8 +24,8 @@ namespace DRED
 
         private static readonly Color BooleanTrueColor  = Color.FromArgb(0x66, 0xBB, 0x6A); // Material Green 400
         private static readonly Color BooleanFalseColor = Color.FromArgb(0xEF, 0x53, 0x50); // Material Red 400
-        private static readonly Color SearchPanelDefaultColor = Color.FromArgb(37, 37, 40);
-        private static readonly Color SearchPanelFilteredColor = Color.FromArgb(30, 35, 50);
+        private static readonly Color SearchPanelDefaultColor = ThemeManager.SearchPanelColor;
+        private static readonly Color SearchPanelFilteredColor = ThemeManager.SearchPanelFilteredColor;
 
         // Populated by Designer's SetupTabWithSplit; arrays allocated here as field initializers
         private System.Windows.Forms.SplitContainer[] _splitContainers = new System.Windows.Forms.SplitContainer[4];
@@ -82,6 +82,7 @@ namespace DRED
         {
             InitializeComponent();
             MaterialSkinManager.Instance.AddFormToManage(this);
+            Logger.Log("Main form initialized.");
 
             cboFilterColumn.Items.AddRange(new object[] {
                 "All Columns", "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer",
@@ -103,6 +104,7 @@ namespace DRED
             {
                 this.BeginInvoke(new Action(() =>
                 {
+                    Logger.Log("Main form shown; loading initial tab data.");
                     foreach (var sc in _splitContainers)
                     {
                         if (sc == null) continue;
@@ -127,6 +129,7 @@ namespace DRED
                     }
 
                     RefreshCurrentTab();
+                    UpdateUndoState();
                 }));
             };
 
@@ -246,6 +249,8 @@ namespace DRED
             mnuFileImport.Enabled = enabled;
             mnuTools.Enabled = enabled;
             mnuEdit.Enabled = enabled;
+            btnUndo.Enabled = enabled && UndoManager.CanUndo;
+            mnuEditUndo.Enabled = enabled && UndoManager.CanUndo;
 
             for (int i = 0; i < _detailLabels.Length; i++)
             {
@@ -257,6 +262,13 @@ namespace DRED
             }
 
             UpdateUserLockStatusLabel();
+        }
+
+        private void UpdateUndoState()
+        {
+            bool canUndo = _isUnlocked && UndoManager.CanUndo;
+            btnUndo.Enabled = canUndo;
+            mnuEditUndo.Enabled = canUndo;
         }
 
         // ── ListBox population ───────────────────────────────────────────
@@ -771,6 +783,7 @@ namespace DRED
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
             tabSelector?.Invalidate();
+            Logger.Log($"Switched to tab: {CurrentTable}.");
             RefreshCurrentTab();
         }
 
@@ -798,6 +811,42 @@ namespace DRED
             RefreshCurrentTab();
         }
 
+        private void btnUndo_Click(object sender, EventArgs e)
+        {
+            var action = UndoManager.Pop();
+            if (action == null)
+            {
+                UpdateUndoState();
+                return;
+            }
+
+            try
+            {
+                switch (action.ActionType)
+                {
+                    case UndoActionType.Delete:
+                        DatabaseHelper.InsertRecord(action.TableName, action.PreviousData);
+                        break;
+                    case UndoActionType.Edit:
+                        DatabaseHelper.UpdateRecord(action.TableName, action.RecordId, action.PreviousData);
+                        break;
+                }
+
+                Logger.Log($"Undo executed: {action.ActionType} on [{action.TableName}] record [{action.RecordId}] by {Environment.UserName}.");
+                RefreshCurrentTab();
+                MessageBox.Show("Last action undone.", "Undo", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Undo action failed.", ex);
+                ShowDbError(ex);
+            }
+            finally
+            {
+                UpdateUndoState();
+            }
+        }
+
         // ── CRUD handlers ────────────────────────────────────────────────
 
         private void btnAdd_Click(object sender, EventArgs e)
@@ -811,7 +860,9 @@ namespace DRED
                     try
                     {
                         DatabaseHelper.InsertRecord(CurrentTable, form.Result);
+                        Logger.Log($"User added a record to [{CurrentTable}].");
                         RefreshCurrentTab();
+                        UpdateUndoState();
                     }
                     catch (Exception ex) { ShowDbError(ex); }
                 }
@@ -850,12 +901,29 @@ namespace DRED
                 using var form = new RecordForm(existing);
                 if (form.ShowDialog(this) == DialogResult.OK && form.Result != null)
                 {
+                    var undoAction = new UndoableAction
+                    {
+                        ActionType = UndoActionType.Edit,
+                        TableName = CurrentTable,
+                        RecordId = id,
+                        PreviousData = existing,
+                        Timestamp = DateTime.Now,
+                        UserName = Environment.UserName,
+                    };
                     try
                     {
+                        UndoManager.Push(undoAction);
                         DatabaseHelper.UpdateRecord(CurrentTable, id, form.Result);
+                        Logger.Log($"User edited record [{id}] in [{CurrentTable}].");
                         RefreshCurrentTab();
+                        UpdateUndoState();
                     }
-                    catch (Exception ex) { ShowDbError(ex); }
+                    catch (Exception ex)
+                    {
+                        if (ReferenceEquals(UndoManager.Peek(), undoAction))
+                            UndoManager.Pop();
+                        ShowDbError(ex);
+                    }
                 }
             }
             finally
@@ -881,12 +949,29 @@ namespace DRED
             if (MessageBox.Show("Are you sure you want to delete this record?", "Delete",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
+                var undoAction = new UndoableAction
+                {
+                    ActionType = UndoActionType.Delete,
+                    TableName = CurrentTable,
+                    RecordId = id,
+                    PreviousData = RowToRecordData(row),
+                    Timestamp = DateTime.Now,
+                    UserName = Environment.UserName,
+                };
                 try
                 {
+                    UndoManager.Push(undoAction);
                     DatabaseHelper.DeleteRecord(CurrentTable, id);
+                    Logger.Log($"User deleted record [{id}] from [{CurrentTable}].");
                     RefreshCurrentTab();
+                    UpdateUndoState();
                 }
-                catch (Exception ex) { ShowDbError(ex); }
+                catch (Exception ex)
+                {
+                    if (ReferenceEquals(UndoManager.Peek(), undoAction))
+                        UndoManager.Pop();
+                    ShowDbError(ex);
+                }
             }
         }
 
@@ -1040,6 +1125,7 @@ namespace DRED
                 dlg.FileName = defaultPath;
 
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
+            Logger.Log($"Starting import from '{dlg.FileName}'.");
 
             var progress = new System.Text.StringBuilder();
             bool hasError = false;
@@ -1052,6 +1138,7 @@ namespace DRED
             {
                 hasError = true;
                 progress.AppendLine($"ERROR: {ex.Message}");
+                Logger.LogError("Import failed.", ex);
             }
             finally
             {
@@ -1062,6 +1149,7 @@ namespace DRED
                 hasError ? "Import \u2013 Errors Occurred" : "Import Complete",
                 MessageBoxButtons.OK,
                 hasError ? MessageBoxIcon.Warning : MessageBoxIcon.Information);
+            Logger.Log(hasError ? "Import completed with errors." : "Import completed successfully.");
 
             RefreshCurrentTab();
         }
@@ -1076,6 +1164,7 @@ namespace DRED
                 FileName   = $"{CurrentTable}_{DateTime.Now:yyyyMMdd}.xlsx",
             };
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
+            Logger.Log($"Export current tab [{CurrentTable}] to '{dlg.FileName}'.");
 
             try
             {
@@ -1084,6 +1173,7 @@ namespace DRED
                 Cursor = Cursors.Default;
                 MessageBox.Show($"Data exported to:\n{dlg.FileName}", "Export Complete",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Logger.Log($"Export complete for [{CurrentTable}] to '{dlg.FileName}'.");
             }
             catch (Exception ex)
             {
@@ -1102,6 +1192,7 @@ namespace DRED
                 FileName   = $"DRED_Export_{DateTime.Now:yyyyMMdd}.xlsx",
             };
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
+            Logger.Log($"Export all tabs to '{dlg.FileName}'.");
 
             try
             {
@@ -1110,6 +1201,7 @@ namespace DRED
                 Cursor = Cursors.Default;
                 MessageBox.Show($"All data exported to:\n{dlg.FileName}", "Export Complete",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
+                Logger.Log($"Export all tabs complete to '{dlg.FileName}'.");
             }
             catch (Exception ex)
             {
@@ -1152,6 +1244,11 @@ namespace DRED
                         e.Handled = true;
                         if (_isUnlocked)
                             btnEdit_Click(this, EventArgs.Empty);
+                        return;
+                    case Keys.Z:
+                        e.Handled = true;
+                        if (btnUndo.Enabled)
+                            btnUndo_Click(this, EventArgs.Empty);
                         return;
                     case Keys.R:
                         e.Handled = true;
@@ -1237,6 +1334,7 @@ namespace DRED
             {
                 _isUnlocked = false;
                 ApplyLockState();
+                Logger.Log("Application locked by user.");
                 return;
             }
 
@@ -1245,6 +1343,7 @@ namespace DRED
             {
                 _isUnlocked = true;
                 ApplyLockState();
+                Logger.Log("Application unlocked by user.");
             }
         }
 
@@ -1287,6 +1386,7 @@ namespace DRED
 
         private static void ShowDbError(Exception ex)
         {
+            Logger.LogError("Database/UI operation failed.", ex);
             string msg = ex.Message;
             if (ex is System.Data.OleDb.OleDbException oleEx)
             {

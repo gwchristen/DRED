@@ -22,9 +22,17 @@ namespace DRED
 
         public static OleDbConnection OpenConnection()
         {
-            var conn = new OleDbConnection(GetConnectionString());
-            conn.Open();
-            return conn;
+            try
+            {
+                var conn = new OleDbConnection(GetConnectionString());
+                conn.Open();
+                return conn;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to open database connection.", ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -332,8 +340,10 @@ CREATE TABLE [RecordLocks] (
 
         public static void InsertRecord(string tableName, RecordData data)
         {
-            using var conn = OpenConnection();
-            string sql = $@"
+            try
+            {
+                using var conn = OpenConnection();
+                string sql = $@"
 INSERT INTO [{tableName}]
     ([OpCo2],[Status],[MFR],[DevCode],[BegSer],[EndSer],[Qty],
      [PODate],[Vintage],[PONumber],[RecvDate],[UnitCost],[CID],[MENumber],
@@ -341,17 +351,26 @@ INSERT INTO [{tableName}]
 VALUES
     (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
-            using var cmd = new OleDbCommand(sql, conn);
-            AddParameters(cmd, data);
-            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
-            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
-            cmd.ExecuteNonQuery();
+                using var cmd = new OleDbCommand(sql, conn);
+                AddParameters(cmd, data);
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
+                cmd.ExecuteNonQuery();
+                Logger.Log($"Inserted record into [{tableName}].");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to insert record into [{tableName}].", ex);
+                throw;
+            }
         }
 
         public static void UpdateRecord(string tableName, int id, RecordData data)
         {
-            using var conn = OpenConnection();
-            string sql = $@"
+            try
+            {
+                using var conn = OpenConnection();
+                string sql = $@"
 UPDATE [{tableName}] SET
     [OpCo2]=?, [Status]=?, [MFR]=?, [DevCode]=?,
     [BegSer]=?, [EndSer]=?, [Qty]=?,
@@ -361,21 +380,37 @@ UPDATE [{tableName}] SET
     [ModifiedBy]=?, [ModifiedDate]=?
 WHERE [Id]=?";
 
-            using var cmd = new OleDbCommand(sql, conn);
-            AddParameters(cmd, data);
-            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
-            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
-            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
-            cmd.ExecuteNonQuery();
+                using var cmd = new OleDbCommand(sql, conn);
+                AddParameters(cmd, data);
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
+                cmd.ExecuteNonQuery();
+                Logger.Log($"Updated record [{id}] in [{tableName}].");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to update record [{id}] in [{tableName}].", ex);
+                throw;
+            }
         }
 
         public static void DeleteRecord(string tableName, int id)
         {
-            using var conn = OpenConnection();
-            string sql = $"DELETE FROM [{tableName}] WHERE [Id]=?";
-            using var cmd = new OleDbCommand(sql, conn);
-            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
-            cmd.ExecuteNonQuery();
+            try
+            {
+                using var conn = OpenConnection();
+                string sql = $"DELETE FROM [{tableName}] WHERE [Id]=?";
+                using var cmd = new OleDbCommand(sql, conn);
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
+                cmd.ExecuteNonQuery();
+                Logger.Log($"Deleted record [{id}] from [{tableName}].");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to delete record [{id}] from [{tableName}].", ex);
+                throw;
+            }
         }
 
         private static void AddParameters(OleDbCommand cmd, RecordData data)
@@ -444,53 +479,61 @@ WHERE [Id]=?";
 
         public static bool TryLockRecord(string tableName, int recordId, out string lockedBy)
         {
-            using var conn = OpenConnection();
-
-            // Clean stale locks (>30 min)
-            using (var cleanCmd = new OleDbCommand("DELETE FROM [RecordLocks] WHERE [LockedAt] < ?", conn))
+            try
             {
-                cleanCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now.AddMinutes(-RecordLockTimeoutMinutes) });
-                cleanCmd.ExecuteNonQuery();
-            }
+                using var conn = OpenConnection();
 
-            // Check for existing lock
-            string? existing;
-            using (var checkCmd = new OleDbCommand(
-                "SELECT [LockedBy] FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
+                // Clean stale locks (>30 min)
+                using (var cleanCmd = new OleDbCommand("DELETE FROM [RecordLocks] WHERE [LockedAt] < ?", conn))
+                {
+                    cleanCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now.AddMinutes(-RecordLockTimeoutMinutes) });
+                    cleanCmd.ExecuteNonQuery();
+                }
+
+                // Check for existing lock
+                string? existing;
+                using (var checkCmd = new OleDbCommand(
+                    "SELECT [LockedBy] FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
+                {
+                    checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                    checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
+                    existing = checkCmd.ExecuteScalar() as string;
+                }
+
+                if (existing != null && !string.Equals(existing, Environment.UserName, StringComparison.OrdinalIgnoreCase))
+                {
+                    lockedBy = existing;
+                    return false;
+                }
+
+                // Remove any existing lock by same user
+                using (var removeCmd = new OleDbCommand(
+                    "DELETE FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
+                {
+                    removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                    removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
+                    removeCmd.ExecuteNonQuery();
+                }
+
+                // Insert new lock
+                using (var insertCmd = new OleDbCommand(
+                    "INSERT INTO [RecordLocks] ([TableName],[RecordId],[LockedBy],[LockedAt]) VALUES (?,?,?,?)", conn))
+                {
+                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
+                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
+                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
+                    insertCmd.ExecuteNonQuery();
+                }
+
+                lockedBy = Environment.UserName;
+                return true;
+            }
+            catch (Exception ex)
             {
-                checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                existing = checkCmd.ExecuteScalar() as string;
+                Logger.LogError($"Failed to lock record [{recordId}] in [{tableName}].", ex);
+                throw;
             }
-
-            if (existing != null && !string.Equals(existing, Environment.UserName, StringComparison.OrdinalIgnoreCase))
-            {
-                lockedBy = existing;
-                return false;
-            }
-
-            // Remove any existing lock by same user
-            using (var removeCmd = new OleDbCommand(
-                "DELETE FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
-            {
-                removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                removeCmd.ExecuteNonQuery();
-            }
-
-            // Insert new lock
-            using (var insertCmd = new OleDbCommand(
-                "INSERT INTO [RecordLocks] ([TableName],[RecordId],[LockedBy],[LockedAt]) VALUES (?,?,?,?)", conn))
-            {
-                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
-                insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
-                insertCmd.ExecuteNonQuery();
-            }
-
-            lockedBy = Environment.UserName;
-            return true;
         }
 
         public static void UnlockRecord(string tableName, int recordId)
@@ -505,7 +548,10 @@ WHERE [Id]=?";
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
                 cmd.ExecuteNonQuery();
             }
-            catch { /* Best effort */ }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to unlock record [{recordId}] in [{tableName}].", ex);
+            }
         }
 
         /// <summary>
@@ -513,10 +559,18 @@ WHERE [Id]=?";
         /// </summary>
         public static void ExportToExcel(string tableName, string filePath)
         {
-            using var workbook = new ClosedXML.Excel.XLWorkbook();
-            var dt = GetTableData(tableName);
-            workbook.Worksheets.Add(dt, tableName);
-            workbook.SaveAs(filePath);
+            try
+            {
+                using var workbook = new ClosedXML.Excel.XLWorkbook();
+                var dt = GetTableData(tableName);
+                workbook.Worksheets.Add(dt, tableName);
+                workbook.SaveAs(filePath);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to export table [{tableName}] to '{filePath}'.", ex);
+                throw;
+            }
         }
 
         /// <summary>
@@ -524,14 +578,22 @@ WHERE [Id]=?";
         /// </summary>
         public static void ExportAllToExcel(string filePath)
         {
-            using var workbook = new ClosedXML.Excel.XLWorkbook();
-            var sheetNames = new[] { "OH - Meters", "I&M - Meters", "OH - Transformers", "I&M - Transformers" };
-            for (int i = 0; i < TableNames.Length; i++)
+            try
             {
-                var dt = GetTableData(TableNames[i]);
-                workbook.Worksheets.Add(dt, sheetNames[i]);
+                using var workbook = new ClosedXML.Excel.XLWorkbook();
+                var sheetNames = new[] { "OH - Meters", "I&M - Meters", "OH - Transformers", "I&M - Transformers" };
+                for (int i = 0; i < TableNames.Length; i++)
+                {
+                    var dt = GetTableData(TableNames[i]);
+                    workbook.Worksheets.Add(dt, sheetNames[i]);
+                }
+                workbook.SaveAs(filePath);
             }
-            workbook.SaveAs(filePath);
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to export all tables to '{filePath}'.", ex);
+                throw;
+            }
         }
     }
 
@@ -565,4 +627,3 @@ WHERE [Id]=?";
         public DateTime? ModifiedDate { get; set; }
     }
 }
-

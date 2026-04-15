@@ -36,8 +36,8 @@ namespace DRED
             this.MinimumSize     = new Size(380, 400);
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.StartPosition   = FormStartPosition.CenterParent;
-            this.BackColor       = Color.FromArgb(0x1E, 0x1E, 0x1E);
-            this.ForeColor       = Color.FromArgb(0xF1, 0xF1, 0xF1);
+            this.BackColor       = ThemeManager.BackgroundColor;
+            this.ForeColor       = ThemeManager.TextColor;
 
             // Count label
             lblCount = new Label
@@ -47,8 +47,8 @@ namespace DRED
                 Height    = 32,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding   = new Padding(8, 0, 0, 0),
-                ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
-                BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
+                ForeColor = ThemeManager.SecondaryTextColor,
+                BackColor = ThemeManager.SurfaceColor,
                 Font      = new Font("Segoe UI", 9.5F),
             };
 
@@ -57,8 +57,8 @@ namespace DRED
             {
                 Dock      = DockStyle.Fill,
                 ReadOnly  = true,
-                BackColor = Color.FromArgb(0x1A, 0x1A, 0x1A),
-                ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                BackColor = ThemeManager.ListBoxDarkColor,
+                ForeColor = ThemeManager.TextColor,
                 Font      = new Font("Consolas", 10F),
                 Text      = string.Join(Environment.NewLine, _serials),
                 BorderStyle = BorderStyle.None,
@@ -71,7 +71,7 @@ namespace DRED
             {
                 Dock          = DockStyle.Bottom,
                 Height        = 48,
-                BackColor     = Color.FromArgb(0x25, 0x25, 0x28),
+                BackColor     = ThemeManager.ButtonPanelColor,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents  = false,
                 Padding       = new Padding(8, 8, 8, 8),

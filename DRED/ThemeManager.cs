@@ -16,6 +16,18 @@ namespace DRED
         public static readonly Color MenuBarColor       = Color.FromArgb(0x2D, 0x2D, 0x30);
         public static readonly Color MenuHighlightColor = Color.FromArgb(0x19, 0x76, 0xD2);
         public static readonly Color MenuBorderColor    = Color.FromArgb(0x3E, 0x3E, 0x42);
+        public static readonly Color ToolbarColor       = Color.FromArgb(30, 30, 30);
+        public static readonly Color SearchPanelColor   = Color.FromArgb(37, 37, 40);
+        public static readonly Color SearchPanelFilteredColor = Color.FromArgb(30, 35, 50);
+        public static readonly Color StatusBarColor     = Color.FromArgb(0x2A, 0x2A, 0x2D);
+        public static readonly Color StatusBorderColor  = Color.FromArgb(0x3E, 0x3E, 0x42);
+        public static readonly Color SplitterColor      = Color.FromArgb(0x3E, 0x3E, 0x42);
+        public static readonly Color ButtonPanelColor   = Color.FromArgb(0x25, 0x25, 0x28);
+        public static readonly Color FilterLabelColor   = Color.FromArgb(144, 202, 249);
+        public static readonly Color TabDividerColor    = Color.FromArgb(55, 55, 55);
+        public static readonly Color TabInactiveTextColor = Color.FromArgb(160, 160, 160);
+        public static readonly Color FormBackColor      = Color.FromArgb(45, 45, 48);
+        public static readonly Color ListBoxDarkColor   = Color.FromArgb(0x1A, 0x1A, 0x1A);
 
         /// <summary>
         /// Applies a dark theme renderer to the given MenuStrip.

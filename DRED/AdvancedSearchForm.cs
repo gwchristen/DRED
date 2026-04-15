@@ -55,10 +55,10 @@ namespace DRED
             this.StartPosition = FormStartPosition.CenterParent;
             this.MinimumSize = new Size(600, 614);
 
-            this.BackColor = Color.FromArgb(45, 45, 48);
-            this.ForeColor = Color.FromArgb(241, 241, 241);
+            this.BackColor = ThemeManager.FormBackColor;
+            this.ForeColor = ThemeManager.TextColor;
 
-            var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = Color.FromArgb(45, 45, 48) };
+            var scroll = new Panel { Dock = DockStyle.Fill, AutoScroll = true, BackColor = ThemeManager.FormBackColor };
             var tlp = new TableLayoutPanel
             {
                 ColumnCount = 4,
@@ -66,7 +66,7 @@ namespace DRED
                 AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Dock = DockStyle.Top,
                 Padding = new Padding(8, 6, 8, 6),
-                BackColor = Color.FromArgb(45, 45, 48),
+                BackColor = ThemeManager.FormBackColor,
             };
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100));
             tlp.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50));
@@ -97,8 +97,8 @@ namespace DRED
             {
                 Dock = DockStyle.Fill,
                 Margin = new Padding(0, 2, 4, 2),
-                BackColor = Color.FromArgb(50, 50, 50),
-                ForeColor = Color.FromArgb(241, 241, 241),
+                BackColor = ThemeManager.InputBackColor,
+                ForeColor = ThemeManager.TextColor,
                 Height = 50,
             };
             tlp.Controls.Add(lblComments, 0, row);
@@ -108,9 +108,9 @@ namespace DRED
 
             // PO Date range
             chkPODateFrom = new MaterialCheckbox { Text = "PO Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpPODateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
+            dtpPODateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = ThemeManager.InputBackColor, ForeColor = Color.White };
             chkPODateTo = new MaterialCheckbox { Text = "PO Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpPODateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
+            dtpPODateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = ThemeManager.InputBackColor, ForeColor = Color.White };
             chkPODateFrom.CheckedChanged += (s, e) => dtpPODateFrom.Enabled = chkPODateFrom.Checked;
             chkPODateTo.CheckedChanged += (s, e) => dtpPODateTo.Enabled = chkPODateTo.Checked;
             tlp.Controls.Add(chkPODateFrom, 0, row); tlp.Controls.Add(dtpPODateFrom, 1, row);
@@ -119,9 +119,9 @@ namespace DRED
 
             // Recv Date range
             chkRecvDateFrom = new MaterialCheckbox { Text = "Est Date From:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpRecvDateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
+            dtpRecvDateFrom = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = ThemeManager.InputBackColor, ForeColor = Color.White };
             chkRecvDateTo = new MaterialCheckbox { Text = "Est Date To:", AutoSize = true, Anchor = AnchorStyles.Left };
-            dtpRecvDateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.White };
+            dtpRecvDateTo = new DateTimePicker { Format = DateTimePickerFormat.Short, Enabled = false, Dock = DockStyle.Fill, BackColor = ThemeManager.InputBackColor, ForeColor = Color.White };
             chkRecvDateFrom.CheckedChanged += (s, e) => dtpRecvDateFrom.Enabled = chkRecvDateFrom.Checked;
             chkRecvDateTo.CheckedChanged += (s, e) => dtpRecvDateTo.Enabled = chkRecvDateTo.Checked;
             tlp.Controls.Add(chkRecvDateFrom, 0, row); tlp.Controls.Add(dtpRecvDateFrom, 1, row);
@@ -150,7 +150,7 @@ namespace DRED
             scroll.Controls.Add(tlp);
 
             // Button panel
-            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 46, BackColor = Color.FromArgb(37, 37, 40) };
+            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 46, BackColor = ThemeManager.SearchPanelColor };
             btnApply = new MaterialButton { Text = "Apply", Location = new Point(8, 6), Type = MaterialButton.MaterialButtonType.Contained, HighEmphasis = true, AutoSize = true };
             btnClear = new MaterialButton { Text = "Clear All", Location = new Point(120, 6), Type = MaterialButton.MaterialButtonType.Outlined, AutoSize = true };
             btnClose = new MaterialButton { Text = "Close", Location = new Point(230, 6), Type = MaterialButton.MaterialButtonType.Text, AutoSize = true };
@@ -171,7 +171,7 @@ namespace DRED
                 AutoSize = true,
                 Anchor = AnchorStyles.Left | AnchorStyles.Top,
                 Margin = new Padding(0, 6, 0, 0),
-                ForeColor = Color.FromArgb(204, 204, 204),
+                ForeColor = ThemeManager.SecondaryTextColor,
             };
 
         private static NumericUpDown MakeNud(decimal max, int decimals, bool enabled) =>
@@ -182,16 +182,16 @@ namespace DRED
                 DecimalPlaces = decimals,
                 Dock = DockStyle.Fill,
                 Enabled = enabled,
-                BackColor = Color.FromArgb(50, 50, 50),
+                BackColor = ThemeManager.InputBackColor,
                 ForeColor = Color.White,
             };
 
         private void AddSearchRow(TableLayoutPanel tlp, int row, string lbl1Text, out TextBox txt1, string lbl2Text, out TextBox txt2)
         {
             var lbl1 = MakeLabel(lbl1Text);
-            txt1 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1), BorderStyle = BorderStyle.FixedSingle };
+            txt1 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), BackColor = ThemeManager.InputBackColor, ForeColor = ThemeManager.TextColor, BorderStyle = BorderStyle.FixedSingle };
             var lbl2 = MakeLabel(lbl2Text);
-            txt2 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), BackColor = Color.FromArgb(50, 50, 50), ForeColor = Color.FromArgb(0xF1, 0xF1, 0xF1), BorderStyle = BorderStyle.FixedSingle };
+            txt2 = new TextBox { Dock = DockStyle.Fill, Margin = new Padding(0, 2, 4, 2), BackColor = ThemeManager.InputBackColor, ForeColor = ThemeManager.TextColor, BorderStyle = BorderStyle.FixedSingle };
             tlp.Controls.Add(lbl1, 0, row);
             tlp.Controls.Add(txt1, 1, row);
             tlp.Controls.Add(lbl2, 2, row);

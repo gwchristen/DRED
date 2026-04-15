@@ -35,14 +35,14 @@ namespace DRED
             this.lblInfo.AutoSize = false;
             this.lblInfo.Location = new System.Drawing.Point(12, 80);
             this.lblInfo.Size = new System.Drawing.Size(560, 40);
-            this.lblInfo.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblInfo.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblInfo.Text = "Specify the path to the DRED Access database file (.accdb). For multi-user " +
                                 "access, point this to a file on a shared network drive.";
 
             // lblDatabasePath
             this.lblDatabasePath.AutoSize = true;
             this.lblDatabasePath.Location = new System.Drawing.Point(12, 130);
-            this.lblDatabasePath.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblDatabasePath.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblDatabasePath.Text = "Database Path:";
 
             // txtDatabasePath
@@ -62,7 +62,7 @@ namespace DRED
             // lblAutoRefresh
             this.lblAutoRefresh.AutoSize = true;
             this.lblAutoRefresh.Location = new System.Drawing.Point(12, 210);
-            this.lblAutoRefresh.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblAutoRefresh.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblAutoRefresh.Text = "Auto-Refresh Interval (seconds, 0 = disabled):";
 
             // nudAutoRefresh
@@ -72,13 +72,13 @@ namespace DRED
             this.nudAutoRefresh.Maximum = 600;
             this.nudAutoRefresh.Value = 60;
             this.nudAutoRefresh.TabIndex = 2;
-            this.nudAutoRefresh.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.nudAutoRefresh.BackColor = ThemeManager.InputBackColor;
             this.nudAutoRefresh.ForeColor = System.Drawing.Color.White;
 
             // lblLockPin
             this.lblLockPin.AutoSize = true;
             this.lblLockPin.Location = new System.Drawing.Point(12, 266);
-            this.lblLockPin.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblLockPin.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblLockPin.Text = "Lock PIN:";
 
             // txtLockPin
@@ -91,14 +91,14 @@ namespace DRED
             // lblAuthorizedUsers
             this.lblAuthorizedUsers.AutoSize = true;
             this.lblAuthorizedUsers.Location = new System.Drawing.Point(12, 338);
-            this.lblAuthorizedUsers.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblAuthorizedUsers.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblAuthorizedUsers.Text = "Authorized Users (Windows usernames):";
 
             // lstAuthorizedUsers
             this.lstAuthorizedUsers.Location = new System.Drawing.Point(12, 356);
             this.lstAuthorizedUsers.Size = new System.Drawing.Size(460, 94);
             this.lstAuthorizedUsers.TabIndex = 4;
-            this.lstAuthorizedUsers.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.lstAuthorizedUsers.BackColor = ThemeManager.InputBackColor;
             this.lstAuthorizedUsers.ForeColor = System.Drawing.Color.White;
 
             // txtAuthorizedUser
@@ -144,8 +144,8 @@ namespace DRED
             // SettingsForm
             this.AcceptButton = this.btnOK;
             this.CancelButton = this.btnCancel;
-            this.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            this.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
+            this.BackColor = ThemeManager.FormBackColor;
+            this.ForeColor = ThemeManager.TextColor;
             this.ClientSize = new System.Drawing.Size(584, 560);
             this.Controls.Add(this.lblInfo);
             this.Controls.Add(this.lblDatabasePath);

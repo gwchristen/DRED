@@ -81,7 +81,7 @@ namespace DRED
 
             // ── Shared colors ────────────────────────────────────────────
             var cardBack  = System.Drawing.Color.FromArgb(56, 56, 58);    // #383838 — card bg
-            var formBack  = System.Drawing.Color.FromArgb(45, 45, 48);    // form bg
+            var formBack  = ThemeManager.FormBackColor;    // form bg
             var labelFore = System.Drawing.Color.FromArgb(180, 180, 180); // label text
             var headerFore = System.Drawing.Color.FromArgb(100, 181, 246); // accent blue for section headers
             var accentBorder = System.Drawing.Color.FromArgb(62, 62, 66); // subtle border
@@ -134,7 +134,7 @@ namespace DRED
             this.nudQty.TabIndex = 6;
             this.nudQty.Size = new System.Drawing.Size(90, 36);
             this.nudQty.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.nudQty.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.nudQty.BackColor = ThemeManager.InputBackColor;
             this.nudQty.ForeColor = System.Drawing.Color.White;
             this.nudQty.ValueChanged += new System.EventHandler(this.nudQty_ValueChanged);
             this.chkAutoQty.Text = "Auto";
@@ -155,8 +155,8 @@ namespace DRED
             this.txtOOSSerials.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.txtOOSSerials.TabIndex = 22;
             this.txtOOSSerials.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtOOSSerials.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
-            this.txtOOSSerials.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
+            this.txtOOSSerials.BackColor = ThemeManager.InputBackColor;
+            this.txtOOSSerials.ForeColor = ThemeManager.TextColor;
             this.txtOOSSerials.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtOOSSerials.Margin = new System.Windows.Forms.Padding(0, 4, 4, 4);
             this.txtOOSSerials.TextChanged += new System.EventHandler(this.OOSSerials_TextChanged);
@@ -210,7 +210,7 @@ namespace DRED
             this.lblRecvDateDisplay.AutoSize = true;
             this.lblRecvDateDisplay.Visible = false;
             this.lblRecvDateDisplay.Font = new System.Drawing.Font("Segoe UI", 9f, System.Drawing.FontStyle.Bold);
-            this.lblRecvDateDisplay.ForeColor = System.Drawing.Color.FromArgb(144, 202, 249);
+            this.lblRecvDateDisplay.ForeColor = ThemeManager.FilterLabelColor;
             this.lblRecvDateDisplay.Margin = new System.Windows.Forms.Padding(6, 6, 0, 0);
             recvPanel.Controls.Add(this.chkRecvDate);
             recvPanel.Controls.Add(this.lblRecvDateDisplay);
@@ -255,8 +255,8 @@ namespace DRED
             this.txtComments.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.txtComments.TabIndex = 19;
             this.txtComments.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtComments.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
-            this.txtComments.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
+            this.txtComments.BackColor = ThemeManager.InputBackColor;
+            this.txtComments.ForeColor = ThemeManager.TextColor;
             this.txtComments.BorderStyle = System.Windows.Forms.BorderStyle.None;
             this.txtComments.MinimumSize = new System.Drawing.Size(0, 100);
 
@@ -277,7 +277,7 @@ namespace DRED
             this.lblAuditInfo.Height = 24;
             this.lblAuditInfo.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.lblAuditInfo.Font = new System.Drawing.Font("Segoe UI", 8f, System.Drawing.FontStyle.Italic);
-            this.lblAuditInfo.ForeColor = System.Drawing.Color.FromArgb(144, 202, 249);
+            this.lblAuditInfo.ForeColor = ThemeManager.FilterLabelColor;
             this.lblAuditInfo.Margin = new System.Windows.Forms.Padding(0, 8, 0, 0);
             this.lblAuditInfo.Visible = false;
             this.lblAuditInfo.BackColor = System.Drawing.Color.Transparent;
@@ -294,7 +294,7 @@ namespace DRED
             // ── pnlButtons ───────────────────────────────────────────────
             this.pnlButtons.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.pnlButtons.Height = 46;
-            this.pnlButtons.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
+            this.pnlButtons.BackColor = ThemeManager.SearchPanelColor;
             this.pnlButtons.Padding = new System.Windows.Forms.Padding(12);
             this.pnlButtons.Controls.Add(this.btnSave);
             this.pnlButtons.Controls.Add(this.btnCancel);
@@ -329,8 +329,8 @@ namespace DRED
             this.MinimumSize = new System.Drawing.Size(700, 850);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Record";
-            this.BackColor = System.Drawing.Color.FromArgb(45, 45, 48);
-            this.ForeColor = System.Drawing.Color.FromArgb(241, 241, 241);
+            this.BackColor = ThemeManager.FormBackColor;
+            this.ForeColor = ThemeManager.TextColor;
 
             ((System.ComponentModel.ISupportInitialize)(this.nudQty)).EndInit();
             this.pnlButtons.ResumeLayout(false);
@@ -466,8 +466,8 @@ namespace DRED
             txt.Dock = System.Windows.Forms.DockStyle.Fill;
             txt.TabIndex = tabIndex;
             txt.Margin = new System.Windows.Forms.Padding(0, 2, 4, 2);
-            txt.BackColor = System.Drawing.Color.FromArgb(50, 50, 50);
-            txt.ForeColor = System.Drawing.Color.FromArgb(0xF1, 0xF1, 0xF1);
+            txt.BackColor = ThemeManager.InputBackColor;
+            txt.ForeColor = ThemeManager.TextColor;
             txt.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
         }
 
