@@ -37,8 +37,8 @@ namespace DRED
             this.MinimumSize     = new Size(380, 400);
             this.FormBorderStyle = FormBorderStyle.Sizable;
             this.StartPosition   = FormStartPosition.CenterParent;
-            this.BackColor       = Color.FromArgb(0x1E, 0x1E, 0x1E);
-            this.ForeColor       = Color.FromArgb(0xF1, 0xF1, 0xF1);
+            this.BackColor       = ThemeManager.BackgroundColor;
+            this.ForeColor       = ThemeManager.TextColor;
 
             // ── Header instruction label ─────────────────────────────────
             var lblInfo = new Label
@@ -48,8 +48,8 @@ namespace DRED
                 Height    = 36,
                 TextAlign = ContentAlignment.MiddleLeft,
                 Padding   = new Padding(8, 0, 0, 0),
-                ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
-                BackColor = Color.FromArgb(0x2D, 0x2D, 0x30),
+                ForeColor = ThemeManager.SecondaryTextColor,
+                BackColor = ThemeManager.SurfaceColor,
                 Font      = new Font("Segoe UI", 9F),
             };
 
@@ -61,8 +61,8 @@ namespace DRED
                 FullRowSelect = true,
                 GridLines    = true,
                 MultiSelect  = true,
-                BackColor    = Color.FromArgb(0x1A, 0x1A, 0x1A),
-                ForeColor    = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                BackColor    = ThemeManager.ListBoxDarkColor,
+                ForeColor    = ThemeManager.TextColor,
                 BorderStyle  = BorderStyle.None,
                 Font         = new Font("Consolas", 10F),
             };
@@ -74,7 +74,7 @@ namespace DRED
             {
                 Dock          = DockStyle.Bottom,
                 Height        = 52,
-                BackColor     = Color.FromArgb(0x2D, 0x2D, 0x30),
+                BackColor     = ThemeManager.SurfaceColor,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents  = false,
                 Padding       = new Padding(8, 10, 8, 0),
@@ -87,7 +87,7 @@ namespace DRED
                 Width     = 68,
                 Height    = 26,
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
+                ForeColor = ThemeManager.SecondaryTextColor,
                 Font      = new Font("Segoe UI", 9F),
                 Margin    = new Padding(0, 2, 4, 0),
             };
@@ -96,8 +96,8 @@ namespace DRED
                 Width       = 72,
                 Height      = 26,
                 MaxLength   = 5,
-                BackColor   = Color.FromArgb(0x32, 0x32, 0x32),
-                ForeColor   = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                BackColor   = ThemeManager.InputBackColor,
+                ForeColor   = ThemeManager.TextColor,
                 BorderStyle = BorderStyle.FixedSingle,
                 Font        = new Font("Consolas", 10F),
                 Margin      = new Padding(0, 2, 12, 0),
@@ -110,7 +110,7 @@ namespace DRED
                 Width     = 54,
                 Height    = 26,
                 TextAlign = ContentAlignment.MiddleLeft,
-                ForeColor = Color.FromArgb(0xCC, 0xCC, 0xCC),
+                ForeColor = ThemeManager.SecondaryTextColor,
                 Font      = new Font("Segoe UI", 9F),
                 Margin    = new Padding(0, 2, 4, 0),
             };
@@ -119,8 +119,8 @@ namespace DRED
                 Width       = 54,
                 Height      = 26,
                 MaxLength   = 2,
-                BackColor   = Color.FromArgb(0x32, 0x32, 0x32),
-                ForeColor   = Color.FromArgb(0xF1, 0xF1, 0xF1),
+                BackColor   = ThemeManager.InputBackColor,
+                ForeColor   = ThemeManager.TextColor,
                 BorderStyle = BorderStyle.FixedSingle,
                 Font        = new Font("Consolas", 10F),
                 Margin      = new Padding(0, 2, 12, 0),
@@ -143,7 +143,7 @@ namespace DRED
             {
                 Dock      = DockStyle.Bottom,
                 Height    = 46,
-                BackColor = Color.FromArgb(0x25, 0x25, 0x28),
+                BackColor = ThemeManager.ButtonPanelColor,
             };
 
             btnEdit = new MaterialButton

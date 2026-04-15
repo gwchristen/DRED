@@ -131,7 +131,10 @@ namespace DRED
                         return;
                     }
                 }
-                catch { /* fall through to defaults */ }
+                catch (Exception ex)
+                {
+                    Logger.LogError("Failed to load lookup code mappings. Falling back to defaults.", ex);
+                }
             }
 
             // Seed with default mappings
@@ -149,6 +152,7 @@ namespace DRED
             }
             catch (Exception ex)
             {
+                Logger.LogError("Failed to save lookup code mappings.", ex);
                 System.Windows.Forms.MessageBox.Show(
                     $"Failed to save lookup codes: {ex.Message}",
                     "Error",

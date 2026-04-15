@@ -28,18 +28,30 @@ namespace DRED
             if (!File.Exists(excelFilePath))
                 throw new FileNotFoundException("Excel file not found.", excelFilePath);
 
+            Logger.Log($"Starting Excel import from '{excelFilePath}'.");
             using var workbook = new XLWorkbook(excelFilePath);
 
             foreach (var (sheetName, tableName) in SheetTableMap)
             {
                 if (!workbook.TryGetWorksheet(sheetName, out IXLWorksheet? sheet) || sheet == null)
                 {
+                    Logger.LogWarning($"Sheet '{sheetName}' not found during import.");
                     progress?.Invoke($"Sheet '{sheetName}' not found in workbook — skipped.");
                     continue;
                 }
 
-                int imported = ImportSheet(sheet, tableName);
-                progress?.Invoke($"Imported {imported} records from '{sheetName}' → [{tableName}].");
+                Logger.Log($"Importing sheet '{sheetName}' into table '{tableName}'.");
+                try
+                {
+                    int imported = ImportSheet(sheet, tableName);
+                    Logger.Log($"Imported {imported} rows from '{sheetName}' into '{tableName}'.");
+                    progress?.Invoke($"Imported {imported} records from '{sheetName}' → [{tableName}].");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Error importing sheet '{sheetName}' into '{tableName}'.", ex);
+                    throw;
+                }
             }
         }
 
@@ -154,7 +166,10 @@ namespace DRED
                 if (cell.DataType == XLDataType.DateTime) return cell.GetDateTime();
                 if (DateTime.TryParse(cell.GetString().Trim(), out DateTime dt)) return dt;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to parse date for column '{colName}'.", ex);
+            }
             return null;
         }
 
@@ -169,7 +184,10 @@ namespace DRED
                 string s = cell.GetString().Trim().Replace("$", "").Replace(",", "");
                 if (decimal.TryParse(s, out decimal val)) return val;
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to parse decimal for column '{colName}'.", ex);
+            }
             return null;
         }
     }

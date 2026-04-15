@@ -35,7 +35,10 @@ namespace DRED
                     dlg.InitialDirectory = Path.GetDirectoryName(txtDatabasePath.Text) ?? "";
                     dlg.FileName = Path.GetFileName(txtDatabasePath.Text);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    Logger.LogError("Failed to initialize settings browse dialog path.", ex);
+                }
             }
 
             if (dlg.ShowDialog() == DialogResult.OK)

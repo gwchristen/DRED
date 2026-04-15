@@ -11,6 +11,29 @@ namespace DRED
         static void Main()
         {
             ApplicationConfiguration.Initialize();
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Logger.Log("Application starting.");
+
+            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            {
+                var ex = e.ExceptionObject as Exception
+                    ?? new Exception("Unknown unhandled non-Exception error.");
+                Logger.LogError("Unhandled non-UI exception.", ex);
+                MessageBox.Show(
+                    "An unexpected error occurred and the application may close.\n\n" + ex.Message,
+                    "Unhandled Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            };
+            Application.ThreadException += (s, e) =>
+            {
+                Logger.LogError("Unhandled UI thread exception.", e.Exception);
+                MessageBox.Show(
+                    "An unexpected UI error occurred.\n\n" + e.Exception.Message,
+                    "Unhandled Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            };
 
             var materialSkinManager = MaterialSkinManager.Instance;
             materialSkinManager.Theme = MaterialSkinManager.Themes.DARK;

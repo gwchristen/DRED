@@ -43,9 +43,9 @@ namespace DRED
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // If settings cannot be loaded, use defaults
+                Logger.LogError("Failed to load app settings. Using defaults.", ex);
             }
         }
 
@@ -70,6 +70,7 @@ namespace DRED
             }
             catch (Exception ex)
             {
+                Logger.LogError("Failed to save app settings.", ex);
                 System.Windows.Forms.MessageBox.Show(
                     $"Failed to save settings: {ex.Message}",
                     "Error",

@@ -25,6 +25,7 @@ namespace DRED
             this.mnuFileSep1         = new System.Windows.Forms.ToolStripSeparator();
             this.mnuFileSettings     = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuEdit             = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuEditUndo         = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuEditAdd          = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuEditEdit         = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuEditDelete       = new System.Windows.Forms.ToolStripMenuItem();
@@ -39,6 +40,7 @@ namespace DRED
             // ── Slim toolbar ─────────────────────────────────────────────
             this.pnlToolbar          = new System.Windows.Forms.FlowLayoutPanel();
             this.btnAdd              = new MaterialSkin.Controls.MaterialButton();
+            this.btnUndo             = new MaterialSkin.Controls.MaterialButton();
             this.btnRefresh          = new MaterialSkin.Controls.MaterialButton();
             this.btnAdvancedSearch   = new MaterialSkin.Controls.MaterialButton();
             this.pnlToolbarSpacer    = new System.Windows.Forms.Panel();
@@ -113,7 +115,12 @@ namespace DRED
             // Edit menu
             this.mnuEdit.Text = "&Edit";
             this.mnuEdit.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                mnuEditAdd, mnuEditEdit, mnuEditDelete, mnuEditSep1, mnuEditRefresh });
+                mnuEditUndo, mnuEditAdd, mnuEditEdit, mnuEditDelete, mnuEditSep1, mnuEditRefresh });
+
+            this.mnuEditUndo.Text = "&Undo";
+            this.mnuEditUndo.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Z;
+            this.mnuEditUndo.Enabled = false;
+            this.mnuEditUndo.Click += (s, e) => btnUndo_Click(s, e);
 
             this.mnuEditAdd.Text = "&Add Record";
             this.mnuEditAdd.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.N;
@@ -160,16 +167,19 @@ namespace DRED
             this.pnlToolbar.Height = 48;
             this.pnlToolbar.Padding = new System.Windows.Forms.Padding(8, 8, 8, 6);
             this.pnlToolbar.WrapContents = false;
-            this.pnlToolbar.BackColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            this.pnlToolbar.BackColor = ThemeManager.ToolbarColor;
 
             SetMaterialButton(btnAdd,           "Add",              MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained, true,  this.btnAdd_Click);
+            SetMaterialButton(btnUndo,          "Undo",             MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnUndo_Click);
             SetMaterialButton(btnRefresh,       "Refresh",          MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnRefresh_Click);
             SetMaterialButton(btnAdvancedSearch, "Advanced Search",  MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnAdvancedSearch_Click);
             SetMaterialButton(btnUnlock,        "🔒 Unlock",        MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined,  false, this.btnUnlock_Click);
             btnAdd.AccessibleName            = "Add new record";
+            btnUndo.AccessibleName           = "Undo last action";
             btnRefresh.AccessibleName        = "Refresh current tab";
             btnAdvancedSearch.AccessibleName = "Open advanced search";
             btnUnlock.AccessibleName         = "Lock or unlock protected actions";
+            btnUndo.Enabled                  = false;
 
             this.pnlToolbarSpacer.Size = new System.Drawing.Size(0, 32);
             this.pnlToolbarSpacer.Margin = new System.Windows.Forms.Padding(0);
@@ -190,7 +200,7 @@ namespace DRED
             btnSettings.Visible  = false;
 
             this.pnlToolbar.Controls.AddRange(new System.Windows.Forms.Control[] {
-                btnAdd, btnRefresh, btnAdvancedSearch, pnlToolbarSpacer, btnUnlock });
+                btnAdd, btnUndo, btnRefresh, btnAdvancedSearch, pnlToolbarSpacer, btnUnlock });
 
             this.pnlToolbar.Resize += (s, e) =>
             {
@@ -211,7 +221,7 @@ namespace DRED
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Top;
             this.pnlSearch.Height = searchPanelHeight;
             this.pnlSearch.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
-            this.pnlSearch.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
+            this.pnlSearch.BackColor = ThemeManager.SearchPanelColor;
 
             this.txtSearch.Hint = "Search...";
             this.txtSearch.UseTallSize = false;
@@ -238,7 +248,7 @@ namespace DRED
 
             this.lblFilterActive.AutoSize = true;
             this.lblFilterActive.Location = new System.Drawing.Point(12, 48);
-            this.lblFilterActive.ForeColor = System.Drawing.Color.FromArgb(144, 202, 249);
+            this.lblFilterActive.ForeColor = ThemeManager.FilterLabelColor;
             this.lblFilterActive.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.lblFilterActive.Text = "🔍 Advanced filter active";
             this.lblFilterActive.Visible = false;
@@ -282,7 +292,7 @@ namespace DRED
             // Replaces MaterialTabSelector so each tab can show its unique accent color.
             this.tabSelector.Dock       = System.Windows.Forms.DockStyle.Top;
             this.tabSelector.Height     = 48;
-            this.tabSelector.BackColor  = System.Drawing.Color.FromArgb(30, 30, 30);
+            this.tabSelector.BackColor  = ThemeManager.ToolbarColor;
             this.tabSelector.TabIndex   = 4;
             this.tabSelector.TabStop    = false;
 
@@ -316,13 +326,13 @@ namespace DRED
                                 Math.Min(255, accent.R / AccentBlend + BaseBackground),
                                 Math.Min(255, accent.G / AccentBlend + BaseBackground),
                                 Math.Min(255, accent.B / AccentBlend + BaseBackground))
-                            : System.Drawing.Color.FromArgb(30, 30, 30));
+                            : ThemeManager.ToolbarColor);
                     g.FillRectangle(bgBrush, x, 0, tabW, h);
 
                     // Label
                     string label = tabControl.TabPages[i].Text;
                     using var fgBrush = new System.Drawing.SolidBrush(
-                        isSelected ? accent : System.Drawing.Color.FromArgb(160, 160, 160));
+                        isSelected ? accent : ThemeManager.TabInactiveTextColor);
                     using var font = new System.Drawing.Font(TabFontFamily,
                         isSelected ? TabFontSizeSelected : TabFontSizeUnselected,
                         isSelected ? System.Drawing.FontStyle.Bold : System.Drawing.FontStyle.Regular);
@@ -346,7 +356,7 @@ namespace DRED
                     // Divider between tabs
                     if (i < count - 1)
                     {
-                        using var sep = new System.Drawing.Pen(System.Drawing.Color.FromArgb(55, 55, 55));
+                        using var sep = new System.Drawing.Pen(ThemeManager.TabDividerColor);
                         g.DrawLine(sep, x + tabW, 4, x + tabW, h - 4);
                     }
                 }
@@ -367,12 +377,12 @@ namespace DRED
             // ── pnlStatus ────────────────────────────────────────────────
             this.pnlStatus.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.pnlStatus.Height = 30;
-            this.pnlStatus.BackColor = System.Drawing.Color.FromArgb(0x2A, 0x2A, 0x2D);
+            this.pnlStatus.BackColor = ThemeManager.StatusBarColor;
             this.pnlStatus.Padding = new System.Windows.Forms.Padding(8, 4, 8, 4);
 
             this.pnlStatus.Paint += (s, e) =>
             {
-                using var pen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(0x3E, 0x3E, 0x42));
+                using var pen = new System.Drawing.Pen(ThemeManager.StatusBorderColor);
                 e.Graphics.DrawLine(pen, 0, 0, pnlStatus.Width, 0);
             };
 
@@ -388,21 +398,21 @@ namespace DRED
 
             this.lblStatusRecords.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatusRecords.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.lblStatusRecords.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblStatusRecords.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblStatusRecords.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.lblStatusRecords.Text = "Records: 0";
             this.tblStatus.Controls.Add(this.lblStatusRecords, 0, 0);
 
             this.lblStatusConnection.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatusConnection.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            this.lblStatusConnection.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblStatusConnection.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblStatusConnection.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.lblStatusConnection.Text = "Connected: (none)";
             this.tblStatus.Controls.Add(this.lblStatusConnection, 1, 0);
 
             this.lblStatusUser.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatusUser.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
-            this.lblStatusUser.ForeColor = System.Drawing.Color.FromArgb(204, 204, 204);
+            this.lblStatusUser.ForeColor = ThemeManager.SecondaryTextColor;
             this.lblStatusUser.Font = new System.Drawing.Font("Segoe UI", 8.5F);
             this.lblStatusUser.Text = "User: ";
             this.tblStatus.Controls.Add(this.lblStatusUser, 2, 0);
@@ -458,10 +468,10 @@ namespace DRED
                 SplitterWidth  = 1,
                 Panel1MinSize  = 0,
                 Panel2MinSize  = 0,
-                BackColor      = System.Drawing.Color.FromArgb(0x3E, 0x3E, 0x42),
+                BackColor      = ThemeManager.SplitterColor,
             };
-            split.Panel1.BackColor = System.Drawing.Color.FromArgb(0x1E, 0x1E, 0x1E);
-            split.Panel2.BackColor = System.Drawing.Color.FromArgb(0x2D, 0x2D, 0x30);
+            split.Panel1.BackColor = ThemeManager.BackgroundColor;
+            split.Panel2.BackColor = ThemeManager.SurfaceColor;
 
             split.Resize += (s, e) =>
             {
@@ -484,7 +494,7 @@ namespace DRED
             {
                 Dock         = System.Windows.Forms.DockStyle.Fill,
                 DrawMode     = System.Windows.Forms.DrawMode.OwnerDrawVariable,
-                BackColor    = System.Drawing.Color.FromArgb(0x1E, 0x1E, 0x1E),
+                BackColor    = ThemeManager.BackgroundColor,
                 ForeColor    = System.Drawing.Color.White,
                 BorderStyle  = System.Windows.Forms.BorderStyle.None,
                 IntegralHeight = false,
@@ -503,7 +513,7 @@ namespace DRED
             {
                 Dock        = System.Windows.Forms.DockStyle.Fill,
                 AutoScroll  = true,
-                BackColor   = System.Drawing.Color.FromArgb(0x2D, 0x2D, 0x30),
+                BackColor   = ThemeManager.SurfaceColor,
             };
 
             split.Panel2.Controls.Add(detailPanel);
@@ -537,6 +547,7 @@ namespace DRED
         private System.Windows.Forms.ToolStripSeparator mnuFileSep1 = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuFileSettings = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuEdit = null!;
+        private System.Windows.Forms.ToolStripMenuItem mnuEditUndo = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuEditAdd = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuEditEdit = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuEditDelete = null!;
@@ -549,6 +560,7 @@ namespace DRED
         private System.Windows.Forms.ToolStripMenuItem mnuToolsLookupCodes = null!;
         private System.Windows.Forms.FlowLayoutPanel pnlToolbar = null!;
         private MaterialSkin.Controls.MaterialButton btnAdd = null!;
+        private MaterialSkin.Controls.MaterialButton btnUndo = null!;
         private System.Windows.Forms.Panel pnlToolbarSpacer = null!;
         private MaterialSkin.Controls.MaterialButton btnUnlock = null!;
         private MaterialSkin.Controls.MaterialButton btnEdit = null!;
