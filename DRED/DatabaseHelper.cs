@@ -52,6 +52,7 @@ namespace DRED
                 EnsureTableExists(conn, table);
             }
             EnsureRecordLocksTable(conn);
+            EnsureAuditLogTable(conn);
         }
 
         private static void CreateDatabase(string path)
@@ -250,6 +251,30 @@ CREATE TABLE [RecordLocks] (
             cmd.ExecuteNonQuery();
         }
 
+        private static void EnsureAuditLogTable(OleDbConnection conn)
+        {
+            DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
+                new object?[] { null, null, "AuditLog", "TABLE" })!;
+
+            if (schema.Rows.Count > 0) return;
+
+            string sql = @"
+CREATE TABLE [AuditLog] (
+    [Id] AUTOINCREMENT PRIMARY KEY,
+    [TableName] TEXT(255),
+    [RecordId] INTEGER,
+    [Action] TEXT(50),
+    [FieldName] TEXT(255),
+    [OldValue] MEMO,
+    [NewValue] MEMO,
+    [UserName] TEXT(255),
+    [Timestamp] DATETIME
+)";
+            using var cmd = new OleDbCommand(sql, conn);
+            cmd.ExecuteNonQuery();
+            Logger.Log("Created [AuditLog] table.");
+        }
+
         public static DataTable GetTableData(string tableName, string filter = "",
             string filterColumn = "", AdvancedSearchCriteria? advancedCriteria = null)
         {
@@ -356,6 +381,10 @@ VALUES
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
                 cmd.ExecuteNonQuery();
+                using var idCmd = new OleDbCommand("SELECT @@IDENTITY", conn);
+                int recordId = Convert.ToInt32(idCmd.ExecuteScalar());
+                string summary = BuildRecordSummary(data);
+                LogAuditEntry(conn, tableName, recordId, "INSERT", null, null, summary);
                 Logger.Log($"Inserted record into [{tableName}].");
             }
             catch (Exception ex)
@@ -370,6 +399,7 @@ VALUES
             try
             {
                 using var conn = OpenConnection();
+                var oldData = GetRecordDataById(conn, tableName, id);
                 string sql = $@"
 UPDATE [{tableName}] SET
     [OpCo2]=?, [Status]=?, [MFR]=?, [DevCode]=?,
@@ -386,6 +416,14 @@ WHERE [Id]=?";
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
                 cmd.ExecuteNonQuery();
+
+                if (oldData != null)
+                {
+                    foreach (var change in GetChangedFields(oldData, data))
+                    {
+                        LogAuditEntry(conn, tableName, id, "UPDATE", change.FieldName, change.OldValue, change.NewValue);
+                    }
+                }
                 Logger.Log($"Updated record [{id}] in [{tableName}].");
             }
             catch (Exception ex)
@@ -400,10 +438,13 @@ WHERE [Id]=?";
             try
             {
                 using var conn = OpenConnection();
+                var oldData = GetRecordDataById(conn, tableName, id);
                 string sql = $"DELETE FROM [{tableName}] WHERE [Id]=?";
                 using var cmd = new OleDbCommand(sql, conn);
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
                 cmd.ExecuteNonQuery();
+                string summary = oldData != null ? BuildRecordSummary(oldData) : "(record data unavailable)";
+                LogAuditEntry(conn, tableName, id, "DELETE", null, summary, null);
                 Logger.Log($"Deleted record [{id}] from [{tableName}].");
             }
             catch (Exception ex)
@@ -412,6 +453,189 @@ WHERE [Id]=?";
                 throw;
             }
         }
+
+        public static void LogAuditEntry(
+            string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
+        {
+            try
+            {
+                using var conn = OpenConnection();
+                LogAuditEntry(conn, tableName, recordId, action, fieldName, oldValue, newValue);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to write audit log entry.", ex);
+            }
+        }
+
+        public static DataTable GetAuditLog(int? recordId = null, string? tableName = null, int maxRows = 100)
+        {
+            using var conn = OpenConnection();
+            var whereParts = new List<string>();
+            using var cmd = new OleDbCommand();
+            cmd.Connection = conn;
+
+            if (recordId.HasValue)
+            {
+                whereParts.Add("[RecordId] = ?");
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId.Value });
+            }
+
+            if (!string.IsNullOrWhiteSpace(tableName))
+            {
+                whereParts.Add("[TableName] LIKE '%' & ? & '%'");
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName.Trim() });
+            }
+
+            maxRows = Math.Clamp(maxRows, 1, 1000);
+            cmd.CommandText = "SELECT TOP " + maxRows + " [Timestamp],[UserName],[TableName],[RecordId],[Action],[FieldName],[OldValue],[NewValue] FROM [AuditLog]";
+            if (whereParts.Count > 0)
+                cmd.CommandText += " WHERE " + string.Join(" AND ", whereParts);
+            cmd.CommandText += " ORDER BY [Timestamp] DESC, [Id] DESC";
+
+            using var adapter = new OleDbDataAdapter(cmd);
+            var dt = new DataTable();
+            adapter.Fill(dt);
+            return dt;
+        }
+
+        private static void LogAuditEntry(
+            OleDbConnection conn, string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
+        {
+            try
+            {
+                using var cmd = new OleDbCommand(@"
+INSERT INTO [AuditLog] ([TableName],[RecordId],[Action],[FieldName],[OldValue],[NewValue],[UserName],[Timestamp])
+VALUES (?,?,?,?,?,?,?,?)", conn);
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 50, Value = action });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = (object?)fieldName ?? DBNull.Value });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.LongVarWChar, Value = (object?)oldValue ?? DBNull.Value });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.LongVarWChar, Value = (object?)newValue ?? DBNull.Value });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
+                cmd.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to write audit log entry for [{tableName}] record [{recordId}].", ex);
+            }
+        }
+
+        private static RecordData? GetRecordDataById(OleDbConnection conn, string tableName, int id)
+        {
+            using var cmd = new OleDbCommand($"SELECT * FROM [{tableName}] WHERE [Id]=?", conn);
+            cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
+            using var reader = cmd.ExecuteReader();
+            if (reader == null || !reader.Read()) return null;
+
+            return new RecordData
+            {
+                OpCo2 = GetNullableString(reader, "OpCo2"),
+                Status = GetNullableString(reader, "Status"),
+                MFR = GetNullableString(reader, "MFR"),
+                DevCode = GetNullableString(reader, "DevCode"),
+                BegSer = GetNullableString(reader, "BegSer"),
+                EndSer = GetNullableString(reader, "EndSer"),
+                Qty = GetNullableInt(reader, "Qty"),
+                PODate = GetNullableDate(reader, "PODate"),
+                Vintage = GetNullableString(reader, "Vintage"),
+                PONumber = GetNullableString(reader, "PONumber"),
+                RecvDate = GetNullableDate(reader, "RecvDate"),
+                UnitCost = GetNullableDecimal(reader, "UnitCost"),
+                CID = GetNullableString(reader, "CID"),
+                MENumber = GetNullableString(reader, "MENumber"),
+                PurCode = GetNullableString(reader, "PurCode"),
+                Est = GetBool(reader, "Est"),
+                TextFile = GetBool(reader, "TextFile"),
+                Comments = GetNullableString(reader, "Comments"),
+                OOSSerials = GetNullableString(reader, "OOSSerials"),
+            };
+        }
+
+        private static List<(string FieldName, string? OldValue, string? NewValue)> GetChangedFields(RecordData oldData, RecordData newData)
+        {
+            var oldMap = GetAuditableFieldMap(oldData);
+            var newMap = GetAuditableFieldMap(newData);
+            var changes = new List<(string FieldName, string? OldValue, string? NewValue)>();
+            foreach (var kvp in oldMap)
+            {
+                string field = kvp.Key;
+                string? oldValue = kvp.Value;
+                string? newValue = newMap[field];
+                if (!string.Equals(oldValue, newValue, StringComparison.Ordinal))
+                    changes.Add((field, oldValue, newValue));
+            }
+
+            return changes;
+        }
+
+        private static Dictionary<string, string?> GetAuditableFieldMap(RecordData data)
+        {
+            return new Dictionary<string, string?>
+            {
+                ["OpCo2"] = data.OpCo2,
+                ["Status"] = data.Status,
+                ["MFR"] = data.MFR,
+                ["DevCode"] = data.DevCode,
+                ["BegSer"] = data.BegSer,
+                ["EndSer"] = data.EndSer,
+                ["Qty"] = data.Qty?.ToString(),
+                ["PODate"] = FormatAuditDate(data.PODate),
+                ["Vintage"] = data.Vintage,
+                ["PONumber"] = data.PONumber,
+                ["RecvDate"] = FormatAuditDate(data.RecvDate),
+                ["UnitCost"] = data.UnitCost?.ToString("0.00"),
+                ["CID"] = data.CID,
+                ["MENumber"] = data.MENumber,
+                ["PurCode"] = data.PurCode,
+                ["Est"] = data.Est ? "True" : "False",
+                ["TextFile"] = data.TextFile ? "True" : "False",
+                ["Comments"] = data.Comments,
+                ["OOSSerials"] = data.OOSSerials,
+            };
+        }
+
+        private static string BuildRecordSummary(RecordData data)
+        {
+            string devCode = string.IsNullOrWhiteSpace(data.DevCode) ? "(blank)" : data.DevCode!;
+            string poNumber = string.IsNullOrWhiteSpace(data.PONumber) ? "(blank)" : data.PONumber!;
+            return $"DevCode={devCode}, PONumber={poNumber}";
+        }
+
+        private static string? GetNullableString(OleDbDataReader reader, string column)
+        {
+            int idx = reader.GetOrdinal(column);
+            return reader.IsDBNull(idx) ? null : reader.GetString(idx);
+        }
+
+        private static int? GetNullableInt(OleDbDataReader reader, string column)
+        {
+            int idx = reader.GetOrdinal(column);
+            return reader.IsDBNull(idx) ? null : Convert.ToInt32(reader.GetValue(idx));
+        }
+
+        private static DateTime? GetNullableDate(OleDbDataReader reader, string column)
+        {
+            int idx = reader.GetOrdinal(column);
+            return reader.IsDBNull(idx) ? null : Convert.ToDateTime(reader.GetValue(idx));
+        }
+
+        private static decimal? GetNullableDecimal(OleDbDataReader reader, string column)
+        {
+            int idx = reader.GetOrdinal(column);
+            return reader.IsDBNull(idx) ? null : Convert.ToDecimal(reader.GetValue(idx));
+        }
+
+        private static bool GetBool(OleDbDataReader reader, string column)
+        {
+            int idx = reader.GetOrdinal(column);
+            return !reader.IsDBNull(idx) && Convert.ToBoolean(reader.GetValue(idx));
+        }
+
+        private static string? FormatAuditDate(DateTime? value)
+            => value?.ToString("yyyy-MM-dd HH:mm:ss");
 
         private static void AddParameters(OleDbCommand cmd, RecordData data)
         {

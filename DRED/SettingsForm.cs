@@ -13,6 +13,8 @@ namespace DRED
             InitializeComponent();
             txtDatabasePath.Text = AppSettings.DatabasePath;
             nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
+            nudBackupInterval.Value = Math.Clamp(AppSettings.BackupIntervalHours, 0, 168);
+            nudMaxBackups.Value = Math.Clamp(AppSettings.MaxBackupCount, 1, 100);
             txtLockPin.Text = AppSettings.LockPin;
             LoadAuthorizedUsers();
         }
@@ -73,6 +75,8 @@ namespace DRED
 
             AppSettings.DatabasePath = path;
             AppSettings.AutoRefreshInterval = (int)nudAutoRefresh.Value;
+            AppSettings.BackupIntervalHours = (int)nudBackupInterval.Value;
+            AppSettings.MaxBackupCount = (int)nudMaxBackups.Value;
             AppSettings.LockPin = pin;
             AppSettings.AuthorizedUsers = GetAuthorizedUsersFromList();
             AppSettings.Save();
