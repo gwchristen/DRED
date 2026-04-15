@@ -381,7 +381,7 @@ ORDER BY [{columnName}]";
 
             using var cmd = new OleDbCommand(sql, conn);
             using var reader = cmd.ExecuteReader();
-            while (reader != null && reader.Read())
+            while (reader.Read())
             {
                 string? value = reader[0] as string;
                 if (!string.IsNullOrWhiteSpace(value))
@@ -774,7 +774,9 @@ VALUES (?,?,?,?,?,?,?,?)", conn);
         private static void EnsureValidTableName(string tableName)
         {
             if (!TableNames.Contains(tableName))
-                throw new ArgumentException("Invalid table name.", nameof(tableName));
+                throw new ArgumentException(
+                    $"Invalid table name '{tableName}'. Valid tables: {string.Join(", ", TableNames)}.",
+                    nameof(tableName));
         }
 
         private static void EnsureValidColumnName(string columnName)
