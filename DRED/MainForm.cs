@@ -1177,19 +1177,19 @@ namespace DRED
                         return;
                     case Keys.D1:
                         e.Handled = true;
-                        tabControl.SelectedIndex = 0;
+                        SelectTabIfAvailable(0);
                         return;
                     case Keys.D2:
                         e.Handled = true;
-                        tabControl.SelectedIndex = 1;
+                        SelectTabIfAvailable(1);
                         return;
                     case Keys.D3:
                         e.Handled = true;
-                        tabControl.SelectedIndex = 2;
+                        SelectTabIfAvailable(2);
                         return;
                     case Keys.D4:
                         e.Handled = true;
-                        tabControl.SelectedIndex = 3;
+                        SelectTabIfAvailable(3);
                         return;
                 }
             }
@@ -1223,6 +1223,12 @@ namespace DRED
             bool isFiltered = _advancedCriteria != null;
             lblFilterActive.Visible = isFiltered;
             pnlSearch.BackColor = isFiltered ? SearchPanelFilteredColor : SearchPanelDefaultColor;
+        }
+
+        private void SelectTabIfAvailable(int tabIndex)
+        {
+            if (tabIndex >= 0 && tabIndex < tabControl.TabCount)
+                tabControl.SelectedIndex = tabIndex;
         }
 
         private void btnUnlock_Click(object sender, EventArgs e)

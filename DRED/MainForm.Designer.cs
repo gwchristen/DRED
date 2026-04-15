@@ -206,8 +206,10 @@ namespace DRED
             };
 
             // ── pnlSearch ────────────────────────────────────────────────
+            // 74px accommodates the 42px search row plus the advanced-filter indicator label below it.
+            const int searchPanelHeight = 74;
             this.pnlSearch.Dock = System.Windows.Forms.DockStyle.Top;
-            this.pnlSearch.Height = 74;
+            this.pnlSearch.Height = searchPanelHeight;
             this.pnlSearch.Padding = new System.Windows.Forms.Padding(8, 6, 8, 6);
             this.pnlSearch.BackColor = System.Drawing.Color.FromArgb(37, 37, 40);
 
