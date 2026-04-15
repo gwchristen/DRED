@@ -4,6 +4,7 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Windows.Forms;
 using MaterialSkin;
 using MaterialSkin.Controls;
@@ -31,12 +32,19 @@ namespace DRED
         private System.Windows.Forms.ListBox[] _listBoxes   = new System.Windows.Forms.ListBox[4];
         private System.Windows.Forms.Panel[]   _detailPanels = new System.Windows.Forms.Panel[4];
         private System.Data.DataTable?[]       _dataTables   = new System.Data.DataTable?[4];
+        private ListItem[][]                   _listItemCache = { Array.Empty<ListItem>(), Array.Empty<ListItem>(), Array.Empty<ListItem>(), Array.Empty<ListItem>() };
         private int[]                          _hoveredListItem = { -1, -1, -1, -1 };
         private readonly DetailPanelManager _detailPanelManager = new();
         private readonly DashboardManager _dashboardManager;
         private KeyboardShortcutHandler _shortcutHandler = null!;
 
         private const int  ListItemHeight     = 58;
+        private static readonly string[] ClipboardExportColumns =
+        {
+            "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer", "Qty", "PODate",
+            "Vintage", "PONumber", "RecvDate", "UnitCost", "CID", "MENumber", "PurCode",
+            "Est", "TextFile", "Comments", "OOSSerials"
+        };
 
         private static bool IsDataTab(int tabIndex)
             => tabIndex >= 1 && tabIndex <= TabTableNames.Length;
@@ -245,7 +253,7 @@ namespace DRED
             string table = TabTableNames[dataTabIndex];
             DataTable dt = DatabaseHelper.GetTableData(table, filter, filterColumn, advancedCriteria);
             _dataTables[dataTabIndex] = dt;
-            PopulateListBox(lb, dt);
+            PopulateListBox(lb, dataTabIndex, dt);
             UpdateStatusBar(dt.Rows.Count);
 
             if (lb.Items.Count > 0)
@@ -334,10 +342,34 @@ namespace DRED
 
         // ── ListBox population ───────────────────────────────────────────
 
-        private static void PopulateListBox(System.Windows.Forms.ListBox lb, DataTable dt)
+        private void PopulateListBox(System.Windows.Forms.ListBox lb, int dataTabIndex, DataTable dt)
         {
+            var newItems = BuildListItems(dt);
+            bool listChanged = _listItemCache[dataTabIndex].Length != newItems.Length
+                || !_listItemCache[dataTabIndex].SequenceEqual(newItems);
+
+            _listItemCache[dataTabIndex] = newItems;
+            if (!listChanged)
+                return;
+
             lb.BeginUpdate();
-            lb.Items.Clear();
+            try
+            {
+                lb.Items.Clear();
+                if (newItems.Length > 0)
+                {
+                    lb.Items.AddRange(Array.ConvertAll(newItems, item => (object)item));
+                }
+            }
+            finally
+            {
+                lb.EndUpdate();
+            }
+        }
+
+        private static ListItem[] BuildListItems(DataTable dt)
+        {
+            var items = new ListItem[dt.Rows.Count];
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 var row = dt.Rows[i];
@@ -347,9 +379,9 @@ namespace DRED
                 string recvDate = row["RecvDate"] is DBNull
                     ? "(no date)"
                     : Convert.ToDateTime(row["RecvDate"]).ToString("MM/dd/yyyy");
-                lb.Items.Add(new ListItem(devCode, qty, poNum, recvDate, i));
+                items[i] = new ListItem(devCode, qty, poNum, recvDate, i);
             }
-            lb.EndUpdate();
+            return items;
         }
 
         // ── Selected row helper ──────────────────────────────────────────
@@ -562,7 +594,7 @@ namespace DRED
             _dialogOpen = true;
             try
             {
-                using var form = new RecordForm();
+                using var form = new RecordForm(CurrentTable);
                 if (form.ShowDialog(this) == DialogResult.OK && form.Result != null)
                 {
                     try
@@ -607,7 +639,7 @@ namespace DRED
             _dialogOpen = true;
             try
             {
-                using var form = new RecordForm(existing);
+                using var form = new RecordForm(CurrentTable, existing, id);
                 if (form.ShowDialog(this) == DialogResult.OK && form.Result != null)
                 {
                     var undoAction = new UndoableAction
@@ -646,43 +678,105 @@ namespace DRED
         private void btnDelete_Click(object sender, EventArgs e)
         {
             if (!EnsureDataTabSelected("delete")) return;
-            var row = GetSelectedRow();
-            if (row == null)
+            int tabIndex = ToDataTabIndex(tabControl.SelectedIndex);
+            var lb = _listBoxes[tabIndex];
+            var dt = _dataTables[tabIndex];
+            if (dt == null)
+                return;
+
+            var selectedItems = lb.SelectedItems.OfType<ListItem>()
+                .OrderBy(i => i.RowIndex)
+                .ToList();
+
+            if (selectedItems.Count == 0)
             {
                 MessageBox.Show("Please select a record to delete.", "Delete Record",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            int id = Convert.ToInt32(row["Id"]);
+            string confirmMessage = selectedItems.Count == 1
+                ? "Are you sure you want to delete this record?"
+                : $"Delete {selectedItems.Count} selected records?";
 
-            if (MessageBox.Show("Are you sure you want to delete this record?", "Delete",
+            if (MessageBox.Show(confirmMessage, "Delete",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                var undoAction = new UndoableAction
-                {
-                    ActionType = UndoActionType.Delete,
-                    TableName = CurrentTable,
-                    RecordId = id,
-                    PreviousData = RowToRecordData(row),
-                    Timestamp = DateTime.Now,
-                    UserName = Environment.UserName,
-                };
+                var pushedActions = new List<UndoableAction>();
                 try
                 {
-                    UndoManager.Push(undoAction);
-                    DatabaseHelper.DeleteRecord(CurrentTable, id);
-                    Logger.Log($"User deleted record [{id}] from [{CurrentTable}].");
+                    foreach (var selectedItem in selectedItems)
+                    {
+                        if (selectedItem.RowIndex < 0 || selectedItem.RowIndex >= dt.Rows.Count)
+                            continue;
+
+                        var row = dt.Rows[selectedItem.RowIndex];
+                        int id = Convert.ToInt32(row["Id"]);
+                        var undoAction = new UndoableAction
+                        {
+                            ActionType = UndoActionType.Delete,
+                            TableName = CurrentTable,
+                            RecordId = id,
+                            PreviousData = RowToRecordData(row),
+                            Timestamp = DateTime.Now,
+                            UserName = Environment.UserName,
+                        };
+                        UndoManager.Push(undoAction);
+                        pushedActions.Add(undoAction);
+
+                        DatabaseHelper.DeleteRecord(CurrentTable, id);
+                        Logger.Log($"User deleted record [{id}] from [{CurrentTable}].");
+                    }
+
                     RefreshCurrentTab();
                     UpdateUndoState();
                 }
                 catch (Exception ex)
                 {
-                    if (ReferenceEquals(UndoManager.Peek(), undoAction))
-                        UndoManager.Pop();
+                    foreach (var action in pushedActions.AsEnumerable().Reverse())
+                    {
+                        if (ReferenceEquals(UndoManager.Peek(), action))
+                            UndoManager.Pop();
+                    }
                     ShowDbError(ex);
                 }
             }
+        }
+
+        private void CopySelectedToClipboard()
+        {
+            if (!EnsureDataTabSelected("copy")) return;
+
+            int tabIndex = ToDataTabIndex(tabControl.SelectedIndex);
+            var lb = _listBoxes[tabIndex];
+            var dt = _dataTables[tabIndex];
+            if (dt == null) return;
+
+            var selectedItems = lb.SelectedItems.OfType<ListItem>()
+                .OrderBy(i => i.RowIndex)
+                .ToList();
+
+            if (selectedItems.Count == 0)
+            {
+                MessageBox.Show("Please select one or more records to copy.", "Copy Selected",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            var sb = new StringBuilder();
+            sb.AppendLine(string.Join('\t', ClipboardExportColumns));
+            foreach (var selectedItem in selectedItems)
+            {
+                if (selectedItem.RowIndex < 0 || selectedItem.RowIndex >= dt.Rows.Count)
+                    continue;
+
+                var row = dt.Rows[selectedItem.RowIndex];
+                var values = ClipboardExportColumns
+                    .Select(col => EscapeClipboardValue(FormatClipboardValue(row, col)));
+                sb.AppendLine(string.Join('\t', values));
+            }
+
+            Clipboard.SetText(sb.ToString());
         }
 
         private void btnSettings_Click(object sender, EventArgs e)
@@ -960,6 +1054,41 @@ namespace DRED
 
         // ── Keyboard shortcuts ───────────────────────────────────────────
 
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (IsDataTab(tabControl.SelectedIndex))
+            {
+                int dataTabIndex = ToDataTabIndex(tabControl.SelectedIndex);
+                var lb = _listBoxes[dataTabIndex];
+
+                if (keyData == (Keys.Control | Keys.A))
+                {
+                    lb.BeginUpdate();
+                    try
+                    {
+                        for (int i = 0; i < lb.Items.Count; i++)
+                            lb.SetSelected(i, true);
+                    }
+                    finally
+                    {
+                        lb.EndUpdate();
+                    }
+                    return true;
+                }
+
+                if (keyData == Keys.Escape)
+                {
+                    if (lb.SelectedIndices.Count > 0)
+                    {
+                        lb.ClearSelected();
+                        return true;
+                    }
+                }
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
@@ -1010,6 +1139,23 @@ namespace DRED
         }
 
         // ── Utilities ────────────────────────────────────────────────────
+
+        private static string FormatClipboardValue(DataRow row, string columnName)
+        {
+            if (!row.Table.Columns.Contains(columnName) || row[columnName] is DBNull)
+                return string.Empty;
+
+            object value = row[columnName];
+            if (value is DateTime dateValue)
+                return dateValue.ToString("MM/dd/yyyy");
+            if (value is bool boolValue)
+                return boolValue ? "True" : "False";
+
+            return Convert.ToString(value) ?? string.Empty;
+        }
+
+        private static string EscapeClipboardValue(string value)
+            => value.Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
 
         private static RecordData RowToRecordData(DataRow row)
         {

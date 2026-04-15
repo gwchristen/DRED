@@ -11,18 +11,40 @@ namespace DRED
 
         private const string CurrencyFormat = "$#,##0.00";
         private readonly bool _isEdit;
+        private readonly string _tableName;
+        private readonly int? _existingRecordId;
         private bool _suppressQtyAutoCalc = false;
         private DateTime? _originalRecvDate = null;
 
         public RecordForm(RecordData? existing = null)
+            : this(string.Empty, existing, null)
+        {
+        }
+
+        public RecordForm(string tableName, RecordData? existing = null, int? existingRecordId = null)
         {
             InitializeComponent();
+            _tableName = tableName;
+            _existingRecordId = existingRecordId;
             _isEdit = existing != null;
             this.Text = _isEdit ? "Edit Record" : "Add Record";
             lblAuditInfo.Visible = false;
+            ConfigureAutoCompleteSources();
 
             if (_isEdit && existing != null)
                 PopulateFromRecord(existing);
+        }
+
+        private void ConfigureAutoCompleteSources()
+        {
+            if (string.IsNullOrWhiteSpace(_tableName))
+                return;
+
+            txtStatus.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "Status");
+            txtOpCo2.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "OpCo2");
+            txtMFR.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "MFR");
+            txtDevCode.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "DevCode");
+            txtPurCode.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "PurCode");
         }
 
         private void PopulateFromRecord(RecordData r)
@@ -77,6 +99,22 @@ namespace DRED
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(txtDevCode.Text))
+            {
+                MessageBox.Show("Dev Code is required.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtDevCode.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtBegSer.Text))
+            {
+                MessageBox.Show("Beg Ser is required.", "Validation",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtBegSer.Focus();
+                return;
+            }
+
             decimal? unitCost = null;
             if (!string.IsNullOrWhiteSpace(txtUnitCost.Text))
             {
@@ -126,6 +164,23 @@ namespace DRED
                 Comments = NullIfEmpty(txtComments.Text),
                 OOSSerials = NullIfEmpty(txtOOSSerials.Text),
             };
+
+            if (!string.IsNullOrWhiteSpace(_tableName) && DatabaseHelper.RecordExists(
+                    _tableName,
+                    Result.DevCode ?? string.Empty,
+                    Result.BegSer ?? string.Empty,
+                    Result.EndSer ?? string.Empty,
+                    _existingRecordId))
+            {
+                if (MessageBox.Show(
+                        "A record with the same Dev Code, Beg Ser, and End Ser already exists. Save anyway?",
+                        "Duplicate Record",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning) != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
 
             DialogResult = DialogResult.OK;
             Close();
@@ -237,4 +292,3 @@ namespace DRED
             string.IsNullOrWhiteSpace(s) ? null : s.Trim();
     }
 }
-

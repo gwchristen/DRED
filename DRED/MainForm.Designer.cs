@@ -30,6 +30,7 @@ namespace DRED
             this.mnuEditAdd          = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuEditEdit         = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuEditDelete       = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuEditCopySelected = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuEditSep1         = new System.Windows.Forms.ToolStripSeparator();
             this.mnuEditRefresh      = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuSearch           = new System.Windows.Forms.ToolStripMenuItem();
@@ -118,7 +119,7 @@ namespace DRED
             // Edit menu
             this.mnuEdit.Text = "&Edit";
             this.mnuEdit.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                mnuEditUndo, mnuEditAdd, mnuEditEdit, mnuEditDelete, mnuEditSep1, mnuEditRefresh });
+                mnuEditUndo, mnuEditAdd, mnuEditEdit, mnuEditDelete, mnuEditCopySelected, mnuEditSep1, mnuEditRefresh });
 
             this.mnuEditUndo.Text = "&Undo";
             this.mnuEditUndo.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Z;
@@ -136,6 +137,10 @@ namespace DRED
             this.mnuEditDelete.Text = "&Delete Record";
             this.mnuEditDelete.ShortcutKeys = System.Windows.Forms.Keys.Delete;
             this.mnuEditDelete.Click += (s, e) => btnDelete_Click(s, e);
+
+            this.mnuEditCopySelected.Text = "Copy &Selected";
+            this.mnuEditCopySelected.ShortcutKeys = System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift | System.Windows.Forms.Keys.C;
+            this.mnuEditCopySelected.Click += (s, e) => CopySelectedToClipboard();
 
             this.mnuEditRefresh.Text = "&Refresh";
             this.mnuEditRefresh.ShortcutKeys = System.Windows.Forms.Keys.F5;
@@ -504,6 +509,7 @@ namespace DRED
                 BackColor    = ThemeManager.BackgroundColor,
                 ForeColor    = System.Drawing.Color.White,
                 BorderStyle  = System.Windows.Forms.BorderStyle.None,
+                SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended,
                 IntegralHeight = false,
                 Tag          = tabIndex,
             };
@@ -574,6 +580,7 @@ namespace DRED
         private System.Windows.Forms.ToolStripMenuItem mnuEditAdd = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuEditEdit = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuEditDelete = null!;
+        private System.Windows.Forms.ToolStripMenuItem mnuEditCopySelected = null!;
         private System.Windows.Forms.ToolStripSeparator mnuEditSep1 = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuEditRefresh = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuSearch = null!;
