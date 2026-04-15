@@ -85,7 +85,6 @@ namespace DRED
             var labelFore = System.Drawing.Color.FromArgb(180, 180, 180); // label text
             var headerFore = System.Drawing.Color.FromArgb(100, 181, 246); // accent blue for section headers
             var accentBorder = System.Drawing.Color.FromArgb(62, 62, 66); // subtle border
-            var requiredFieldColor = System.Drawing.Color.FromArgb(0xF4, 0x43, 0x36);
 
             // ── pnlScroll — outer scrollable container ───────────────────
             this.pnlScroll.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -110,11 +109,10 @@ namespace DRED
             ConfigureDarkTextBox(txtMFR, 2); tblDevice.Controls.Add(txtMFR, 1, 1);
             txtMFR.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             txtMFR.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
-            AddLabelToCard(tblDevice, lblDevCode, "Dev Code: *", labelFore, 1, 2);
+            AddLabelToCard(tblDevice, lblDevCode, "Dev Code:", labelFore, 1, 2);
             ConfigureDarkTextBox(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
             txtDevCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             txtDevCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
-            lblDevCode.ForeColor = requiredFieldColor;
 
             pnlDeviceInfo = MakeCard(cardBack, accentBorder, lblDevHeader, tblDevice);
 
@@ -122,8 +120,7 @@ namespace DRED
             var tblSerial = MakeCardTable(2);
             var lblSerialHeader = MakeCardHeader("SERIAL RANGE & QUANTITY", headerFore);
             // Row 0: BegSer | EndSer
-            AddLabelToCard(tblSerial, lblBegSer, "Beg Ser: *", labelFore, 0, 0);
-            lblBegSer.ForeColor = requiredFieldColor;
+            AddLabelToCard(tblSerial, lblBegSer, "Beg Ser:", labelFore, 0, 0);
             ConfigureDarkTextBox(txtBegSer, 4);
             txtBegSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
             tblSerial.Controls.Add(txtBegSer, 1, 0);

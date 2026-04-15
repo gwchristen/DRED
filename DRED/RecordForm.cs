@@ -99,22 +99,6 @@ namespace DRED
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtDevCode.Text))
-            {
-                MessageBox.Show("Dev Code is required.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtDevCode.Focus();
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(txtBegSer.Text))
-            {
-                MessageBox.Show("Beg Ser is required.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                txtBegSer.Focus();
-                return;
-            }
-
             decimal? unitCost = null;
             if (!string.IsNullOrWhiteSpace(txtUnitCost.Text))
             {
