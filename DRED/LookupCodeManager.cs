@@ -12,13 +12,11 @@ namespace DRED
     /// </summary>
     public static class LookupCodeManager
     {
-        private static readonly string FilePath =
-            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lookup_codes.json");
-
         // key = DevCode (5-char), value = list of lookup codes (2-char each)
         private static Dictionary<string, List<string>> _table = new(StringComparer.OrdinalIgnoreCase);
 
         private static bool _loaded = false;
+        private static string _lastLoadedPath = string.Empty;
 
         /// <summary>
         /// Returns all current mappings as a list of (DevCode, LookupCode) pairs.
@@ -108,22 +106,35 @@ namespace DRED
             Save();
         }
 
+        public static void ResetCache()
+        {
+            _loaded = false;
+            _lastLoadedPath = string.Empty;
+            _table = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        }
+
         // ── Persistence ──────────────────────────────────────────────────
 
         private static void EnsureLoaded()
         {
+            string currentPath = GetFilePath();
+            if (_loaded && !string.Equals(_lastLoadedPath, currentPath, StringComparison.OrdinalIgnoreCase))
+                ResetCache();
             if (_loaded) return;
             Load();
         }
 
         private static void Load()
         {
+            string filePath = GetFilePath();
             _loaded = true;
-            if (File.Exists(FilePath))
+            _lastLoadedPath = filePath;
+            MigrateLegacyFileIfNeeded(filePath);
+            if (File.Exists(filePath))
             {
                 try
                 {
-                    string json = File.ReadAllText(FilePath);
+                    string json = File.ReadAllText(filePath);
                     var raw = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
                     if (raw != null)
                     {
@@ -146,9 +157,14 @@ namespace DRED
         {
             try
             {
+                string filePath = GetFilePath();
+                _lastLoadedPath = filePath;
+                string? directory = Path.GetDirectoryName(filePath);
+                if (!string.IsNullOrWhiteSpace(directory))
+                    Directory.CreateDirectory(directory);
                 string json = JsonSerializer.Serialize(_table,
                     new JsonSerializerOptions { WriteIndented = true });
-                File.WriteAllText(FilePath, json);
+                File.WriteAllText(filePath, json);
             }
             catch (Exception ex)
             {
@@ -157,7 +173,38 @@ namespace DRED
                     $"Failed to save lookup codes: {ex.Message}",
                     "Error",
                     System.Windows.Forms.MessageBoxButtons.OK,
-                    System.Windows.Forms.MessageBoxIcon.Error);
+                System.Windows.Forms.MessageBoxIcon.Error);
+            }
+        }
+
+        private static string GetFilePath()
+        {
+            if (!string.IsNullOrWhiteSpace(AppSettings.LookupCodesPath))
+                return AppSettings.LookupCodesPath;
+
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "DRED", "lookup_codes.json");
+        }
+
+        private static void MigrateLegacyFileIfNeeded(string newPath)
+        {
+            if (!string.IsNullOrWhiteSpace(AppSettings.LookupCodesPath))
+                return;
+
+            string legacyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "lookup_codes.json");
+            if (File.Exists(newPath) || !File.Exists(legacyPath))
+                return;
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(newPath)!);
+                File.Copy(legacyPath, newPath);
+                Logger.Log($"Migrated lookup_codes.json from '{legacyPath}' to '{newPath}'.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Failed to migrate lookup_codes.json to new location.", ex);
             }
         }
 
