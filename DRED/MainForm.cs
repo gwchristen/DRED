@@ -16,6 +16,7 @@ namespace DRED
             { "OH_Meters", "IM_Meters", "OH_Transformers", "IM_Transformers" };
 
         private static readonly Color[] TabAccentColors = {
+            Color.FromArgb(0x90, 0xA4, 0xAE), // Blue Grey - Dashboard
             Color.FromArgb(0x42, 0xA5, 0xF5), // Blue   - OH Meters
             Color.FromArgb(0x26, 0xA6, 0x9A), // Teal   - I&M Meters
             Color.FromArgb(0xFF, 0xA7, 0x26), // Orange - OH Transformers
@@ -37,14 +38,30 @@ namespace DRED
 
         private const int  ListItemHeight     = 58;
 
+        private static bool IsDataTab(int tabIndex)
+            => tabIndex >= 1 && tabIndex <= TabTableNames.Length;
+
+        private static int ToDataTabIndex(int tabIndex)
+            => tabIndex - 1;
+
+        private static int ToUiTabIndex(int dataTabIndex)
+            => dataTabIndex + 1;
+
+        private bool IsDashboardSelected => tabControl.SelectedIndex == 0;
+
         private string CurrentTable =>
-            TabTableNames[tabControl.SelectedIndex];
+            IsDataTab(tabControl.SelectedIndex)
+                ? TabTableNames[ToDataTabIndex(tabControl.SelectedIndex)]
+                : string.Empty;
 
         private AdvancedSearchCriteria? _advancedCriteria;
         private bool _dialogOpen  = false;
         private System.Windows.Forms.Timer _refreshTimer = null!;
+        private System.Windows.Forms.Timer _backupTimer = null!;
         private bool _initialized = false;
         private bool _isUnlocked = false;
+        private System.Windows.Forms.Panel _dashboardHostPanel = null!;
+        private DashboardLabels? _dashboardLabels;
 
         // ── Nested types ─────────────────────────────────────────────────
 
@@ -76,6 +93,15 @@ namespace DRED
             public List<System.Windows.Forms.Label> ValueLabels     = new();
         }
 
+        private sealed class DashboardLabels
+        {
+            public System.Windows.Forms.Label TotalRecords = null!;
+            public System.Windows.Forms.Label PerTable = null!;
+            public System.Windows.Forms.Label RecentActivity = null!;
+            public System.Windows.Forms.Label StatusCounts = null!;
+            public System.Windows.Forms.Label OpCoCounts = null!;
+        }
+
         // ── Constructor ──────────────────────────────────────────────────
 
         public MainForm()
@@ -92,12 +118,33 @@ namespace DRED
             cboFilterColumn.SelectedIndexChanged += cboFilterColumn_SelectedIndexChanged;
 
             InitializeDetailPanels();
+            InitializeDashboard();
             _isUnlocked = IsCurrentUserAuthorized();
             ApplyLockState();
 
             _refreshTimer = new System.Windows.Forms.Timer();
-            _refreshTimer.Tick += (s, e) => { if (!_dialogOpen) RefreshCurrentTab(); };
+            _refreshTimer.Tick += (s, e) =>
+            {
+                if (!_dialogOpen && !IsDashboardSelected)
+                    RefreshCurrentTab();
+            };
             UpdateRefreshTimer();
+
+            _backupTimer = new System.Windows.Forms.Timer();
+            _backupTimer.Tick += (s, e) =>
+            {
+                if (_dialogOpen) return;
+                try
+                {
+                    BackupManager.CreateBackup("scheduled");
+                    BackupManager.CleanupOldBackups(AppSettings.MaxBackupCount);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError("Scheduled backup failed.", ex);
+                }
+            };
+            UpdateBackupTimer();
             UpdateFilterIndicator();
 
             this.Shown += (s, e) =>
@@ -149,12 +196,29 @@ namespace DRED
             }
         }
 
+        private void UpdateBackupTimer()
+        {
+            _backupTimer.Stop();
+            int hours = AppSettings.BackupIntervalHours;
+            if (hours > 0)
+            {
+                _backupTimer.Interval = (int)TimeSpan.FromHours(hours).TotalMilliseconds;
+                _backupTimer.Start();
+            }
+        }
+
         private void RefreshCurrentTab()
         {
             if (!_initialized) return;
             try
             {
                 int tabIndex = tabControl.SelectedIndex;
+                if (tabIndex == 0)
+                {
+                    RefreshDashboard();
+                    return;
+                }
+
                 string filter = txtSearch.Text.Trim();
                 string filterColumn = cboFilterColumn.SelectedIndex > 0
                     ? cboFilterColumn.SelectedItem?.ToString() ?? ""
@@ -170,21 +234,22 @@ namespace DRED
         private void LoadTable(int tabIndex, string filter, string filterColumn = "",
             AdvancedSearchCriteria? advancedCriteria = null)
         {
-            if (tabIndex < 0 || tabIndex >= tabControl.TabPages.Count) return;
+            if (!IsDataTab(tabIndex)) return;
+            int dataTabIndex = ToDataTabIndex(tabIndex);
 
             // Preserve current selection identity and scroll position before refresh
-            var lb = _listBoxes[tabIndex];
+            var lb = _listBoxes[dataTabIndex];
             object? prevId = null;
             int prevTopIndex = lb.TopIndex;
-            if (lb.SelectedItem is ListItem prevItem && _dataTables[tabIndex] != null)
+            if (lb.SelectedItem is ListItem prevItem && _dataTables[dataTabIndex] != null)
             {
-                var prevRow = _dataTables[tabIndex]!.Rows[prevItem.RowIndex];
+                var prevRow = _dataTables[dataTabIndex]!.Rows[prevItem.RowIndex];
                 prevId = prevRow["Id"];
             }
 
-            string table = TabTableNames[tabIndex];
+            string table = TabTableNames[dataTabIndex];
             DataTable dt = DatabaseHelper.GetTableData(table, filter, filterColumn, advancedCriteria);
-            _dataTables[tabIndex] = dt;
+            _dataTables[dataTabIndex] = dt;
             PopulateListBox(lb, dt);
             UpdateStatusBar(dt.Rows.Count);
 
@@ -211,7 +276,7 @@ namespace DRED
             }
             else
             {
-                ShowEmptyDetailState(tabIndex);
+                ShowEmptyDetailState(dataTabIndex);
             }
         }
 
@@ -220,6 +285,13 @@ namespace DRED
         private void UpdateStatusBar(int recordCount)
         {
             lblStatusRecords.Text    = $"Records: {recordCount}";
+            lblStatusConnection.Text = $"Connected: {AppSettings.DatabasePath}";
+            UpdateUserLockStatusLabel();
+        }
+
+        private void UpdateDashboardStatusBar(int totalRecords)
+        {
+            lblStatusRecords.Text    = $"Dashboard: Total Records {totalRecords}";
             lblStatusConnection.Text = $"Connected: {AppSettings.DatabasePath}";
             UpdateUserLockStatusLabel();
         }
@@ -239,16 +311,17 @@ namespace DRED
         private void ApplyLockState()
         {
             bool enabled = _isUnlocked;
+            bool dataTabSelected = IsDataTab(tabControl.SelectedIndex);
 
             btnUnlock.Text = enabled ? "🔓 Lock" : "🔒 Unlock";
-            btnAdd.Enabled = enabled;
-            btnEdit.Enabled = enabled;
-            btnDelete.Enabled = enabled;
+            btnAdd.Enabled = enabled && dataTabSelected;
+            btnEdit.Enabled = enabled && dataTabSelected;
+            btnDelete.Enabled = enabled && dataTabSelected;
 
             mnuFileSettings.Enabled = enabled;
             mnuFileImport.Enabled = enabled;
             mnuTools.Enabled = enabled;
-            mnuEdit.Enabled = enabled;
+            mnuEdit.Enabled = enabled && dataTabSelected;
             btnUndo.Enabled = enabled && UndoManager.CanUndo;
             mnuEditUndo.Enabled = enabled && UndoManager.CanUndo;
 
@@ -296,12 +369,13 @@ namespace DRED
         private DataRow? GetSelectedRow()
         {
             int tabIndex = tabControl.SelectedIndex;
-            if (tabIndex < 0 || tabIndex >= 4) return null;
-            var lb = _listBoxes[tabIndex];
-            if (lb == null || lb.SelectedIndex < 0 || _dataTables[tabIndex] == null) return null;
+            if (!IsDataTab(tabIndex)) return null;
+            int dataTabIndex = ToDataTabIndex(tabIndex);
+            var lb = _listBoxes[dataTabIndex];
+            if (lb == null || lb.SelectedIndex < 0 || _dataTables[dataTabIndex] == null) return null;
             if (lb.SelectedItem is not ListItem item) return null;
             int rowIdx = item.RowIndex;
-            var dt = _dataTables[tabIndex]!;
+            var dt = _dataTables[dataTabIndex]!;
             if (rowIdx < 0 || rowIdx >= dt.Rows.Count) return null;
             return dt.Rows[rowIdx];
         }
@@ -319,7 +393,7 @@ namespace DRED
             if (lb.Items[e.Index] is not ListItem item) return;
 
             int   tabIndex = (int)(lb.Tag ?? 0);
-            Color accent   = TabAccentColors[tabIndex];
+            Color accent   = TabAccentColors[ToUiTabIndex(tabIndex)];
 
             bool selected = (e.State & DrawItemState.Selected) != 0;
             bool hovered  = _hoveredListItem[tabIndex] == e.Index;
@@ -426,7 +500,7 @@ namespace DRED
         {
             _detailLabels = new DetailLabels[4];
             for (int i = 0; i < 4; i++)
-                BuildDetailForTab(i, _detailPanels[i], TabAccentColors[i]);
+                BuildDetailForTab(i, _detailPanels[i], TabAccentColors[ToUiTabIndex(i)]);
         }
 
         private void ReapplyDetailPanelColors()
@@ -436,7 +510,7 @@ namespace DRED
                 var dl = _detailLabels[i];
                 if (dl == null) continue;
 
-                var accent         = TabAccentColors[i];
+                var accent         = TabAccentColors[ToUiTabIndex(i)];
                 var fieldNameColor = Color.FromArgb(0x99, 0x99, 0x99);
                 var valueColor     = Color.FromArgb(0xF1, 0xF1, 0xF1);
 
@@ -470,6 +544,171 @@ namespace DRED
                 // Panel backgrounds
                 dl.ContentPanel.BackColor = Color.FromArgb(0x2D, 0x2D, 0x30);
             }
+        }
+
+        private void InitializeDashboard()
+        {
+            if (_dashboardHostPanel == null) return;
+
+            _dashboardHostPanel.Controls.Clear();
+            _dashboardHostPanel.BackColor = ThemeManager.BackgroundColor;
+
+            var grid = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                ColumnCount = 2,
+                RowCount = 2,
+                BackColor = Color.Transparent,
+                Padding = new Padding(0),
+                Margin = new Padding(0),
+            };
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            grid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            grid.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            var labels = new DashboardLabels();
+            var accent = TabAccentColors[0];
+
+            var totalCard = CreateDashboardCard("TOTAL RECORDS", accent, out labels.TotalRecords);
+            labels.TotalRecords.Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold);
+            labels.PerTable = AddDashboardSecondaryLabel(totalCard);
+            grid.Controls.Add(totalCard, 0, 0);
+
+            var recentCard = CreateDashboardCard("RECENT ACTIVITY", accent, out labels.RecentActivity);
+            grid.Controls.Add(recentCard, 1, 0);
+
+            var statusCard = CreateDashboardCard("RECORDS BY STATUS", accent, out labels.StatusCounts);
+            grid.Controls.Add(statusCard, 0, 1);
+
+            var opcoCard = CreateDashboardCard("RECORDS BY OPCO2", accent, out labels.OpCoCounts);
+            grid.Controls.Add(opcoCard, 1, 1);
+
+            _dashboardHostPanel.Controls.Add(grid);
+            _dashboardLabels = labels;
+        }
+
+        private TableLayoutPanel CreateDashboardCard(string title, Color accent, out Label valueLabel)
+        {
+            var card = new TableLayoutPanel
+            {
+                ColumnCount = 1,
+                RowCount = 2,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
+                Dock = DockStyle.Top,
+                Margin = new Padding(6),
+                Padding = new Padding(12, 10, 12, 12),
+                BackColor = ThemeManager.SurfaceColor,
+            };
+            card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+            var header = new Label
+            {
+                Text = title,
+                ForeColor = accent,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 6),
+            };
+
+            valueLabel = new Label
+            {
+                Text = "—",
+                ForeColor = ThemeManager.TextColor,
+                Font = new Font("Segoe UI", 11F),
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                MaximumSize = new Size(480, 0),
+            };
+
+            card.Controls.Add(header, 0, 0);
+            card.Controls.Add(valueLabel, 0, 1);
+            return card;
+        }
+
+        private Label AddDashboardSecondaryLabel(TableLayoutPanel card)
+        {
+            card.RowCount += 1;
+            card.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            var lbl = new Label
+            {
+                Text = "—",
+                ForeColor = ThemeManager.SecondaryTextColor,
+                Font = new Font("Segoe UI", 9F),
+                Dock = DockStyle.Top,
+                AutoSize = true,
+                MaximumSize = new Size(480, 0),
+                Margin = new Padding(0, 8, 0, 0),
+            };
+            card.Controls.Add(lbl, 0, card.RowCount - 1);
+            return lbl;
+        }
+
+        private void RefreshDashboard()
+        {
+            if (_dashboardLabels == null) return;
+
+            var tableData = new Dictionary<string, DataTable>();
+            foreach (string table in TabTableNames)
+                tableData[table] = DatabaseHelper.GetTableData(table);
+
+            int total = tableData.Values.Sum(t => t.Rows.Count);
+            _dashboardLabels.TotalRecords.Text = total.ToString("N0");
+            _dashboardLabels.PerTable.Text = string.Join(Environment.NewLine,
+                tableData.Select(kvp => $"{kvp.Key}: {kvp.Value.Rows.Count:N0}"));
+
+            var recent = tableData
+                .SelectMany(kvp =>
+                    kvp.Value.AsEnumerable()
+                    .Select(row => new
+                    {
+                        Table = kvp.Key,
+                        DevCode = row["DevCode"] as string ?? "(blank)",
+                        Date = GetRecentDate(row)
+                    }))
+                .Where(x => x.Date.HasValue)
+                .OrderByDescending(x => x.Date)
+                .Take(5)
+                .Select(x => $"{x.DevCode} • {x.Table} • {x.Date:MM/dd/yyyy HH:mm}")
+                .ToList();
+            _dashboardLabels.RecentActivity.Text = recent.Count > 0
+                ? string.Join(Environment.NewLine, recent)
+                : "No recent activity.";
+
+            _dashboardLabels.StatusCounts.Text = BuildGroupedCounts(tableData.Values, "Status");
+            _dashboardLabels.OpCoCounts.Text = BuildGroupedCounts(tableData.Values, "OpCo2");
+            UpdateDashboardStatusBar(total);
+            Logger.Log("Dashboard refreshed.");
+        }
+
+        private static DateTime? GetRecentDate(DataRow row)
+        {
+            if (row.Table.Columns.Contains("ModifiedDate") && row["ModifiedDate"] is not DBNull)
+                return Convert.ToDateTime(row["ModifiedDate"]);
+            if (row.Table.Columns.Contains("CreatedDate") && row["CreatedDate"] is not DBNull)
+                return Convert.ToDateTime(row["CreatedDate"]);
+            return null;
+        }
+
+        private static string BuildGroupedCounts(IEnumerable<DataTable> tables, string columnName)
+        {
+            var groups = tables
+                .SelectMany(t => t.AsEnumerable())
+                .Select(r => r.Table.Columns.Contains(columnName) && r[columnName] is not DBNull
+                    ? (r[columnName] as string ?? string.Empty).Trim()
+                    : string.Empty)
+                .Select(v => string.IsNullOrWhiteSpace(v) ? "(blank)" : v)
+                .GroupBy(v => v, StringComparer.OrdinalIgnoreCase)
+                .OrderByDescending(g => g.Count())
+                .ThenBy(g => g.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(g => $"{g.Key}: {g.Count():N0}")
+                .ToList();
+
+            return groups.Count > 0 ? string.Join(Environment.NewLine, groups) : "No records.";
         }
 
         private void BuildDetailForTab(int tabIndex, System.Windows.Forms.Panel scrollPanel, Color accentColor)
@@ -783,7 +1022,10 @@ namespace DRED
         private void tabControl_SelectedIndexChanged(object sender, EventArgs e)
         {
             tabSelector?.Invalidate();
-            Logger.Log($"Switched to tab: {CurrentTable}.");
+            Logger.Log(IsDashboardSelected
+                ? "Switched to tab: Dashboard."
+                : $"Switched to tab: {CurrentTable}.");
+            ApplyLockState();
             RefreshCurrentTab();
         }
 
@@ -851,6 +1093,7 @@ namespace DRED
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
+            if (!EnsureDataTabSelected("add")) return;
             _dialogOpen = true;
             try
             {
@@ -876,6 +1119,7 @@ namespace DRED
 
         private void btnEdit_Click(object sender, EventArgs e)
         {
+            if (!EnsureDataTabSelected("edit")) return;
             var row = GetSelectedRow();
             if (row == null)
             {
@@ -936,6 +1180,7 @@ namespace DRED
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
+            if (!EnsureDataTabSelected("delete")) return;
             var row = GetSelectedRow();
             if (row == null)
             {
@@ -983,6 +1228,7 @@ namespace DRED
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
                     UpdateRefreshTimer();
+                    UpdateBackupTimer();
                     if (!_isUnlocked && IsCurrentUserAuthorized())
                     {
                         _isUnlocked = true;
@@ -999,6 +1245,7 @@ namespace DRED
 
         private void btnGenerate_Click(object sender, EventArgs e)
         {
+            if (!EnsureDataTabSelected("generate")) return;
             var row = GetSelectedRow();
             if (row == null)
             {
@@ -1008,7 +1255,9 @@ namespace DRED
             }
 
             int tabIndex = tabControl.SelectedIndex;
-            bool isMeter = tabIndex == 0 || tabIndex == 1;
+            if (!IsDataTab(tabIndex)) return;
+            int dataTabIndex = ToDataTabIndex(tabIndex);
+            bool isMeter = dataTabIndex == 0 || dataTabIndex == 1;
 
             string devCode = row["DevCode"] as string ?? "";
             string mfrCode = row["MFR"]     as string ?? "";
@@ -1089,6 +1338,21 @@ namespace DRED
             }
         }
 
+        private void btnAuditLog_Click(object sender, EventArgs e)
+        {
+            _dialogOpen = true;
+            try
+            {
+                using var form = new AuditLogForm();
+                form.ShowDialog(this);
+            }
+            finally
+            {
+                _dialogOpen = false;
+                ReapplyDetailPanelColors();
+            }
+        }
+
         private void btnAdvancedSearch_Click(object sender, EventArgs e)
         {
             _dialogOpen = true;
@@ -1127,6 +1391,24 @@ namespace DRED
             if (dlg.ShowDialog(this) != DialogResult.OK) return;
             Logger.Log($"Starting import from '{dlg.FileName}'.");
 
+            try
+            {
+                BackupManager.CreateBackup("pre-import");
+                BackupManager.CleanupOldBackups(AppSettings.MaxBackupCount);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Pre-import backup failed.", ex);
+                if (MessageBox.Show(
+                        $"Unable to create backup before import:\n{ex.Message}\n\nContinue import anyway?",
+                        "Backup Failed",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning) != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
+
             var progress = new System.Text.StringBuilder();
             bool hasError = false;
             try
@@ -1156,6 +1438,7 @@ namespace DRED
 
         private void btnExport_Click(object sender, EventArgs e)
         {
+            if (!EnsureDataTabSelected("export")) return;
             using var dlg = new SaveFileDialog
             {
                 Title      = "Export to Excel",
@@ -1288,6 +1571,10 @@ namespace DRED
                         e.Handled = true;
                         SelectTabIfAvailable(3);
                         return;
+                    case Keys.D5:
+                        e.Handled = true;
+                        SelectTabIfAvailable(4);
+                        return;
                 }
             }
 
@@ -1326,6 +1613,17 @@ namespace DRED
         {
             if (tabIndex >= 0 && tabIndex < tabControl.TabCount)
                 tabControl.SelectedIndex = tabIndex;
+        }
+
+        private bool EnsureDataTabSelected(string action)
+        {
+            if (IsDataTab(tabControl.SelectedIndex)) return true;
+            MessageBox.Show(
+                $"Please switch to a data tab to {action} records.",
+                "Dashboard",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+            return false;
         }
 
         private void btnUnlock_Click(object sender, EventArgs e)

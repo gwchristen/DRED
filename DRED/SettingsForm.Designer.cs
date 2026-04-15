@@ -18,6 +18,10 @@ namespace DRED
             this.btnBrowse        = new MaterialSkin.Controls.MaterialButton();
             this.lblAutoRefresh   = new System.Windows.Forms.Label();
             this.nudAutoRefresh   = new System.Windows.Forms.NumericUpDown();
+            this.lblBackupInterval = new System.Windows.Forms.Label();
+            this.nudBackupInterval = new System.Windows.Forms.NumericUpDown();
+            this.lblMaxBackups = new System.Windows.Forms.Label();
+            this.nudMaxBackups = new System.Windows.Forms.NumericUpDown();
             this.lblLockPin       = new System.Windows.Forms.Label();
             this.txtLockPin       = new MaterialSkin.Controls.MaterialTextBox2();
             this.lblAuthorizedUsers = new System.Windows.Forms.Label();
@@ -29,6 +33,8 @@ namespace DRED
             this.btnCancel        = new MaterialSkin.Controls.MaterialButton();
             this.lblInfo          = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.nudAutoRefresh)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudBackupInterval)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudMaxBackups)).BeginInit();
             this.SuspendLayout();
 
             // lblInfo
@@ -75,6 +81,38 @@ namespace DRED
             this.nudAutoRefresh.BackColor = ThemeManager.InputBackColor;
             this.nudAutoRefresh.ForeColor = System.Drawing.Color.White;
 
+            // lblBackupInterval
+            this.lblBackupInterval.AutoSize = true;
+            this.lblBackupInterval.Location = new System.Drawing.Point(120, 210);
+            this.lblBackupInterval.ForeColor = ThemeManager.SecondaryTextColor;
+            this.lblBackupInterval.Text = "Backup Interval (hours, 0 = disabled):";
+
+            // nudBackupInterval
+            this.nudBackupInterval.Location = new System.Drawing.Point(120, 228);
+            this.nudBackupInterval.Size = new System.Drawing.Size(80, 23);
+            this.nudBackupInterval.Minimum = 0;
+            this.nudBackupInterval.Maximum = 168;
+            this.nudBackupInterval.Value = 24;
+            this.nudBackupInterval.TabIndex = 3;
+            this.nudBackupInterval.BackColor = ThemeManager.InputBackColor;
+            this.nudBackupInterval.ForeColor = System.Drawing.Color.White;
+
+            // lblMaxBackups
+            this.lblMaxBackups.AutoSize = true;
+            this.lblMaxBackups.Location = new System.Drawing.Point(220, 210);
+            this.lblMaxBackups.ForeColor = ThemeManager.SecondaryTextColor;
+            this.lblMaxBackups.Text = "Max Backups:";
+
+            // nudMaxBackups
+            this.nudMaxBackups.Location = new System.Drawing.Point(220, 228);
+            this.nudMaxBackups.Size = new System.Drawing.Size(80, 23);
+            this.nudMaxBackups.Minimum = 1;
+            this.nudMaxBackups.Maximum = 100;
+            this.nudMaxBackups.Value = 10;
+            this.nudMaxBackups.TabIndex = 4;
+            this.nudMaxBackups.BackColor = ThemeManager.InputBackColor;
+            this.nudMaxBackups.ForeColor = System.Drawing.Color.White;
+
             // lblLockPin
             this.lblLockPin.AutoSize = true;
             this.lblLockPin.Location = new System.Drawing.Point(12, 266);
@@ -85,7 +123,7 @@ namespace DRED
             this.txtLockPin.UseTallSize = false;
             this.txtLockPin.Location = new System.Drawing.Point(12, 284);
             this.txtLockPin.Size = new System.Drawing.Size(180, 48);
-            this.txtLockPin.TabIndex = 3;
+            this.txtLockPin.TabIndex = 5;
             this.txtLockPin.UseSystemPasswordChar = true;
 
             // lblAuthorizedUsers
@@ -97,7 +135,7 @@ namespace DRED
             // lstAuthorizedUsers
             this.lstAuthorizedUsers.Location = new System.Drawing.Point(12, 356);
             this.lstAuthorizedUsers.Size = new System.Drawing.Size(460, 94);
-            this.lstAuthorizedUsers.TabIndex = 4;
+            this.lstAuthorizedUsers.TabIndex = 6;
             this.lstAuthorizedUsers.BackColor = ThemeManager.InputBackColor;
             this.lstAuthorizedUsers.ForeColor = System.Drawing.Color.White;
 
@@ -105,13 +143,13 @@ namespace DRED
             this.txtAuthorizedUser.UseTallSize = false;
             this.txtAuthorizedUser.Location = new System.Drawing.Point(12, 456);
             this.txtAuthorizedUser.Size = new System.Drawing.Size(300, 48);
-            this.txtAuthorizedUser.TabIndex = 5;
+            this.txtAuthorizedUser.TabIndex = 7;
             this.txtAuthorizedUser.Hint = "Username";
 
             // btnAddUser
             this.btnAddUser.Location = new System.Drawing.Point(320, 463);
             this.btnAddUser.Text = "Add";
-            this.btnAddUser.TabIndex = 6;
+            this.btnAddUser.TabIndex = 8;
             this.btnAddUser.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
             this.btnAddUser.AutoSize = true;
             this.btnAddUser.Click += new System.EventHandler(this.btnAddUser_Click);
@@ -119,7 +157,7 @@ namespace DRED
             // btnRemoveUser
             this.btnRemoveUser.Location = new System.Drawing.Point(390, 463);
             this.btnRemoveUser.Text = "Remove";
-            this.btnRemoveUser.TabIndex = 7;
+            this.btnRemoveUser.TabIndex = 9;
             this.btnRemoveUser.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
             this.btnRemoveUser.AutoSize = true;
             this.btnRemoveUser.Click += new System.EventHandler(this.btnRemoveUser_Click);
@@ -127,7 +165,7 @@ namespace DRED
             // btnOK
             this.btnOK.Location = new System.Drawing.Point(400, 512);
             this.btnOK.Text = "OK";
-            this.btnOK.TabIndex = 8;
+            this.btnOK.TabIndex = 10;
             this.btnOK.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Contained;
             this.btnOK.HighEmphasis = true;
             this.btnOK.AutoSize = true;
@@ -136,7 +174,7 @@ namespace DRED
             // btnCancel
             this.btnCancel.Location = new System.Drawing.Point(480, 512);
             this.btnCancel.Text = "Cancel";
-            this.btnCancel.TabIndex = 9;
+            this.btnCancel.TabIndex = 11;
             this.btnCancel.Type = MaterialSkin.Controls.MaterialButton.MaterialButtonType.Outlined;
             this.btnCancel.AutoSize = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
@@ -153,6 +191,10 @@ namespace DRED
             this.Controls.Add(this.btnBrowse);
             this.Controls.Add(this.lblAutoRefresh);
             this.Controls.Add(this.nudAutoRefresh);
+            this.Controls.Add(this.lblBackupInterval);
+            this.Controls.Add(this.nudBackupInterval);
+            this.Controls.Add(this.lblMaxBackups);
+            this.Controls.Add(this.nudMaxBackups);
             this.Controls.Add(this.lblLockPin);
             this.Controls.Add(this.txtLockPin);
             this.Controls.Add(this.lblAuthorizedUsers);
@@ -168,6 +210,8 @@ namespace DRED
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "DRED – Settings";
             ((System.ComponentModel.ISupportInitialize)(this.nudAutoRefresh)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudBackupInterval)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.nudMaxBackups)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
         }
@@ -178,6 +222,10 @@ namespace DRED
         private MaterialSkin.Controls.MaterialButton btnBrowse = null!;
         private System.Windows.Forms.Label lblAutoRefresh = null!;
         private System.Windows.Forms.NumericUpDown nudAutoRefresh = null!;
+        private System.Windows.Forms.Label lblBackupInterval = null!;
+        private System.Windows.Forms.NumericUpDown nudBackupInterval = null!;
+        private System.Windows.Forms.Label lblMaxBackups = null!;
+        private System.Windows.Forms.NumericUpDown nudMaxBackups = null!;
         private System.Windows.Forms.Label lblLockPin = null!;
         private MaterialSkin.Controls.MaterialTextBox2 txtLockPin = null!;
         private System.Windows.Forms.Label lblAuthorizedUsers = null!;

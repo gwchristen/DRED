@@ -19,6 +19,8 @@ namespace DRED
 
         public static string DatabasePath { get; set; } = string.Empty;
         public static int AutoRefreshInterval { get; set; } = 60;
+        public static int BackupIntervalHours { get; set; } = 24;
+        public static int MaxBackupCount { get; set; } = 10;
         public static string LockPin { get; set; } = "1234";
         public static List<string> AuthorizedUsers { get; set; } = new();
 
@@ -34,6 +36,8 @@ namespace DRED
                     {
                         DatabasePath = data.DatabasePath ?? string.Empty;
                         AutoRefreshInterval = data.AutoRefreshInterval;
+                        BackupIntervalHours = Math.Clamp(data.BackupIntervalHours, 0, 168);
+                        MaxBackupCount = Math.Max(1, data.MaxBackupCount);
                         LockPin = string.IsNullOrWhiteSpace(data.LockPin) ? "1234" : data.LockPin;
                         AuthorizedUsers = data.AuthorizedUsers?
                             .Where(u => !string.IsNullOrWhiteSpace(u))
@@ -58,6 +62,8 @@ namespace DRED
                 {
                     DatabasePath = DatabasePath,
                     AutoRefreshInterval = AutoRefreshInterval,
+                    BackupIntervalHours = Math.Clamp(BackupIntervalHours, 0, 168),
+                    MaxBackupCount = Math.Max(1, MaxBackupCount),
                     LockPin = string.IsNullOrWhiteSpace(LockPin) ? "1234" : LockPin,
                     AuthorizedUsers = AuthorizedUsers
                         .Where(u => !string.IsNullOrWhiteSpace(u))
@@ -83,6 +89,8 @@ namespace DRED
         {
             public string? DatabasePath { get; set; }
             public int AutoRefreshInterval { get; set; } = 60;
+            public int BackupIntervalHours { get; set; } = 24;
+            public int MaxBackupCount { get; set; } = 10;
             public string LockPin { get; set; } = "1234";
             public List<string> AuthorizedUsers { get; set; } = new();
         }

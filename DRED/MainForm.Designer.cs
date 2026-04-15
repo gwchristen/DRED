@@ -9,6 +9,7 @@ namespace DRED
             if (disposing)
             {
                 _refreshTimer?.Dispose();
+                _backupTimer?.Dispose();
                 components?.Dispose();
             }
             base.Dispose(disposing);
@@ -36,6 +37,7 @@ namespace DRED
             this.mnuSearchAdvanced   = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuTools            = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuToolsLookupCodes = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuToolsAuditLog    = new System.Windows.Forms.ToolStripMenuItem();
 
             // ── Slim toolbar ─────────────────────────────────────────────
             this.pnlToolbar          = new System.Windows.Forms.FlowLayoutPanel();
@@ -64,6 +66,7 @@ namespace DRED
             // ── Tab control ──────────────────────────────────────────────
             this.tabControl          = new MaterialSkin.Controls.MaterialTabControl();
             this.tabSelector         = new System.Windows.Forms.Panel();
+            this.tabDashboard        = new System.Windows.Forms.TabPage();
             this.tabOHMeters         = new System.Windows.Forms.TabPage();
             this.tabIMMeters         = new System.Windows.Forms.TabPage();
             this.tabOHTransformers   = new System.Windows.Forms.TabPage();
@@ -154,10 +157,13 @@ namespace DRED
             // Tools menu
             this.mnuTools.Text = "&Tools";
             this.mnuTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                mnuToolsLookupCodes });
+                mnuToolsLookupCodes, mnuToolsAuditLog });
 
             this.mnuToolsLookupCodes.Text = "&Lookup Code Editor...";
             this.mnuToolsLookupCodes.Click += (s, e) => btnLookupCodeEditor_Click(s, e);
+
+            this.mnuToolsAuditLog.Text = "&Audit Log...";
+            this.mnuToolsAuditLog.Click += (s, e) => btnAuditLog_Click(s, e);
 
             // Apply dark theme to menu
             ThemeManager.ApplyDarkMenuStrip(this.mainMenu);
@@ -279,10 +285,11 @@ namespace DRED
             // ── tabControl ───────────────────────────────────────────────
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.TabPages.AddRange(new System.Windows.Forms.TabPage[] {
-                tabOHMeters, tabIMMeters, tabOHTransformers, tabIMTransformers });
+                tabDashboard, tabOHMeters, tabIMMeters, tabOHTransformers, tabIMTransformers });
             this.tabControl.TabIndex = 3;
             this.tabControl.SelectedIndexChanged += new System.EventHandler(this.tabControl_SelectedIndexChanged);
 
+            SetupDashboardTab(tabDashboard, "Dashboard");
             SetupTabWithSplit(tabOHMeters,       "OH - Meters",        System.Drawing.Color.FromArgb(0x42, 0xA5, 0xF5), 0);
             SetupTabWithSplit(tabIMMeters,       "I&M - Meters",       System.Drawing.Color.FromArgb(0x26, 0xA6, 0x9A), 1);
             SetupTabWithSplit(tabOHTransformers, "OH - Transformers",  System.Drawing.Color.FromArgb(0xFF, 0xA7, 0x26), 2);
@@ -526,6 +533,22 @@ namespace DRED
             _splitContainers[tabIndex] = split;
         }
 
+        private void SetupDashboardTab(System.Windows.Forms.TabPage tab, string text)
+        {
+            tab.Text = text;
+            tab.BackColor = ThemeManager.BackgroundColor;
+
+            var dashboardPanel = new System.Windows.Forms.Panel
+            {
+                Dock = System.Windows.Forms.DockStyle.Fill,
+                AutoScroll = true,
+                BackColor = ThemeManager.BackgroundColor,
+                Padding = new System.Windows.Forms.Padding(10),
+            };
+            tab.Controls.Add(dashboardPanel);
+            _dashboardHostPanel = dashboardPanel;
+        }
+
         private static void SetMaterialButton(MaterialSkin.Controls.MaterialButton btn,
             string text, MaterialSkin.Controls.MaterialButton.MaterialButtonType type,
             bool highEmphasis, System.EventHandler handler)
@@ -558,6 +581,7 @@ namespace DRED
         private System.Windows.Forms.ToolStripMenuItem mnuSearchAdvanced = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuTools = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuToolsLookupCodes = null!;
+        private System.Windows.Forms.ToolStripMenuItem mnuToolsAuditLog = null!;
         private System.Windows.Forms.FlowLayoutPanel pnlToolbar = null!;
         private MaterialSkin.Controls.MaterialButton btnAdd = null!;
         private MaterialSkin.Controls.MaterialButton btnUndo = null!;
@@ -578,6 +602,7 @@ namespace DRED
         private System.Windows.Forms.Label lblFilterActive = null!;
         private MaterialSkin.Controls.MaterialTabControl tabControl = null!;
         private System.Windows.Forms.Panel tabSelector = null!;
+        private System.Windows.Forms.TabPage tabDashboard = null!;
         private System.Windows.Forms.TabPage tabOHMeters = null!;
         private System.Windows.Forms.TabPage tabIMMeters = null!;
         private System.Windows.Forms.TabPage tabOHTransformers = null!;
