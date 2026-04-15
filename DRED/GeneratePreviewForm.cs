@@ -19,6 +19,7 @@ namespace DRED
         private RichTextBox txtPreview   = null!;
         private Label       lblCount     = null!;
         private MaterialButton btnSave   = null!;
+        private MaterialButton btnCopy   = null!;
         private MaterialButton btnClose  = null!;
 
         public GeneratePreviewForm(List<string> serials, string devCode)
@@ -66,40 +67,73 @@ namespace DRED
             };
 
             // Button panel
-            var pnlBtn = new Panel
+            var pnlButtons = new FlowLayoutPanel
             {
-                Dock      = DockStyle.Bottom,
-                Height    = 48,
-                BackColor = Color.FromArgb(0x25, 0x25, 0x28),
+                Dock          = DockStyle.Bottom,
+                Height        = 48,
+                BackColor     = Color.FromArgb(0x25, 0x25, 0x28),
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents  = false,
+                Padding       = new Padding(8, 8, 8, 8),
             };
 
             btnSave = new MaterialButton
             {
                 Text         = "Save",
-                Location     = new Point(8, 8),
                 Type         = MaterialButton.MaterialButtonType.Contained,
                 HighEmphasis = true,
                 AutoSize     = true,
+                Margin       = new Padding(0, 0, 8, 0),
             };
             btnClose = new MaterialButton
             {
                 Text     = "Close",
-                Location = new Point(120, 8),
                 Type     = MaterialButton.MaterialButtonType.Outlined,
                 AutoSize = true,
+                Margin   = new Padding(0, 0, 0, 0),
+            };
+            btnCopy = new MaterialButton
+            {
+                Text     = "Copy",
+                Type     = MaterialButton.MaterialButtonType.Outlined,
+                AutoSize = true,
+                Margin   = new Padding(0, 0, 8, 0),
             };
 
             btnSave.Click  += BtnSave_Click;
+            btnCopy.Click  += BtnCopy_Click;
             btnClose.Click += (s, e) => this.Close();
 
-            pnlBtn.Controls.Add(btnSave);
-            pnlBtn.Controls.Add(btnClose);
+            pnlButtons.Controls.Add(btnSave);
+            pnlButtons.Controls.Add(btnCopy);
+            pnlButtons.Controls.Add(btnClose);
 
             this.Controls.Add(txtPreview);
             this.Controls.Add(lblCount);
-            this.Controls.Add(pnlBtn);
+            this.Controls.Add(pnlButtons);
 
             this.CancelButton = btnClose;
+        }
+
+        private void BtnCopy_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                Clipboard.SetText(string.Join(Environment.NewLine, _serials));
+                MessageBox.Show(
+                    $"Copied {_serials.Count} serial(s) to clipboard.",
+                    "Copied",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Failed to copy to clipboard:\n{ex.Message}",
+                    "Copy Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         private void BtnSave_Click(object? sender, EventArgs e)

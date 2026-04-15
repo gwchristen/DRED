@@ -9,7 +9,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <AssemblyName>DRED</AssemblyName>
     <RootNamespace>DRED</RootNamespace>
-    <ApplicationIcon />
+    <ApplicationIcon>Resources\DRED.ico</ApplicationIcon>
     <StartupObject>DRED.Program</StartupObject>
   </PropertyGroup>
 

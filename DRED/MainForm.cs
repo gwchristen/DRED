@@ -24,6 +24,8 @@ namespace DRED
 
         private static readonly Color BooleanTrueColor  = Color.FromArgb(0x66, 0xBB, 0x6A); // Material Green 400
         private static readonly Color BooleanFalseColor = Color.FromArgb(0xEF, 0x53, 0x50); // Material Red 400
+        private static readonly Color SearchPanelDefaultColor = Color.FromArgb(37, 37, 40);
+        private static readonly Color SearchPanelFilteredColor = Color.FromArgb(30, 35, 50);
 
         // Populated by Designer's SetupTabWithSplit; arrays allocated here as field initializers
         private System.Windows.Forms.SplitContainer[] _splitContainers = new System.Windows.Forms.SplitContainer[4];
@@ -95,6 +97,7 @@ namespace DRED
             _refreshTimer = new System.Windows.Forms.Timer();
             _refreshTimer.Tick += (s, e) => { if (!_dialogOpen) RefreshCurrentTab(); };
             UpdateRefreshTimer();
+            UpdateFilterIndicator();
 
             this.Shown += (s, e) =>
             {
@@ -786,6 +789,7 @@ namespace DRED
         {
             txtSearch.Text    = "";
             _advancedCriteria = null;
+            UpdateFilterIndicator();
             RefreshCurrentTab();
         }
 
@@ -1009,6 +1013,7 @@ namespace DRED
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
                     _advancedCriteria = form.Criteria;
+                    UpdateFilterIndicator();
                     RefreshCurrentTab();
                 }
             }
@@ -1170,6 +1175,22 @@ namespace DRED
                         if (_isUnlocked)
                             btnSettings_Click(this, EventArgs.Empty);
                         return;
+                    case Keys.D1:
+                        e.Handled = true;
+                        SelectTabIfAvailable(0);
+                        return;
+                    case Keys.D2:
+                        e.Handled = true;
+                        SelectTabIfAvailable(1);
+                        return;
+                    case Keys.D3:
+                        e.Handled = true;
+                        SelectTabIfAvailable(2);
+                        return;
+                    case Keys.D4:
+                        e.Handled = true;
+                        SelectTabIfAvailable(3);
+                        return;
                 }
             }
 
@@ -1191,9 +1212,23 @@ namespace DRED
                     e.Handled = true;
                     txtSearch.Text    = "";
                     _advancedCriteria = null;
+                    UpdateFilterIndicator();
                     RefreshCurrentTab();
                     return;
             }
+        }
+
+        private void UpdateFilterIndicator()
+        {
+            bool isFiltered = _advancedCriteria != null;
+            lblFilterActive.Visible = isFiltered;
+            pnlSearch.BackColor = isFiltered ? SearchPanelFilteredColor : SearchPanelDefaultColor;
+        }
+
+        private void SelectTabIfAvailable(int tabIndex)
+        {
+            if (tabIndex >= 0 && tabIndex < tabControl.TabCount)
+                tabControl.SelectedIndex = tabIndex;
         }
 
         private void btnUnlock_Click(object sender, EventArgs e)
