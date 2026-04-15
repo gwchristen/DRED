@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.OleDb;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace DRED
 {
@@ -363,6 +365,74 @@ CREATE TABLE [AuditLog] (
             return dt;
         }
 
+        public static AutoCompleteStringCollection GetDistinctValues(string tableName, string columnName)
+        {
+            EnsureValidTableName(tableName);
+            EnsureValidColumnName(columnName);
+
+            var values = new AutoCompleteStringCollection();
+
+            using var conn = OpenConnection();
+            string sql = $@"
+SELECT DISTINCT [{columnName}]
+FROM [{tableName}]
+WHERE [{columnName}] IS NOT NULL AND [{columnName}] <> ''
+ORDER BY [{columnName}]";
+
+            using var cmd = new OleDbCommand(sql, conn);
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                string? value = reader[0] as string;
+                if (!string.IsNullOrWhiteSpace(value))
+                    values.Add(value);
+            }
+
+            return values;
+        }
+
+        public static bool RecordExists(string tableName, string devCode, string begSer, string endSer, int? excludeId = null)
+        {
+            EnsureValidTableName(tableName);
+
+            using var conn = OpenConnection();
+            string trimmedEndSer = endSer?.Trim() ?? string.Empty;
+
+            string sql;
+            using var cmd = new OleDbCommand();
+            cmd.Connection = conn;
+
+            if (string.IsNullOrEmpty(trimmedEndSer))
+            {
+                sql = $@"
+SELECT COUNT(*)
+FROM [{tableName}]
+WHERE [DevCode] = ? AND [BegSer] = ? AND ([EndSer] IS NULL OR [EndSer] = '')";
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = devCode.Trim() });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = begSer.Trim() });
+            }
+            else
+            {
+                sql = $@"
+SELECT COUNT(*)
+FROM [{tableName}]
+WHERE [DevCode] = ? AND [BegSer] = ? AND [EndSer] = ?";
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = devCode.Trim() });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = begSer.Trim() });
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = trimmedEndSer });
+            }
+
+            if (excludeId.HasValue)
+            {
+                sql += " AND [Id] <> ?";
+                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = excludeId.Value });
+            }
+
+            cmd.CommandText = sql;
+            object? result = cmd.ExecuteScalar();
+            return Convert.ToInt32(result) > 0;
+        }
+
         public static void InsertRecord(string tableName, RecordData data)
         {
             try
@@ -699,6 +769,27 @@ VALUES (?,?,?,?,?,?,?,?)", conn);
             var p = new OleDbParameter { OleDbType = OleDbType.Currency };
             p.Value = value.HasValue ? (object)value.Value : DBNull.Value;
             cmd.Parameters.Add(p);
+        }
+
+        private static void EnsureValidTableName(string tableName)
+        {
+            if (!TableNames.Contains(tableName))
+                throw new ArgumentException(
+                    $"Invalid table name '{tableName}'. Valid tables: {string.Join(", ", TableNames)}.",
+                    nameof(tableName));
+        }
+
+        private static void EnsureValidColumnName(string columnName)
+        {
+            string[] allowedColumns =
+            {
+                "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer", "Qty",
+                "PODate", "Vintage", "PONumber", "RecvDate", "UnitCost", "CID",
+                "MENumber", "PurCode", "Est", "TextFile", "Comments", "OOSSerials"
+            };
+
+            if (!allowedColumns.Contains(columnName))
+                throw new ArgumentException("Invalid column name.", nameof(columnName));
         }
 
         public static bool TryLockRecord(string tableName, int recordId, out string lockedBy)

@@ -85,6 +85,7 @@ namespace DRED
             var labelFore = System.Drawing.Color.FromArgb(180, 180, 180); // label text
             var headerFore = System.Drawing.Color.FromArgb(100, 181, 246); // accent blue for section headers
             var accentBorder = System.Drawing.Color.FromArgb(62, 62, 66); // subtle border
+            var requiredFieldColor = System.Drawing.Color.FromArgb(0xF4, 0x43, 0x36);
 
             // ── pnlScroll — outer scrollable container ───────────────────
             this.pnlScroll.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -98,13 +99,22 @@ namespace DRED
             // Row 0: OpCo2 | Status
             AddLabelToCard(tblDevice, lblOpCo2, "OpCo2:", labelFore, 0, 0);
             ConfigureDarkTextBox(txtOpCo2, 0); tblDevice.Controls.Add(txtOpCo2, 1, 0);
+            txtOpCo2.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            txtOpCo2.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             AddLabelToCard(tblDevice, lblStatus, "Status:", labelFore, 0, 2);
             ConfigureDarkTextBox(txtStatus, 1); tblDevice.Controls.Add(txtStatus, 3, 0);
+            txtStatus.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            txtStatus.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             // Row 1: MFR | DevCode
             AddLabelToCard(tblDevice, lblMFR, "MFR:", labelFore, 1, 0);
             ConfigureDarkTextBox(txtMFR, 2); tblDevice.Controls.Add(txtMFR, 1, 1);
-            AddLabelToCard(tblDevice, lblDevCode, "Dev Code:", labelFore, 1, 2);
+            txtMFR.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            txtMFR.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            AddLabelToCard(tblDevice, lblDevCode, "Dev Code: *", labelFore, 1, 2);
             ConfigureDarkTextBox(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
+            txtDevCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            txtDevCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            lblDevCode.ForeColor = requiredFieldColor;
 
             pnlDeviceInfo = MakeCard(cardBack, accentBorder, lblDevHeader, tblDevice);
 
@@ -112,7 +122,8 @@ namespace DRED
             var tblSerial = MakeCardTable(2);
             var lblSerialHeader = MakeCardHeader("SERIAL RANGE & QUANTITY", headerFore);
             // Row 0: BegSer | EndSer
-            AddLabelToCard(tblSerial, lblBegSer, "Beg Ser:", labelFore, 0, 0);
+            AddLabelToCard(tblSerial, lblBegSer, "Beg Ser: *", labelFore, 0, 0);
+            lblBegSer.ForeColor = requiredFieldColor;
             ConfigureDarkTextBox(txtBegSer, 4);
             txtBegSer.TextChanged += new System.EventHandler(this.SerialField_TextChanged);
             tblSerial.Controls.Add(txtBegSer, 1, 0);
@@ -229,6 +240,8 @@ namespace DRED
             // Row 1: Pur Code | Established (checkbox)
             AddLabelToCard(tblIdent, lblPurCode, "Pur. Code:", labelFore, 1, 0);
             ConfigureDarkTextBox(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
+            txtPurCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            txtPurCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
             AddLabelToCard(tblIdent, lblEst, "Established:", labelFore, 1, 2);
             this.chkEst.Text = "";
             this.chkEst.AutoSize = true;
