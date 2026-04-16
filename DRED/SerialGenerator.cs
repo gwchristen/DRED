@@ -218,7 +218,7 @@ namespace DRED
         private static List<string> ParseOosSerials(string? oosRaw)
         {
             if (string.IsNullOrWhiteSpace(oosRaw)) return new List<string>();
-            var lines = oosRaw.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = oosRaw.Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries);
             var result = new List<string>();
             foreach (string line in lines)
             {

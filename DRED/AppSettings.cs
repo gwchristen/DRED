@@ -22,6 +22,7 @@ namespace DRED
         public static int BackupIntervalHours { get; set; } = 24;
         public static int MaxBackupCount { get; set; } = 10;
         public static string LookupCodesPath { get; set; } = string.Empty;
+        public static string PurchaseCodesPath { get; set; } = string.Empty;
         public static string LockPin { get; set; } = "1234";
         public static List<string> AuthorizedUsers { get; set; } = new();
 
@@ -40,6 +41,7 @@ namespace DRED
                         BackupIntervalHours = Math.Clamp(data.BackupIntervalHours, 0, 168);
                         MaxBackupCount = Math.Max(1, data.MaxBackupCount);
                         LookupCodesPath = data.LookupCodesPath ?? string.Empty;
+                        PurchaseCodesPath = data.PurchaseCodesPath ?? string.Empty;
                         LockPin = string.IsNullOrWhiteSpace(data.LockPin) ? "1234" : data.LockPin;
                         AuthorizedUsers = data.AuthorizedUsers?
                             .Where(u => !string.IsNullOrWhiteSpace(u))
@@ -67,6 +69,7 @@ namespace DRED
                     BackupIntervalHours = Math.Clamp(BackupIntervalHours, 0, 168),
                     MaxBackupCount = Math.Max(1, MaxBackupCount),
                     LookupCodesPath = LookupCodesPath,
+                    PurchaseCodesPath = PurchaseCodesPath,
                     LockPin = string.IsNullOrWhiteSpace(LockPin) ? "1234" : LockPin,
                     AuthorizedUsers = AuthorizedUsers
                         .Where(u => !string.IsNullOrWhiteSpace(u))
@@ -95,6 +98,7 @@ namespace DRED
             public int BackupIntervalHours { get; set; } = 24;
             public int MaxBackupCount { get; set; } = 10;
             public string? LookupCodesPath { get; set; } = string.Empty;
+            public string? PurchaseCodesPath { get; set; } = string.Empty;
             public string LockPin { get; set; } = "1234";
             public List<string> AuthorizedUsers { get; set; } = new();
         }

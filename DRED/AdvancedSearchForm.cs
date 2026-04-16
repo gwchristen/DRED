@@ -271,5 +271,15 @@ namespace DRED
         public decimal? CostMax { get; set; }
         public int? QtyMin { get; set; }
         public int? QtyMax { get; set; }
+
+        public bool IsEmpty =>
+            OpCo2 == null && Status == null && MFR == null && DevCode == null &&
+            BegSer == null && EndSer == null && PONumber == null && Vintage == null &&
+            CID == null && MENumber == null && PurCode == null &&
+            Est == null && TextFile == null && Comments == null &&
+            PODateFrom == null && PODateTo == null &&
+            RecvDateFrom == null && RecvDateTo == null &&
+            CostMin == null && CostMax == null &&
+            QtyMin == null && QtyMax == null;
     }
 }

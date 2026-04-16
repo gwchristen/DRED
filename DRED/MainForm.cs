@@ -897,6 +897,21 @@ namespace DRED
             }
         }
 
+        private void btnPurchaseCodeEditor_Click(object sender, EventArgs e)
+        {
+            _dialogOpen = true;
+            try
+            {
+                using var form = new PurchaseCodeEditorForm();
+                form.ShowDialog(this);
+            }
+            finally
+            {
+                _dialogOpen = false;
+                _detailPanelManager.ReapplyColors();
+            }
+        }
+
         private void btnAuditLog_Click(object sender, EventArgs e)
         {
             _dialogOpen = true;
@@ -921,6 +936,8 @@ namespace DRED
                 if (form.ShowDialog(this) == DialogResult.OK)
                 {
                     _advancedCriteria = form.Criteria;
+                    if (_advancedCriteria != null && _advancedCriteria.IsEmpty)
+                        _advancedCriteria = null;
                     UpdateFilterIndicator();
                     RefreshCurrentTab();
                 }
@@ -1097,7 +1114,7 @@ namespace DRED
 
         private void UpdateFilterIndicator()
         {
-            bool isFiltered = _advancedCriteria != null;
+            bool isFiltered = _advancedCriteria != null && !_advancedCriteria.IsEmpty;
             lblFilterActive.Visible = isFiltered;
             pnlSearch.BackColor = isFiltered ? SearchPanelFilteredColor : SearchPanelDefaultColor;
         }
