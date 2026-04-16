@@ -7,51 +7,81 @@ using System.Text.Json;
 namespace DRED
 {
     /// <summary>
-    /// Manages the device code → purchase code mapping table, persisted as JSON.
+    /// Manages table-specific device code → purchase code mappings, persisted as JSON.
     /// Supports multiple purchase codes per device code.
     /// </summary>
     public static class PurchaseCodeManager
     {
+        private static readonly string[] KnownTables =
+            { "OH_Meters", "IM_Meters", "OH_Transformers", "IM_Transformers" };
         private static readonly object SyncLock = new();
-        private static Dictionary<string, List<string>> _table = new(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, Dictionary<string, List<string>>> _table = BuildDefaults();
         private static bool _loaded = false;
         private static string _lastLoadedPath = string.Empty;
 
-        public static List<(string DevCode, string PurchaseCode)> GetAll()
+        public static List<(string TableName, string DevCode, string PurchaseCode)> GetAll()
         {
             lock (SyncLock)
             {
                 EnsureLoaded();
+                var result = new List<(string, string, string)>();
+                foreach (var tableKv in _table.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    foreach (var devKv in tableKv.Value.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        foreach (var code in devKv.Value)
+                            result.Add((tableKv.Key, devKv.Key, code));
+                    }
+                }
+                return result;
+            }
+        }
+
+        public static List<(string DevCode, string PurchaseCode)> GetAllForTable(string tableName)
+        {
+            lock (SyncLock)
+            {
+                EnsureLoaded();
+                string normalizedTableName = Normalize(tableName);
+                if (!_table.TryGetValue(normalizedTableName, out var tableMappings))
+                    return new List<(string, string)>();
+
                 var result = new List<(string, string)>();
-                foreach (var kv in _table.OrderBy(x => x.Key))
+                foreach (var kv in tableMappings.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
                     foreach (var code in kv.Value)
                         result.Add((kv.Key, code));
                 return result;
             }
         }
 
-        public static List<string> GetPurchaseCodes(string devCode)
+        public static List<string> GetPurchaseCodes(string tableName, string devCode)
         {
             lock (SyncLock)
             {
                 EnsureLoaded();
-                return _table.TryGetValue(devCode.Trim(), out var codes)
-                    ? new List<string>(codes)
-                    : new List<string>();
+                tableName = Normalize(tableName);
+                devCode = Normalize(devCode);
+                if (!_table.TryGetValue(tableName, out var tableMappings) ||
+                    !tableMappings.TryGetValue(devCode, out var codes))
+                    return new List<string>();
+                return new List<string>(codes);
             }
         }
 
-        public static void AddMapping(string devCode, string purchaseCode)
+        public static void AddMapping(string tableName, string devCode, string purchaseCode)
         {
             lock (SyncLock)
             {
                 EnsureLoaded();
-                devCode = devCode.Trim();
-                purchaseCode = purchaseCode.Trim();
-                if (!_table.TryGetValue(devCode, out var list))
+                tableName = Normalize(tableName);
+                devCode = Normalize(devCode);
+                purchaseCode = Normalize(purchaseCode);
+
+                var tableMappings = EnsureTable(tableName);
+                if (!tableMappings.TryGetValue(devCode, out var list))
                 {
                     list = new List<string>();
-                    _table[devCode] = list;
+                    tableMappings[devCode] = list;
                 }
                 if (!list.Contains(purchaseCode, StringComparer.OrdinalIgnoreCase))
                     list.Add(purchaseCode);
@@ -59,37 +89,47 @@ namespace DRED
             }
         }
 
-        public static void RemoveMapping(string devCode, string purchaseCode)
+        public static void RemoveMapping(string tableName, string devCode, string purchaseCode)
         {
             lock (SyncLock)
             {
                 EnsureLoaded();
-                if (!_table.TryGetValue(devCode, out var list)) return;
+                tableName = Normalize(tableName);
+                devCode = Normalize(devCode);
+                purchaseCode = Normalize(purchaseCode);
+
+                if (!_table.TryGetValue(tableName, out var tableMappings) ||
+                    !tableMappings.TryGetValue(devCode, out var list))
+                    return;
+
                 list.RemoveAll(pc => string.Equals(pc, purchaseCode, StringComparison.OrdinalIgnoreCase));
                 if (list.Count == 0)
-                    _table.Remove(devCode);
+                    tableMappings.Remove(devCode);
                 Save();
             }
         }
 
-        public static void SetAll(List<(string DevCode, string PurchaseCode)> mappings)
+        public static void SetAllForTable(string tableName, List<(string DevCode, string PurchaseCode)> mappings)
         {
             lock (SyncLock)
             {
-                _table = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                EnsureLoaded();
+                tableName = Normalize(tableName);
+                var tableMappings = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
                 foreach (var (dc, pc) in mappings)
                 {
-                    string key = dc.Trim();
-                    if (!_table.TryGetValue(key, out var list))
+                    string key = Normalize(dc);
+                    if (!tableMappings.TryGetValue(key, out var list))
                     {
                         list = new List<string>();
-                        _table[key] = list;
+                        tableMappings[key] = list;
                     }
 
-                    string code = pc.Trim();
+                    string code = Normalize(pc);
                     if (!list.Contains(code, StringComparer.OrdinalIgnoreCase))
                         list.Add(code);
                 }
+                _table[tableName] = tableMappings;
                 Save();
             }
         }
@@ -100,7 +140,7 @@ namespace DRED
             {
                 _loaded = false;
                 _lastLoadedPath = string.Empty;
-                _table = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                _table = BuildDefaults();
             }
         }
 
@@ -124,10 +164,32 @@ namespace DRED
                 try
                 {
                     string json = File.ReadAllText(filePath);
-                    var raw = JsonSerializer.Deserialize<Dictionary<string, List<string>>>(json);
+                    if (TryDeserializeLegacy(json, out var legacy))
+                    {
+                        _table = ExpandLegacyToAllTables(legacy);
+                        Save();
+                        return;
+                    }
+
+                    var raw = JsonSerializer.Deserialize<Dictionary<string, Dictionary<string, List<string>>>>(json);
                     if (raw != null)
                     {
-                        _table = new Dictionary<string, List<string>>(raw, StringComparer.OrdinalIgnoreCase);
+                        _table = BuildDefaults();
+                        foreach (var tableKv in raw)
+                        {
+                            var tableMappings = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                            foreach (var devKv in tableKv.Value)
+                            {
+                                var distinctCodes = devKv.Value
+                                    .Where(code => !string.IsNullOrWhiteSpace(code))
+                                    .Select(Normalize)
+                                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                                    .ToList();
+                                if (distinctCodes.Count > 0)
+                                    tableMappings[Normalize(devKv.Key)] = distinctCodes;
+                            }
+                            _table[Normalize(tableKv.Key)] = tableMappings;
+                        }
                         return;
                     }
                 }
@@ -199,7 +261,78 @@ namespace DRED
             }
         }
 
-        private static Dictionary<string, List<string>> BuildDefaults()
-            => new(StringComparer.OrdinalIgnoreCase);
+        private static Dictionary<string, Dictionary<string, List<string>>> BuildDefaults()
+        {
+            var result = new Dictionary<string, Dictionary<string, List<string>>>(StringComparer.OrdinalIgnoreCase);
+            foreach (string table in KnownTables)
+                result[table] = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            return result;
+        }
+
+        private static string Normalize(string value) => value.Trim();
+
+        private static Dictionary<string, List<string>> EnsureTable(string tableName)
+        {
+            if (!_table.TryGetValue(tableName, out var tableMappings))
+            {
+                tableMappings = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+                _table[tableName] = tableMappings;
+            }
+            return tableMappings;
+        }
+
+        private static bool TryDeserializeLegacy(string json, out Dictionary<string, List<string>> legacy)
+        {
+            legacy = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                if (doc.RootElement.ValueKind != JsonValueKind.Object)
+                    return false;
+
+                bool hasLegacyValues = false;
+                foreach (var prop in doc.RootElement.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind != JsonValueKind.Array)
+                        continue;
+
+                    hasLegacyValues = true;
+                    var codes = new List<string>();
+                    foreach (var val in prop.Value.EnumerateArray())
+                    {
+                        if (val.ValueKind == JsonValueKind.String)
+                        {
+                            string normalized = Normalize(val.GetString() ?? string.Empty);
+                            if (!string.IsNullOrWhiteSpace(normalized) &&
+                                !codes.Contains(normalized, StringComparer.OrdinalIgnoreCase))
+                                codes.Add(normalized);
+                        }
+                    }
+
+                    if (codes.Count > 0)
+                        legacy[Normalize(prop.Name)] = codes;
+                }
+
+                return hasLegacyValues;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static Dictionary<string, Dictionary<string, List<string>>> ExpandLegacyToAllTables(
+            Dictionary<string, List<string>> legacy)
+        {
+            var result = BuildDefaults();
+            foreach (var tableName in KnownTables)
+            {
+                var target = result[tableName];
+                foreach (var kv in legacy)
+                    target[kv.Key] = new List<string>(kv.Value);
+            }
+
+            return result;
+        }
     }
 }
