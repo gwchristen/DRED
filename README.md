@@ -20,19 +20,35 @@ Before building or running DRED you need:
 ## Project Structure
 
 ```
-DRED.sln                     Solution file
+DRED.sln                              Solution file
 DRED/
-  DRED.csproj                Project file (net8.0-windows, WinForms)
-  Program.cs                 Application entry point
-  AppSettings.cs             Reads/writes settings.json in %APPDATA%\DRED
-  DatabaseHelper.cs          OleDb database creation, connection, CRUD, export
-  ExcelImporter.cs           Imports data from Created Histories.xlsx
-  ThemeManager.cs            Dark mode theme applied to all forms/controls
-  MainForm.cs/.Designer.cs   Main window with tab control and DataGridViews
-  RecordForm.cs/.Designer.cs Add/Edit record dialog
-  SettingsForm.cs/.Designer.cs  Database path + auto-refresh configuration
-  AdvancedSearchForm.cs      Multi-criteria advanced search dialog
-Created Histories.xlsx       Source data spreadsheet for initial import
+  DRED.csproj                         Project file (net8.0-windows, WinForms)
+  Program.cs                          Application entry point
+  AppSettings.cs                      Reads/writes settings.json in %APPDATA%\DRED
+  DatabaseHelper.cs                   OleDb database creation, connection, CRUD, export
+  ExcelImporter.cs                    Imports data from Created Histories.xlsx
+  ThemeManager.cs                     Dark mode theme applied to all forms/controls
+  Logger.cs                           File-based application logging with rotation
+  BackupManager.cs                    Automatic and manual .accdb backup management
+  UndoManager.cs                      In-memory undo stack for edit/delete actions
+  KeyboardShortcutHandler.cs          Centralized keyboard shortcut routing
+  DashboardManager.cs                 Dashboard tab summary statistics and charts
+  DetailPanelManager.cs               Right-side detail panel population and styling
+  SerialGenerator.cs                  Serial number text file generation logic
+  LookupCodeManager.cs                Manages device-code-to-lookup-code mappings
+  LookupCodeEditorForm.cs             UI for editing lookup code mappings
+  LookupCodeDialogs.cs                Input/picker dialogs for lookup code selection
+  PurchaseCodeManager.cs              Manages device-code-to-purchase-code mappings
+  PurchaseCodeEditorForm.cs           UI for editing purchase code mappings
+  MainForm.cs / .Designer.cs          Main window with tab control and list/detail split view
+  RecordForm.cs / .Designer.cs        Add/Edit record dialog with card-based layout
+  SettingsForm.cs / .Designer.cs      Database path, refresh, backup, PIN, and user configuration
+  AdvancedSearchForm.cs               Multi-criteria advanced search dialog
+  AuditLogForm.cs                     View audit trail / change history
+  GeneratePreviewForm.cs              Preview and save generated serial number text files
+  PinEntryForm.cs / .Designer.cs      PIN entry dialog for unlocking privileged actions
+  Resources/                          Application icon and embedded resources
+Created Histories.xlsx                Source data spreadsheet for initial import
 ```
 
 ---
@@ -115,13 +131,24 @@ dotnet run --project DRED/DRED.csproj
 ### Core Features
 | Feature | Description |
 |---|---|
-| **Tab-based browsing** | 4 tabs, one per table, each with a searchable DataGridView |
+| **Tab-based browsing** | 4 tabs, one per table, each with a searchable list and right-side detail panel |
+| **Dashboard tab** | Summary statistics across all tables |
 | **Add / Edit / Delete** | Full CRUD via the toolbar; reusable form for all 4 tables |
+| **PIN lock** | Privileged actions (add, edit, delete, import, settings) require PIN, with authorized-user auto-unlock |
 | **Double-click to Edit** | Double-click any row to open it in edit mode |
+| **Undo support** | In-memory undo for edit and delete operations |
 | **Search / Filter** | Real-time filter bar searches across all text columns or a specific column |
+| **Multi-select** | Ctrl+A / shift-click multi-select for bulk delete and clipboard copy |
+| **Clipboard export** | Ctrl+C copies selected records to the clipboard |
 | **Export to Excel** | Exports the current tab's data to an `.xlsx` file via ClosedXML |
 | **Export All to Excel** | Exports all 4 tables into a single workbook with 4 sheets |
 | **Import from Excel** | Migration from `Created Histories.xlsx` |
+| **Serial number generation** | Generate serial number text output with preview and save |
+| **Lookup code management** | Manage device-to-lookup-code mappings |
+| **Purchase code management** | Manage device-to-purchase-code mappings |
+| **Audit log viewer** | Review change history from the UI |
+| **Automatic backups** | Configurable backup interval and retention, plus manual backup support |
+| **File logging** | File-based application logging with automatic rotation |
 | **Settings** | Configurable database path and auto-refresh interval |
 
 ### UI & UX
@@ -171,6 +198,8 @@ dotnet run --project DRED/DRED.csproj
 | `Ctrl+S` | Export current tab to Excel |
 | `Ctrl+Shift+S` | Export all tabs to Excel |
 | `Ctrl+I` | Import from Excel |
+| `Ctrl+C` | Copy selected records to clipboard |
+| `Ctrl+A` | Select all records in current tab |
 | `Ctrl+,` | Open Settings |
 | `Escape` | Clear search filter and advanced criteria |
 
@@ -181,4 +210,5 @@ dotnet run --project DRED/DRED.csproj
 | Package | Purpose |
 |---|---|
 | `ClosedXML` | Excel import and export |
+| `MaterialSkin.2` | Material Design UI controls |
 | `System.Data.OleDb` | Microsoft Access database connectivity |
