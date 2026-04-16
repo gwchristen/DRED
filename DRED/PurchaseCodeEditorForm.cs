@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
+using System.Linq;
 using System.Windows.Forms;
+using ClosedXML.Excel;
 using MaterialSkin.Controls;
 
 namespace DRED
@@ -15,10 +18,16 @@ namespace DRED
         private ListView lvMappings = null!;
         private TextBox txtDevCode = null!;
         private TextBox txtPurchaseCode = null!;
+        private ComboBox cboTableFilter = null!;
         private MaterialButton btnAdd = null!;
         private MaterialButton btnEdit = null!;
         private MaterialButton btnDelete = null!;
+        private MaterialButton btnImport = null!;
         private MaterialButton btnClose = null!;
+        private Label lblInfo = null!;
+
+        private static readonly string[] TableNames =
+            { "OH_Meters", "IM_Meters", "OH_Transformers", "IM_Transformers" };
 
         private (string dev, string code)? _pendingEdit = null;
 
@@ -38,9 +47,41 @@ namespace DRED
             this.BackColor = ThemeManager.BackgroundColor;
             this.ForeColor = ThemeManager.TextColor;
 
-            var lblInfo = new Label
+            var pnlTableFilter = new Panel
             {
-                Text = "Manage device code → purchase code mappings (one row per mapping):",
+                Dock = DockStyle.Top,
+                Height = 44,
+                BackColor = ThemeManager.SurfaceColor,
+                Padding = new Padding(8, 8, 8, 6),
+            };
+            var lblTable = new Label
+            {
+                Text = "Table:",
+                AutoSize = true,
+                ForeColor = ThemeManager.SecondaryTextColor,
+                BackColor = ThemeManager.SurfaceColor,
+                Font = new Font("Segoe UI", 9F),
+                Location = new Point(0, 11),
+            };
+            cboTableFilter = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 180,
+                Location = new Point(52, 7),
+                BackColor = ThemeManager.InputBackColor,
+                ForeColor = ThemeManager.TextColor,
+                Font = new Font("Segoe UI", 9F),
+            };
+            cboTableFilter.Items.AddRange(TableNames.Cast<object>().ToArray());
+            cboTableFilter.SelectedIndexChanged += CboTableFilter_SelectedIndexChanged;
+            if (cboTableFilter.Items.Count > 0)
+                cboTableFilter.SelectedIndex = 0;
+            pnlTableFilter.Controls.Add(lblTable);
+            pnlTableFilter.Controls.Add(cboTableFilter);
+
+            lblInfo = new Label
+            {
+                Text = "Managing mappings for:",
                 Dock = DockStyle.Top,
                 Height = 36,
                 TextAlign = ContentAlignment.MiddleLeft,
@@ -150,30 +191,40 @@ namespace DRED
             btnDelete = new MaterialButton
             {
                 Text = "Delete Selected",
-                Location = new Point(140, 8),
+                Location = new Point(132, 8),
+                Type = MaterialButton.MaterialButtonType.Outlined,
+                AutoSize = true,
+            };
+            btnImport = new MaterialButton
+            {
+                Text = "Import from Excel",
+                Location = new Point(272, 8),
                 Type = MaterialButton.MaterialButtonType.Outlined,
                 AutoSize = true,
             };
             btnClose = new MaterialButton
             {
                 Text = "Close",
-                Location = new Point(290, 8),
+                Location = new Point(444, 8),
                 Type = MaterialButton.MaterialButtonType.Text,
                 AutoSize = true,
             };
 
             btnEdit.Click += BtnEdit_Click;
             btnDelete.Click += BtnDelete_Click;
+            btnImport.Click += BtnImport_Click;
             btnClose.Click += (s, e) => this.Close();
 
             pnlBtn.Controls.Add(btnEdit);
             pnlBtn.Controls.Add(btnDelete);
+            pnlBtn.Controls.Add(btnImport);
             pnlBtn.Controls.Add(btnClose);
 
             this.Controls.Add(lvMappings);
             this.Controls.Add(pnlInput);
             this.Controls.Add(pnlBtn);
             this.Controls.Add(lblInfo);
+            this.Controls.Add(pnlTableFilter);
 
             this.CancelButton = btnClose;
         }
@@ -181,16 +232,31 @@ namespace DRED
         private void LoadMappings()
         {
             lvMappings.Items.Clear();
-            foreach (var (dev, code) in PurchaseCodeManager.GetAll())
+            foreach (var (dev, code) in PurchaseCodeManager.GetAllForTable(GetSelectedTable()))
             {
                 var item = new ListViewItem(dev);
                 item.SubItems.Add(code);
                 lvMappings.Items.Add(item);
             }
+
+            lblInfo.Text = $"Managing mappings for: {GetSelectedTable()}";
+        }
+
+        private string GetSelectedTable() =>
+            cboTableFilter.SelectedItem?.ToString() ?? TableNames[0];
+
+        private void CboTableFilter_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            _pendingEdit = null;
+            btnAdd.Text = "Add";
+            txtDevCode.Text = string.Empty;
+            txtPurchaseCode.Text = string.Empty;
+            LoadMappings();
         }
 
         private void BtnAdd_Click(object? sender, EventArgs e)
         {
+            string tableName = GetSelectedTable();
             string dev = txtDevCode.Text.Trim().ToUpperInvariant();
             string code = txtPurchaseCode.Text.Trim().ToUpperInvariant();
 
@@ -209,12 +275,12 @@ namespace DRED
 
             if (_pendingEdit.HasValue)
             {
-                PurchaseCodeManager.RemoveMapping(_pendingEdit.Value.dev, _pendingEdit.Value.code);
+                PurchaseCodeManager.RemoveMapping(tableName, _pendingEdit.Value.dev, _pendingEdit.Value.code);
                 _pendingEdit = null;
                 btnAdd.Text = "Add";
             }
 
-            PurchaseCodeManager.AddMapping(dev, code);
+            PurchaseCodeManager.AddMapping(tableName, dev, code);
             txtDevCode.Text = "";
             txtPurchaseCode.Text = "";
             LoadMappings();
@@ -260,9 +326,142 @@ namespace DRED
                 toRemove.Add((item.Text, item.SubItems[1].Text));
 
             foreach (var (dev, code) in toRemove)
-                PurchaseCodeManager.RemoveMapping(dev, code);
+                PurchaseCodeManager.RemoveMapping(GetSelectedTable(), dev, code);
 
             LoadMappings();
         }
+
+        private void BtnImport_Click(object? sender, EventArgs e)
+        {
+            string selectedTable = GetSelectedTable();
+            using var ofd = new OpenFileDialog
+            {
+                Title = "Import Purchase Codes from Excel",
+                Filter = "Excel Workbook (*.xlsx)|*.xlsx",
+                Multiselect = false,
+            };
+
+            if (ofd.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            List<(string DevCode, string PurchaseCode)> imported;
+            try
+            {
+                imported = ReadMappingsFromExcel(ofd.FileName);
+            }
+            catch (InvalidDataException ex)
+            {
+                MessageBox.Show(ex.Message, "Import Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Failed to import purchase codes from '{ofd.FileName}'.", ex);
+                MessageBox.Show(
+                    $"Failed to read Excel file.\n\n{ex.Message}\n\nMake sure the file is a valid .xlsx workbook and is not open in another program.",
+                    "Import Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            var action = MessageBox.Show(
+                $"Import {imported.Count} mapping(s) into {selectedTable}?\n\nYes = Replace all mappings for {selectedTable}\nNo = Merge with existing mappings\nCancel = Do nothing",
+                "Import Purchase Codes",
+                MessageBoxButtons.YesNoCancel,
+                MessageBoxIcon.Question);
+
+            if (action == DialogResult.Cancel)
+                return;
+
+            bool replaced = action == DialogResult.Yes;
+            if (replaced &&
+                MessageBox.Show(
+                    $"This will remove all existing mappings for {selectedTable} before import.\n\nContinue?",
+                    "Confirm Replace",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes)
+            {
+                return;
+            }
+
+            if (replaced)
+            {
+                PurchaseCodeManager.SetAllForTable(selectedTable, imported);
+            }
+            else
+            {
+                foreach (var (devCode, purCode) in imported)
+                    PurchaseCodeManager.AddMapping(selectedTable, devCode, purCode);
+            }
+
+            Logger.Log(
+                $"Imported {imported.Count} purchase code mapping(s) into '{selectedTable}' from '{ofd.FileName}' ({(replaced ? "replace" : "merge")}).");
+
+            LoadMappings();
+            MessageBox.Show(
+                $"Imported {imported.Count} mapping(s) into {selectedTable} ({(replaced ? "Replace" : "Merge")}).",
+                "Import Complete",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+
+        private static List<(string DevCode, string PurchaseCode)> ReadMappingsFromExcel(string filePath)
+        {
+            using var workbook = new XLWorkbook(filePath);
+            var sheet = workbook.Worksheets.FirstOrDefault();
+            if (sheet == null)
+                throw new InvalidDataException("The workbook does not contain any worksheets.");
+
+            var headerRow = sheet.Row(1);
+            int lastCol = sheet.LastColumnUsed()?.ColumnNumber() ?? 0;
+            if (lastCol == 0)
+                throw new InvalidDataException("No header row was found in the selected worksheet.");
+
+            int devCol = -1;
+            int purCol = -1;
+            for (int c = 1; c <= lastCol; c++)
+            {
+                string normalizedHeader = NormalizeHeader(headerRow.Cell(c).GetString());
+                if (IsDevCodeHeader(normalizedHeader))
+                    devCol = c;
+                if (IsPurchaseCodeHeader(normalizedHeader))
+                    purCol = c;
+            }
+
+            if (devCol <= 0 || purCol <= 0)
+                throw new InvalidDataException(
+                    "Could not find required columns.\nExpected headers like Dev Code / DevCode / Device Code and Pur Code / PurCode / Purchase Code.");
+
+            int lastRow = sheet.LastRowUsed()?.RowNumber() ?? 0;
+            var mappings = new List<(string DevCode, string PurchaseCode)>();
+            for (int r = 2; r <= lastRow; r++)
+            {
+                var row = sheet.Row(r);
+                string devCode = row.Cell(devCol).GetString().Trim().ToUpperInvariant();
+                string purCode = row.Cell(purCol).GetString().Trim().ToUpperInvariant();
+                if (string.IsNullOrWhiteSpace(devCode) || string.IsNullOrWhiteSpace(purCode))
+                    continue;
+                mappings.Add((devCode, purCode));
+            }
+
+            return mappings
+                .Distinct()
+                .ToList();
+        }
+
+        private static string NormalizeHeader(string value)
+        {
+            var chars = value
+                .Where(char.IsLetterOrDigit)
+                .ToArray();
+            return new string(chars).ToLowerInvariant();
+        }
+
+        private static bool IsDevCodeHeader(string normalizedHeader) =>
+            normalizedHeader is "devcode" or "devicecode";
+
+        private static bool IsPurchaseCodeHeader(string normalizedHeader) =>
+            normalizedHeader is "purcode" or "purchasecode";
     }
 }

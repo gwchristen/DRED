@@ -283,9 +283,9 @@ namespace DRED
         {
             string devCode = txtDevCode.Text.Trim();
             string currentValue = cboPurCode.Text.Trim();
-            var purchaseCodes = string.IsNullOrWhiteSpace(devCode)
+            var purchaseCodes = string.IsNullOrWhiteSpace(_tableName) || string.IsNullOrWhiteSpace(devCode)
                 ? Array.Empty<string>()
-                : PurchaseCodeManager.GetPurchaseCodes(devCode)
+                : PurchaseCodeManager.GetPurchaseCodes(_tableName, devCode)
                     .Where(code => !string.IsNullOrWhiteSpace(code))
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .OrderBy(code => code, StringComparer.OrdinalIgnoreCase)
