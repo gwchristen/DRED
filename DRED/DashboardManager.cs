@@ -130,7 +130,10 @@ namespace DRED
 
             var tableData = new Dictionary<string, DataTable>();
             string selectedTable = _cboTableFilter.SelectedItem?.ToString() ?? "All Tables";
-            foreach (string table in _tableNames.Where(t => selectedTable == "All Tables" || string.Equals(t, selectedTable, StringComparison.OrdinalIgnoreCase)))
+            IEnumerable<string> selectedTables = _tableNames.Where(table =>
+                selectedTable == "All Tables" ||
+                string.Equals(table, selectedTable, StringComparison.OrdinalIgnoreCase));
+            foreach (string table in selectedTables)
                 tableData[table] = DatabaseHelper.GetTableData(table);
 
             UpdateFilterOptions(tableData.Values, _cboStatusFilter, "All Statuses", "Status");
@@ -206,7 +209,7 @@ namespace DRED
             string previous = comboBox.SelectedItem?.ToString() ?? allText;
             var distinctValues = tables
                 .SelectMany(t => t.AsEnumerable())
-                .Where(r => r.Table.Columns.Contains(columnName) && r[columnName] is not DBNull)
+                .Where(r => r.Table.Columns.Contains(columnName) && r[columnName] != DBNull.Value)
                 .Select(r => (r[columnName] as string ?? string.Empty).Trim())
                 .Where(v => !string.IsNullOrWhiteSpace(v))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
