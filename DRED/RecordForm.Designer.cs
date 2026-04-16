@@ -18,7 +18,6 @@ namespace DRED
             this.pnlDeviceInfo     = new System.Windows.Forms.Panel();
             this.pnlSerialRange    = new System.Windows.Forms.Panel();
             this.pnlPurchaseInfo   = new System.Windows.Forms.Panel();
-            this.pnlIdentifiers    = new System.Windows.Forms.Panel();
             this.pnlCommentsCard   = new System.Windows.Forms.Panel();
 
             this.lblOpCo2          = new System.Windows.Forms.Label();
@@ -71,9 +70,6 @@ namespace DRED
             this.pnlButtons        = new System.Windows.Forms.Panel();
             this.btnSave           = new MaterialSkin.Controls.MaterialButton();
             this.btnCancel         = new MaterialSkin.Controls.MaterialButton();
-
-            // Keep tableLayoutPanel for backward compatibility (not used in layout)
-            this.tableLayoutPanel  = new System.Windows.Forms.TableLayoutPanel();
 
             ((System.ComponentModel.ISupportInitialize)(this.nudQty)).BeginInit();
             this.pnlButtons.SuspendLayout();
@@ -158,7 +154,7 @@ namespace DRED
             tblSerial.SetColumnSpan(qtyPanel, 3);
             // Row 2: OOS Serials (multi-line, full width)
             tblSerial.RowCount = 4;
-            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 90F));
+            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
             AddLabelToCard(tblSerial, lblOOSSerials, "OOS Serials:", labelFore, 2, 0);
             this.txtOOSSerials.Multiline = true;
             this.txtOOSSerials.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
@@ -186,8 +182,8 @@ namespace DRED
             pnlSerialRange = MakeCard(cardBack, accentBorder, lblSerialHeader, tblSerial);
 
             // ── Card: Purchase Information ───────────────────────────────
-            var tblPurchase = MakeCardTable(3);
-            var lblPurchaseHeader = MakeCardHeader("PURCHASE INFORMATION", headerFore);
+            var tblPurchase = MakeCardTable(5);
+            var lblPurchaseHeader = MakeCardHeader("PURCHASE & IDENTIFICATION", headerFore);
             // Row 0: PO Date | txtPODate | PO Number | txtPONumber
             AddLabelToCard(tblPurchase, lblPODate, "PO Date:", labelFore, 0, 0);
             ConfigureDarkTextBox(txtPODate, 8);
@@ -203,8 +199,43 @@ namespace DRED
             this.txtUnitCost.Enter += new System.EventHandler(this.txtUnitCost_Enter);
             this.txtUnitCost.Leave += new System.EventHandler(this.txtUnitCost_Leave);
             tblPurchase.Controls.Add(txtUnitCost, 3, 1);
-            // Row 2: Est Date alone
-            AddLabelToCard(tblPurchase, lblRecvDate, "Est Date:", labelFore, 2, 0);
+            // Row 2: CID | M.E. #
+            AddLabelToCard(tblPurchase, lblCID, "CID:", labelFore, 2, 0);
+            ConfigureDarkTextBox(txtCID, 14); tblPurchase.Controls.Add(txtCID, 1, 2);
+            AddLabelToCard(tblPurchase, lblMENumber, "M.E. #:", labelFore, 2, 2);
+            ConfigureDarkTextBox(txtMENumber, 15); tblPurchase.Controls.Add(txtMENumber, 3, 2);
+            // Row 3: Pur Code | Flags
+            AddLabelToCard(tblPurchase, lblPurCode, "Pur. Code:", labelFore, 3, 0);
+            this.cboPurCode.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cboPurCode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
+            this.cboPurCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cboPurCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.cboPurCode.TabIndex = 16;
+            this.cboPurCode.BackColor = ThemeManager.InputBackColor;
+            this.cboPurCode.ForeColor = ThemeManager.TextColor;
+            this.cboPurCode.Margin = new System.Windows.Forms.Padding(0, 4, 4, 4);
+            tblPurchase.Controls.Add(this.cboPurCode, 1, 3);
+            AddLabelToCard(tblPurchase, lblEst, "Flags:", labelFore, 3, 2);
+            var boolPanel = new System.Windows.Forms.FlowLayoutPanel
+            {
+                Dock = System.Windows.Forms.DockStyle.Fill,
+                FlowDirection = System.Windows.Forms.FlowDirection.LeftToRight,
+                BackColor = System.Drawing.Color.Transparent,
+                Margin = System.Windows.Forms.Padding.Empty,
+            };
+            this.chkEst.Text = "Established";
+            this.chkEst.AutoSize = true;
+            this.chkEst.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chkEst.TabIndex = 17;
+            this.chkTextFile.Text = "Text File";
+            this.chkTextFile.AutoSize = true;
+            this.chkTextFile.Anchor = System.Windows.Forms.AnchorStyles.Left;
+            this.chkTextFile.TabIndex = 18;
+            boolPanel.Controls.Add(this.chkEst);
+            boolPanel.Controls.Add(this.chkTextFile);
+            tblPurchase.Controls.Add(boolPanel, 3, 3);
+            // Row 4: Recv Date alone
+            AddLabelToCard(tblPurchase, lblRecvDate, "Recv Date:", labelFore, 4, 0);
             var recvPanel = new System.Windows.Forms.FlowLayoutPanel
             {
                 Dock = System.Windows.Forms.DockStyle.Fill,
@@ -223,44 +254,9 @@ namespace DRED
             this.lblRecvDateDisplay.Margin = new System.Windows.Forms.Padding(6, 6, 0, 0);
             recvPanel.Controls.Add(this.chkRecvDate);
             recvPanel.Controls.Add(this.lblRecvDateDisplay);
-            tblPurchase.Controls.Add(recvPanel, 1, 2);
+            tblPurchase.Controls.Add(recvPanel, 1, 4);
 
             pnlPurchaseInfo = MakeCard(cardBack, accentBorder, lblPurchaseHeader, tblPurchase);
-
-            // ── Card: Identifiers ────────────────────────────────────────
-            var tblIdent = MakeCardTable(3);
-            var lblIdentHeader = MakeCardHeader("IDENTIFIERS", headerFore);
-            // Row 0: CID | ME Number
-            AddLabelToCard(tblIdent, lblCID, "CID:", labelFore, 0, 0);
-            ConfigureDarkTextBox(txtCID, 14); tblIdent.Controls.Add(txtCID, 1, 0);
-            AddLabelToCard(tblIdent, lblMENumber, "M.E. #:", labelFore, 0, 2);
-            ConfigureDarkTextBox(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
-            // Row 1: Pur Code | Established (checkbox)
-            AddLabelToCard(tblIdent, lblPurCode, "Pur. Code:", labelFore, 1, 0);
-            this.cboPurCode.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.cboPurCode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
-            this.cboPurCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.cboPurCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
-            this.cboPurCode.TabIndex = 16;
-            this.cboPurCode.BackColor = ThemeManager.InputBackColor;
-            this.cboPurCode.ForeColor = ThemeManager.TextColor;
-            this.cboPurCode.Margin = new System.Windows.Forms.Padding(0, 4, 4, 4);
-            tblIdent.Controls.Add(this.cboPurCode, 1, 1);
-            AddLabelToCard(tblIdent, lblEst, "Established:", labelFore, 1, 2);
-            this.chkEst.Text = "";
-            this.chkEst.AutoSize = true;
-            this.chkEst.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.chkEst.TabIndex = 17;
-            tblIdent.Controls.Add(this.chkEst, 3, 1);
-            // Row 2: Text File (checkbox)
-            AddLabelToCard(tblIdent, lblTextFile, "Text File:", labelFore, 2, 0);
-            this.chkTextFile.Text = "";
-            this.chkTextFile.AutoSize = true;
-            this.chkTextFile.Anchor = System.Windows.Forms.AnchorStyles.Left;
-            this.chkTextFile.TabIndex = 18;
-            tblIdent.Controls.Add(this.chkTextFile, 1, 2);
-
-            pnlIdentifiers = MakeCard(cardBack, accentBorder, lblIdentHeader, tblIdent);
 
             // ── Card: Comments & Notes ───────────────────────────────────
             var lblCommentsHeader = MakeCardHeader("COMMENTS & NOTES", headerFore);
@@ -303,7 +299,6 @@ namespace DRED
             // Add in reverse order (last added appears at top with DockStyle.Top)
             this.pnlScroll.Controls.Add(this.lblAuditInfo);
             this.pnlScroll.Controls.Add(pnlCommentsCard);
-            this.pnlScroll.Controls.Add(pnlIdentifiers);
             this.pnlScroll.Controls.Add(pnlPurchaseInfo);
             this.pnlScroll.Controls.Add(pnlSerialRange);
             this.pnlScroll.Controls.Add(pnlDeviceInfo);
@@ -332,18 +327,14 @@ namespace DRED
             this.btnCancel.AutoSize = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
 
-            // tableLayoutPanel kept for reference but not used in new layout
-            this.tableLayoutPanel.Visible = false;
-
             // ── RecordForm ───────────────────────────────────────────────
             this.AcceptButton = this.btnSave;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(720, 920);
+            this.ClientSize = new System.Drawing.Size(720, 760);
             this.Controls.Add(this.pnlScroll);
             this.Controls.Add(this.pnlButtons);
-            this.Controls.Add(this.tableLayoutPanel);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
-            this.MinimumSize = new System.Drawing.Size(700, 850);
+            this.MinimumSize = new System.Drawing.Size(700, 700);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Record";
             this.BackColor = ThemeManager.FormBackColor;
@@ -493,9 +484,7 @@ namespace DRED
         private System.Windows.Forms.Panel pnlDeviceInfo = null!;
         private System.Windows.Forms.Panel pnlSerialRange = null!;
         private System.Windows.Forms.Panel pnlPurchaseInfo = null!;
-        private System.Windows.Forms.Panel pnlIdentifiers = null!;
         private System.Windows.Forms.Panel pnlCommentsCard = null!;
-        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel = null!;
         private System.Windows.Forms.Label lblOpCo2 = null!;
         private System.Windows.Forms.TextBox txtOpCo2 = null!;
         private System.Windows.Forms.Label lblStatus = null!;
