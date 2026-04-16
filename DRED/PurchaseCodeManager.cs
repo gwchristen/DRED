@@ -167,6 +167,8 @@ namespace DRED
                     if (TryDeserializeLegacy(json, out var legacy))
                     {
                         _table = ExpandLegacyToAllTables(legacy);
+                        Logger.Log(
+                            $"Migrated purchase code mappings from legacy flat format to table-aware format in '{filePath}'.");
                         Save();
                         return;
                     }

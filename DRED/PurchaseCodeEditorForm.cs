@@ -358,7 +358,7 @@ namespace DRED
             {
                 Logger.LogError($"Failed to import purchase codes from '{ofd.FileName}'.", ex);
                 MessageBox.Show(
-                    $"Failed to read Excel file.\n\n{ex.Message}",
+                    $"Failed to read Excel file.\n\n{ex.Message}\n\nMake sure the file is a valid .xlsx workbook and is not open in another program.",
                     "Import Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -375,6 +375,16 @@ namespace DRED
                 return;
 
             bool replaced = action == DialogResult.Yes;
+            if (replaced &&
+                MessageBox.Show(
+                    $"This will remove all existing mappings for {selectedTable} before import.\n\nContinue?",
+                    "Confirm Replace",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning) != DialogResult.Yes)
+            {
+                return;
+            }
+
             if (replaced)
             {
                 PurchaseCodeManager.SetAllForTable(selectedTable, imported);
