@@ -231,6 +231,8 @@ namespace DRED
 
         private void LoadMappings()
         {
+            if (lvMappings == null || lblInfo == null) return;
+
             lvMappings.Items.Clear();
             foreach (var (dev, code) in PurchaseCodeManager.GetAllForTable(GetSelectedTable()))
             {
@@ -247,6 +249,8 @@ namespace DRED
 
         private void CboTableFilter_SelectedIndexChanged(object? sender, EventArgs e)
         {
+            if (btnAdd == null) return;
+
             _pendingEdit = null;
             btnAdd.Text = "Add";
             txtDevCode.Text = string.Empty;
