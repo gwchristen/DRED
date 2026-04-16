@@ -85,7 +85,7 @@ namespace DRED
             // ── pnlScroll — outer scrollable container ───────────────────
             this.pnlScroll.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pnlScroll.AutoScroll = true;
-            this.pnlScroll.Padding = new System.Windows.Forms.Padding(10, 6, 10, 6);
+            this.pnlScroll.Padding = new System.Windows.Forms.Padding(8, 4, 8, 4);
             this.pnlScroll.BackColor = formBack;
 
             // ── Card: Device Information ─────────────────────────────────
@@ -154,7 +154,7 @@ namespace DRED
             tblSerial.SetColumnSpan(qtyPanel, 3);
             // Row 2: OOS Serials (multi-line, full width)
             tblSerial.RowCount = 4;
-            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 60F));
+            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
             AddLabelToCard(tblSerial, lblOOSSerials, "OOS Serials:", labelFore, 2, 0);
             this.txtOOSSerials.Multiline = true;
             this.txtOOSSerials.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
@@ -169,7 +169,7 @@ namespace DRED
             tblSerial.Controls.Add(this.txtOOSSerials, 1, 2);
             tblSerial.SetColumnSpan(this.txtOOSSerials, 3);
             // Row 3: OOS Serials hint
-            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
+            tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 18F));
             this.lblOOSHint.Text = "One per line or comma-separated \u2022 Ctrl+Enter for new line";
             this.lblOOSHint.Font = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblOOSHint.ForeColor = System.Drawing.Color.FromArgb(0x99, 0x99, 0x99);
@@ -277,12 +277,12 @@ namespace DRED
             {
                 Dock = System.Windows.Forms.DockStyle.Fill,
                 Padding = new System.Windows.Forms.Padding(0),
-                Height = 110,
-                MinimumSize = new System.Drawing.Size(0, 110),
+                Height = 90,
+                MinimumSize = new System.Drawing.Size(0, 90),
             };
             commentsInner.Controls.Add(this.txtComments);
 
-            pnlCommentsCard = MakeCardWithContent(cardBack, accentBorder, lblCommentsHeader, commentsInner, 160);
+            pnlCommentsCard = MakeCardWithContent(cardBack, accentBorder, lblCommentsHeader, commentsInner, 120);
 
             // ── lblAuditInfo ─────────────────────────────────────────────
             this.lblAuditInfo.AutoSize = false;
@@ -330,11 +330,11 @@ namespace DRED
             // ── RecordForm ───────────────────────────────────────────────
             this.AcceptButton = this.btnSave;
             this.CancelButton = this.btnCancel;
-            this.ClientSize = new System.Drawing.Size(720, 760);
+            this.ClientSize = new System.Drawing.Size(720, 780);
             this.Controls.Add(this.pnlScroll);
             this.Controls.Add(this.pnlButtons);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.Sizable;
-            this.MinimumSize = new System.Drawing.Size(700, 700);
+            this.MinimumSize = new System.Drawing.Size(680, 680);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Record";
             this.BackColor = ThemeManager.FormBackColor;
@@ -367,7 +367,7 @@ namespace DRED
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Absolute, 110F));
             tbl.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             for (int i = 0; i < rows; i++)
-                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 50F));
+                tbl.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 42F));
             return tbl;
         }
 
@@ -378,7 +378,7 @@ namespace DRED
             {
                 Text = text,
                 Dock = System.Windows.Forms.DockStyle.Top,
-                Height = 22,
+                Height = 20,
                 Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold),
                 ForeColor = color,
                 BackColor = System.Drawing.Color.Transparent,
@@ -403,8 +403,8 @@ namespace DRED
                 Dock = System.Windows.Forms.DockStyle.Top,
                 AutoSize = true,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(8, 4, 8, 4),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 4),
+                Padding = new System.Windows.Forms.Padding(8, 2, 8, 2),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 2),
             };
             panel.Paint += (s, e) =>
             {
@@ -435,8 +435,8 @@ namespace DRED
             {
                 Dock = System.Windows.Forms.DockStyle.Top,
                 BackColor = backColor,
-                Padding = new System.Windows.Forms.Padding(8, 4, 8, 4),
-                Margin = new System.Windows.Forms.Padding(0, 0, 0, 4),
+                Padding = new System.Windows.Forms.Padding(8, 2, 8, 2),
+                Margin = new System.Windows.Forms.Padding(0, 0, 0, 2),
             };
             panel.Paint += (s, e) =>
             {
@@ -447,8 +447,8 @@ namespace DRED
             panel.Controls.Add(content);
             panel.Controls.Add(header);
 
-            // Set panel height to account for header + content + vertical padding (top:4 + bottom:4)
-            const int verticalPadding = 8; // top (4) + bottom (4) from Padding(8, 4, 8, 4)
+            // Set panel height to account for header + content + vertical padding (top:2 + bottom:2)
+            const int verticalPadding = 4; // top (2) + bottom (2) from Padding(8, 2, 8, 2)
             panel.Height = header.Height + contentHeight + verticalPadding;
             return panel;
         }
@@ -463,7 +463,7 @@ namespace DRED
             lbl.Text = text;
             lbl.AutoSize = true;
             lbl.Anchor = System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Top;
-            lbl.Margin = new System.Windows.Forms.Padding(0, 8, 4, 0);
+            lbl.Margin = new System.Windows.Forms.Padding(0, 6, 4, 0);
             lbl.ForeColor = foreColor;
             lbl.BackColor = System.Drawing.Color.Transparent;
             tbl.Controls.Add(lbl, col, row);
