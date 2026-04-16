@@ -38,6 +38,7 @@ namespace DRED
             this.mnuSearchAdvanced   = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuTools            = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuToolsLookupCodes = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuToolsPurchaseCodes = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuToolsAuditLog    = new System.Windows.Forms.ToolStripMenuItem();
 
             // ── Slim toolbar ─────────────────────────────────────────────
@@ -162,10 +163,13 @@ namespace DRED
             // Tools menu
             this.mnuTools.Text = "&Tools";
             this.mnuTools.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-                mnuToolsLookupCodes, mnuToolsAuditLog });
+                mnuToolsLookupCodes, mnuToolsPurchaseCodes, mnuToolsAuditLog });
 
             this.mnuToolsLookupCodes.Text = "&Lookup Code Editor...";
             this.mnuToolsLookupCodes.Click += (s, e) => btnLookupCodeEditor_Click(s, e);
+
+            this.mnuToolsPurchaseCodes.Text = "&Purchase Code Editor...";
+            this.mnuToolsPurchaseCodes.Click += (s, e) => btnPurchaseCodeEditor_Click(s, e);
 
             this.mnuToolsAuditLog.Text = "&Audit Log...";
             this.mnuToolsAuditLog.Click += (s, e) => btnAuditLog_Click(s, e);
@@ -432,7 +436,7 @@ namespace DRED
             this.pnlStatus.Controls.Add(this.tblStatus);
 
             // ── MainForm ─────────────────────────────────────────────────
-            this.ClientSize = new System.Drawing.Size(1200, 764);
+            this.ClientSize = new System.Drawing.Size(1200, 850);
             this.MainMenuStrip = this.mainMenu;
             this.Controls.Add(this.tabControl);
             this.Controls.Add(this.tabSelector);
@@ -442,7 +446,7 @@ namespace DRED
             this.Controls.Add(this.mainMenu);
             this.Text = "DRED – Device Record Established Database";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.MinimumSize = new System.Drawing.Size(800, 564);
+            this.MinimumSize = new System.Drawing.Size(800, 650);
             this.KeyPreview = true;
 
             this.mainMenu.ResumeLayout(false);
@@ -588,6 +592,7 @@ namespace DRED
         private System.Windows.Forms.ToolStripMenuItem mnuSearchAdvanced = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuTools = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuToolsLookupCodes = null!;
+        private System.Windows.Forms.ToolStripMenuItem mnuToolsPurchaseCodes = null!;
         private System.Windows.Forms.ToolStripMenuItem mnuToolsAuditLog = null!;
         private System.Windows.Forms.FlowLayoutPanel pnlToolbar = null!;
         private MaterialSkin.Controls.MaterialButton btnAdd = null!;

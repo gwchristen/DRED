@@ -4,6 +4,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using MaterialSkin.Controls;
 
 namespace DRED
 {
@@ -17,6 +18,10 @@ namespace DRED
         private readonly string[] _tableNames;
         private readonly Action<int> _updateStatusBar;
         private readonly Color _accentColor;
+        private ComboBox? _cboTableFilter;
+        private ComboBox? _cboStatusFilter;
+        private ComboBox? _cboOpCoFilter;
+        private MaterialButton? _btnRefresh;
 
         public DashboardManager(string[] tableNames, Color accentColor, Action<int> updateStatusBar)
         {
@@ -42,6 +47,46 @@ namespace DRED
 
             _dashboardHostPanel.Controls.Clear();
             _dashboardHostPanel.BackColor = ThemeManager.BackgroundColor;
+
+            var filterPanel = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 44,
+                WrapContents = false,
+                FlowDirection = FlowDirection.LeftToRight,
+                BackColor = ThemeManager.SurfaceColor,
+                Padding = new Padding(8, 8, 8, 6),
+                Margin = new Padding(0, 0, 0, 8),
+            };
+
+            _cboTableFilter = CreateFilterComboBox();
+            _cboTableFilter.Items.AddRange(new object[] { "All Tables", "OH_Meters", "IM_Meters", "OH_Transformers", "IM_Transformers" });
+            _cboTableFilter.SelectedIndex = 0;
+
+            _cboStatusFilter = CreateFilterComboBox();
+            _cboStatusFilter.Items.Add("All Statuses");
+            _cboStatusFilter.SelectedIndex = 0;
+
+            _cboOpCoFilter = CreateFilterComboBox();
+            _cboOpCoFilter.Items.Add("All OpCo2");
+            _cboOpCoFilter.SelectedIndex = 0;
+
+            _btnRefresh = new MaterialButton
+            {
+                Text = "Refresh",
+                Type = MaterialButton.MaterialButtonType.Outlined,
+                AutoSize = true,
+                Margin = new Padding(8, 2, 0, 0),
+            };
+            _btnRefresh.Click += (s, e) => Refresh();
+
+            filterPanel.Controls.Add(MakeFilterLabel("Table:"));
+            filterPanel.Controls.Add(_cboTableFilter);
+            filterPanel.Controls.Add(MakeFilterLabel("Status:"));
+            filterPanel.Controls.Add(_cboStatusFilter);
+            filterPanel.Controls.Add(MakeFilterLabel("OpCo2:"));
+            filterPanel.Controls.Add(_cboOpCoFilter);
+            filterPanel.Controls.Add(_btnRefresh);
 
             var grid = new TableLayoutPanel
             {
@@ -75,16 +120,32 @@ namespace DRED
             grid.Controls.Add(opcoCard, 1, 1);
 
             _dashboardHostPanel.Controls.Add(grid);
+            _dashboardHostPanel.Controls.Add(filterPanel);
             _dashboardLabels = labels;
         }
 
         public void Refresh()
         {
-            if (_dashboardLabels == null) return;
+            if (_dashboardLabels == null || _cboTableFilter == null || _cboStatusFilter == null || _cboOpCoFilter == null) return;
 
             var tableData = new Dictionary<string, DataTable>();
-            foreach (string table in _tableNames)
+            string selectedTable = _cboTableFilter.SelectedItem?.ToString() ?? "All Tables";
+            foreach (string table in _tableNames.Where(t => selectedTable == "All Tables" || string.Equals(t, selectedTable, StringComparison.OrdinalIgnoreCase)))
                 tableData[table] = DatabaseHelper.GetTableData(table);
+
+            UpdateFilterOptions(tableData.Values, _cboStatusFilter, "All Statuses", "Status");
+            UpdateFilterOptions(tableData.Values, _cboOpCoFilter, "All OpCo2", "OpCo2");
+
+            string statusFilter = _cboStatusFilter.SelectedItem?.ToString() ?? "All Statuses";
+            string opcoFilter = _cboOpCoFilter.SelectedItem?.ToString() ?? "All OpCo2";
+            bool hasStatusFilter = !string.Equals(statusFilter, "All Statuses", StringComparison.OrdinalIgnoreCase);
+            bool hasOpcoFilter = !string.Equals(opcoFilter, "All OpCo2", StringComparison.OrdinalIgnoreCase);
+
+            if (hasStatusFilter || hasOpcoFilter)
+            {
+                foreach (string key in tableData.Keys.ToList())
+                    tableData[key] = ApplyFilters(tableData[key], hasStatusFilter ? statusFilter : null, hasOpcoFilter ? opcoFilter : null);
+            }
 
             int total = tableData.Values.Sum(t => t.Rows.Count);
             _dashboardLabels.TotalRecords.Text = total.ToString("N0");
@@ -113,6 +174,79 @@ namespace DRED
             _dashboardLabels.OpCoCounts.Text = BuildGroupedCounts(tableData.Values, "OpCo2");
             _updateStatusBar(total);
             Logger.Log("Dashboard refreshed.");
+        }
+
+        private static ComboBox CreateFilterComboBox()
+        {
+            return new ComboBox
+            {
+                Width = 150,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                BackColor = ThemeManager.InputBackColor,
+                ForeColor = ThemeManager.TextColor,
+                FlatStyle = FlatStyle.Flat,
+                Margin = new Padding(4, 2, 6, 0),
+            };
+        }
+
+        private static Label MakeFilterLabel(string text)
+        {
+            return new Label
+            {
+                Text = text,
+                AutoSize = true,
+                ForeColor = ThemeManager.SecondaryTextColor,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Margin = new Padding(0, 6, 0, 0),
+            };
+        }
+
+        private static void UpdateFilterOptions(IEnumerable<DataTable> tables, ComboBox comboBox, string allText, string columnName)
+        {
+            string previous = comboBox.SelectedItem?.ToString() ?? allText;
+            var distinctValues = tables
+                .SelectMany(t => t.AsEnumerable())
+                .Where(r => r.Table.Columns.Contains(columnName) && r[columnName] is not DBNull)
+                .Select(r => (r[columnName] as string ?? string.Empty).Trim())
+                .Where(v => !string.IsNullOrWhiteSpace(v))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            comboBox.BeginUpdate();
+            comboBox.Items.Clear();
+            comboBox.Items.Add(allText);
+            foreach (string value in distinctValues)
+                comboBox.Items.Add(value);
+            comboBox.EndUpdate();
+
+            if (comboBox.Items.Cast<object>().Any(item =>
+                    string.Equals(item?.ToString(), previous, StringComparison.OrdinalIgnoreCase)))
+            {
+                comboBox.SelectedItem = comboBox.Items.Cast<object>()
+                    .First(item => string.Equals(item?.ToString(), previous, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                comboBox.SelectedIndex = 0;
+            }
+        }
+
+        private static DataTable ApplyFilters(DataTable source, string? statusFilter, string? opcoFilter)
+        {
+            if (string.IsNullOrWhiteSpace(statusFilter) && string.IsNullOrWhiteSpace(opcoFilter))
+                return source;
+
+            var rows = source.AsEnumerable().Where(row =>
+            {
+                bool statusMatches = string.IsNullOrWhiteSpace(statusFilter) ||
+                    string.Equals((row["Status"] as string ?? string.Empty).Trim(), statusFilter, StringComparison.OrdinalIgnoreCase);
+                bool opcoMatches = string.IsNullOrWhiteSpace(opcoFilter) ||
+                    string.Equals((row["OpCo2"] as string ?? string.Empty).Trim(), opcoFilter, StringComparison.OrdinalIgnoreCase);
+                return statusMatches && opcoMatches;
+            });
+
+            return rows.Any() ? rows.CopyToDataTable() : source.Clone();
         }
 
         private static TableLayoutPanel CreateDashboardCard(string title, Color accent, out Label valueLabel)

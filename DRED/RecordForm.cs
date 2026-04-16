@@ -44,7 +44,7 @@ namespace DRED
             txtOpCo2.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "OpCo2");
             txtMFR.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "MFR");
             txtDevCode.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "DevCode");
-            txtPurCode.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "PurCode");
+            cboPurCode.AutoCompleteCustomSource = DatabaseHelper.GetDistinctValues(_tableName, "PurCode");
         }
 
         private void PopulateFromRecord(RecordData r)
@@ -64,11 +64,12 @@ namespace DRED
             txtUnitCost.Text = r.UnitCost.HasValue ? r.UnitCost.Value.ToString(CurrencyFormat) : "";
             txtCID.Text      = r.CID ?? "";
             txtMENumber.Text = r.MENumber ?? "";
-            txtPurCode.Text  = r.PurCode ?? "";
+            cboPurCode.Text  = r.PurCode ?? "";
             chkEst.Checked       = r.Est;
             chkTextFile.Checked  = r.TextFile;
             txtComments.Text = r.Comments ?? "";
             txtOOSSerials.Text = r.OOSSerials ?? "";
+            RefreshPurchaseCodeOptions();
 
             // PO Date: if value exists, show it; else leave blank
             txtPODate.Text = r.PODate.HasValue ? r.PODate.Value.ToString("MM/dd/yyyy") : "";
@@ -142,7 +143,7 @@ namespace DRED
                 UnitCost = unitCost,
                 CID      = NullIfEmpty(txtCID.Text),
                 MENumber = NullIfEmpty(txtMENumber.Text),
-                PurCode  = NullIfEmpty(txtPurCode.Text),
+                PurCode  = NullIfEmpty(cboPurCode.Text),
                 Est      = chkEst.Checked,
                 TextFile = chkTextFile.Checked,
                 Comments = NullIfEmpty(txtComments.Text),
@@ -228,7 +229,7 @@ namespace DRED
             }
 
             int oosCount = txtOOSSerials.Text
-                .Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries)
+                .Split(new[] { '\r', '\n', ',' }, StringSplitOptions.RemoveEmptyEntries)
                 .Count(s => !string.IsNullOrWhiteSpace(s));
 
             int totalQty = rangeQty + oosCount;
@@ -274,5 +275,42 @@ namespace DRED
 
         private static string? NullIfEmpty(string? s) =>
             string.IsNullOrWhiteSpace(s) ? null : s.Trim();
+
+        private void txtDevCode_Leave(object sender, EventArgs e)
+            => RefreshPurchaseCodeOptions();
+
+        private void RefreshPurchaseCodeOptions()
+        {
+            string devCode = txtDevCode.Text.Trim();
+            string currentValue = cboPurCode.Text.Trim();
+            var purchaseCodes = string.IsNullOrWhiteSpace(devCode)
+                ? new string[0]
+                : PurchaseCodeManager.GetPurchaseCodes(devCode)
+                    .Where(code => !string.IsNullOrWhiteSpace(code))
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(code => code, StringComparer.OrdinalIgnoreCase)
+                    .ToArray();
+
+            cboPurCode.BeginUpdate();
+            cboPurCode.Items.Clear();
+            cboPurCode.Items.AddRange(purchaseCodes);
+            cboPurCode.EndUpdate();
+
+            if (string.IsNullOrWhiteSpace(currentValue))
+            {
+                if (purchaseCodes.Length == 1)
+                    cboPurCode.SelectedItem = purchaseCodes[0];
+                else
+                    cboPurCode.Text = string.Empty;
+                return;
+            }
+
+            string? exactMatch = purchaseCodes
+                .FirstOrDefault(code => string.Equals(code, currentValue, StringComparison.OrdinalIgnoreCase));
+            if (exactMatch != null)
+                cboPurCode.SelectedItem = exactMatch;
+            else
+                cboPurCode.Text = currentValue;
+        }
     }
 }

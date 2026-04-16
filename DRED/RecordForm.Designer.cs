@@ -58,7 +58,7 @@ namespace DRED
             this.lblMENumber       = new System.Windows.Forms.Label();
             this.txtMENumber       = new System.Windows.Forms.TextBox();
             this.lblPurCode        = new System.Windows.Forms.Label();
-            this.txtPurCode        = new System.Windows.Forms.TextBox();
+            this.cboPurCode        = new System.Windows.Forms.ComboBox();
             this.lblEst            = new System.Windows.Forms.Label();
             this.chkEst            = new MaterialSkin.Controls.MaterialCheckbox();
             this.lblTextFile       = new System.Windows.Forms.Label();
@@ -113,6 +113,7 @@ namespace DRED
             ConfigureDarkTextBox(txtDevCode, 3); tblDevice.Controls.Add(txtDevCode, 3, 1);
             txtDevCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             txtDevCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            txtDevCode.Leave += new System.EventHandler(this.txtDevCode_Leave);
 
             pnlDeviceInfo = MakeCard(cardBack, accentBorder, lblDevHeader, tblDevice);
 
@@ -173,7 +174,7 @@ namespace DRED
             tblSerial.SetColumnSpan(this.txtOOSSerials, 3);
             // Row 3: OOS Serials hint
             tblSerial.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 22F));
-            this.lblOOSHint.Text = "One per line \u2022 Ctrl+Enter for new line";
+            this.lblOOSHint.Text = "One per line or comma-separated \u2022 Ctrl+Enter for new line";
             this.lblOOSHint.Font = new System.Drawing.Font("Segoe UI", 7.5f);
             this.lblOOSHint.ForeColor = System.Drawing.Color.FromArgb(0x99, 0x99, 0x99);
             this.lblOOSHint.AutoSize = true;
@@ -236,9 +237,15 @@ namespace DRED
             ConfigureDarkTextBox(txtMENumber, 15); tblIdent.Controls.Add(txtMENumber, 3, 0);
             // Row 1: Pur Code | Established (checkbox)
             AddLabelToCard(tblIdent, lblPurCode, "Pur. Code:", labelFore, 1, 0);
-            ConfigureDarkTextBox(txtPurCode, 16); tblIdent.Controls.Add(txtPurCode, 1, 1);
-            txtPurCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            txtPurCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.cboPurCode.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.cboPurCode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
+            this.cboPurCode.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cboPurCode.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.cboPurCode.TabIndex = 16;
+            this.cboPurCode.BackColor = ThemeManager.InputBackColor;
+            this.cboPurCode.ForeColor = ThemeManager.TextColor;
+            this.cboPurCode.Margin = new System.Windows.Forms.Padding(0, 4, 4, 4);
+            tblIdent.Controls.Add(this.cboPurCode, 1, 1);
             AddLabelToCard(tblIdent, lblEst, "Established:", labelFore, 1, 2);
             this.chkEst.Text = "";
             this.chkEst.AutoSize = true;
@@ -523,7 +530,7 @@ namespace DRED
         private System.Windows.Forms.Label lblMENumber = null!;
         private System.Windows.Forms.TextBox txtMENumber = null!;
         private System.Windows.Forms.Label lblPurCode = null!;
-        private System.Windows.Forms.TextBox txtPurCode = null!;
+        private System.Windows.Forms.ComboBox cboPurCode = null!;
         private System.Windows.Forms.Label lblEst = null!;
         private MaterialSkin.Controls.MaterialCheckbox chkEst = null!;
         private System.Windows.Forms.Label lblTextFile = null!;
