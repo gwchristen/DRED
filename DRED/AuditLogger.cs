@@ -52,6 +52,16 @@ namespace DRED
             return dt;
         }
 
+        /// <summary>
+        /// Allows internal callers (e.g., DatabaseHelper CRUD methods) to write audit rows
+        /// on an existing connection while preserving the original public + private overload shape.
+        /// </summary>
+        internal static void LogAuditEntryWithConnection(
+            OleDbConnection conn, string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
+        {
+            LogAuditEntry(conn, tableName, recordId, action, fieldName, oldValue, newValue);
+        }
+
         private static void LogAuditEntry(
             OleDbConnection conn, string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
         {

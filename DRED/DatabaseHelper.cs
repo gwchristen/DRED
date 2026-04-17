@@ -232,7 +232,7 @@ VALUES
                 using var idCmd = new OleDbCommand("SELECT @@IDENTITY", conn);
                 int recordId = Convert.ToInt32(idCmd.ExecuteScalar());
                 string summary = BuildRecordSummary(data);
-                AuditLogger.LogAuditEntry(tableName, recordId, "INSERT", null, null, summary);
+                AuditLogger.LogAuditEntryWithConnection(conn, tableName, recordId, "INSERT", null, null, summary);
                 Logger.Log($"Inserted record into [{tableName}].");
             }
             catch (Exception ex)
@@ -269,7 +269,7 @@ WHERE [Id]=?";
                 {
                     foreach (var change in GetChangedFields(oldData, data))
                     {
-                        AuditLogger.LogAuditEntry(tableName, id, "UPDATE", change.FieldName, change.OldValue, change.NewValue);
+                        AuditLogger.LogAuditEntryWithConnection(conn, tableName, id, "UPDATE", change.FieldName, change.OldValue, change.NewValue);
                     }
                 }
                 Logger.Log($"Updated record [{id}] in [{tableName}].");
@@ -292,7 +292,7 @@ WHERE [Id]=?";
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
                 cmd.ExecuteNonQuery();
                 string summary = oldData != null ? BuildRecordSummary(oldData) : "(record data unavailable)";
-                AuditLogger.LogAuditEntry(tableName, id, "DELETE", null, summary, null);
+                AuditLogger.LogAuditEntryWithConnection(conn, tableName, id, "DELETE", null, summary, null);
                 Logger.Log($"Deleted record [{id}] from [{tableName}].");
             }
             catch (Exception ex)
