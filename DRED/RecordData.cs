@@ -1,4 +1,5 @@
 using System;
+using System.Data;
 
 namespace DRED
 {
@@ -30,5 +31,39 @@ namespace DRED
         public DateTime? CreatedDate { get; set; }
         public string? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
+
+        public static RecordData FromDataRow(DataRow row)
+        {
+            return new RecordData
+            {
+                OpCo2 = row["OpCo2"] as string,
+                Status = row["Status"] as string,
+                MFR = row["MFR"] as string,
+                DevCode = row["DevCode"] as string,
+                BegSer = row["BegSer"] as string,
+                EndSer = row["EndSer"] as string,
+                Qty = row["Qty"] is DBNull ? null : Convert.ToInt32(row["Qty"]),
+                PODate = row["PODate"] is DBNull ? null : Convert.ToDateTime(row["PODate"]),
+                Vintage = row["Vintage"] as string,
+                PONumber = row["PONumber"] as string,
+                RecvDate = row["RecvDate"] is DBNull ? null : Convert.ToDateTime(row["RecvDate"]),
+                UnitCost = row["UnitCost"] is DBNull ? null : Convert.ToDecimal(row["UnitCost"]),
+                CID = row["CID"] as string,
+                MENumber = row["MENumber"] as string,
+                PurCode = row["PurCode"] as string,
+                Est = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]),
+                TextFile = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]),
+                Comments = row["Comments"] as string,
+                OOSSerials = row.Table.Columns.Contains("OOSSerials") ? row["OOSSerials"] as string : null,
+                CreatedBy = row.Table.Columns.Contains("CreatedBy") ? row["CreatedBy"] as string : null,
+                CreatedDate = row.Table.Columns.Contains("CreatedDate") && row["CreatedDate"] is not DBNull
+                    ? Convert.ToDateTime(row["CreatedDate"])
+                    : (DateTime?)null,
+                ModifiedBy = row.Table.Columns.Contains("ModifiedBy") ? row["ModifiedBy"] as string : null,
+                ModifiedDate = row.Table.Columns.Contains("ModifiedDate") && row["ModifiedDate"] is not DBNull
+                    ? Convert.ToDateTime(row["ModifiedDate"])
+                    : (DateTime?)null,
+            };
+        }
     }
 }

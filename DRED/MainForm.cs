@@ -39,11 +39,37 @@ namespace DRED
         private KeyboardShortcutHandler _shortcutHandler = null!;
 
         private const int  ListItemHeight     = 58;
+        private const string FilterAllColumnsLabel = "All Columns";
+        private const string ColumnOpCo2 = "OpCo2";
+        private const string ColumnStatus = "Status";
+        private const string ColumnMFR = "MFR";
+        private const string ColumnDevCode = "DevCode";
+        private const string ColumnBegSer = "BegSer";
+        private const string ColumnEndSer = "EndSer";
+        private const string ColumnQty = "Qty";
+        private const string ColumnPODate = "PODate";
+        private const string ColumnVintage = "Vintage";
+        private const string ColumnPONumber = "PONumber";
+        private const string ColumnRecvDate = "RecvDate";
+        private const string ColumnUnitCost = "UnitCost";
+        private const string ColumnCID = "CID";
+        private const string ColumnMENumber = "MENumber";
+        private const string ColumnPurCode = "PurCode";
+        private const string ColumnEst = "Est";
+        private const string ColumnTextFile = "TextFile";
+        private const string ColumnComments = "Comments";
+        private const string ColumnOOSSerials = "OOSSerials";
+
         private static readonly string[] ClipboardExportColumns =
         {
-            "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer", "Qty", "PODate",
-            "Vintage", "PONumber", "RecvDate", "UnitCost", "CID", "MENumber", "PurCode",
-            "Est", "TextFile", "Comments", "OOSSerials"
+            ColumnOpCo2, ColumnStatus, ColumnMFR, ColumnDevCode, ColumnBegSer, ColumnEndSer, ColumnQty, ColumnPODate,
+            ColumnVintage, ColumnPONumber, ColumnRecvDate, ColumnUnitCost, ColumnCID, ColumnMENumber, ColumnPurCode,
+            ColumnEst, ColumnTextFile, ColumnComments, ColumnOOSSerials
+        };
+        private static readonly string[] FilterColumns =
+        {
+            ColumnOpCo2, ColumnStatus, ColumnMFR, ColumnDevCode, ColumnBegSer, ColumnEndSer,
+            ColumnPONumber, ColumnVintage, ColumnCID, ColumnMENumber, ColumnPurCode, ColumnComments
         };
 
         private static bool IsDataTab(int tabIndex)
@@ -83,10 +109,8 @@ namespace DRED
             Logger.Log("Main form initialized.");
             _dashboardManager = new DashboardManager(TabTableNames, TabAccentColors[0], UpdateDashboardStatusBar);
 
-            cboFilterColumn.Items.AddRange(new object[] {
-                "All Columns", "OpCo2", "Status", "MFR", "DevCode", "BegSer", "EndSer",
-                "PONumber", "Vintage", "CID", "MENumber", "PurCode", "Comments"
-            });
+            cboFilterColumn.Items.Add(FilterAllColumnsLabel);
+            cboFilterColumn.Items.AddRange(FilterColumns);
             cboFilterColumn.SelectedIndex = 0;
             cboFilterColumn.SelectedIndexChanged += cboFilterColumn_SelectedIndexChanged;
 
@@ -230,7 +254,7 @@ namespace DRED
             }
             catch (Exception ex)
             {
-                ShowDbError(ex);
+                ErrorHelper.ShowDbError(ex);
             }
         }
 
@@ -373,12 +397,12 @@ namespace DRED
             for (int i = 0; i < dt.Rows.Count; i++)
             {
                 var row = dt.Rows[i];
-                string devCode  = row["DevCode"] as string ?? "(no code)";
-                string qty      = row["Qty"] is DBNull ? "\u2014" : Convert.ToString(row["Qty"]) ?? "\u2014";
-                string poNum    = row["PONumber"] as string ?? "(no PO)";
-                string recvDate = row["RecvDate"] is DBNull
+                string devCode  = row[ColumnDevCode] as string ?? "(no code)";
+                string qty      = row[ColumnQty] is DBNull ? "\u2014" : Convert.ToString(row[ColumnQty]) ?? "\u2014";
+                string poNum    = row[ColumnPONumber] as string ?? "(no PO)";
+                string recvDate = row[ColumnRecvDate] is DBNull
                     ? "(no date)"
-                    : Convert.ToDateTime(row["RecvDate"]).ToString("MM/dd/yyyy");
+                    : Convert.ToDateTime(row[ColumnRecvDate]).ToString("MM/dd/yyyy");
                 items[i] = new ListItem(devCode, qty, poNum, recvDate, i);
             }
             return items;
@@ -578,7 +602,7 @@ namespace DRED
             catch (Exception ex)
             {
                 Logger.LogError("Undo action failed.", ex);
-                ShowDbError(ex);
+                ErrorHelper.ShowDbError(ex);
             }
             finally
             {
@@ -591,11 +615,10 @@ namespace DRED
         private void btnAdd_Click(object sender, EventArgs e)
         {
             if (!EnsureDataTabSelected("add")) return;
-            _dialogOpen = true;
-            try
+            using var form = new RecordForm(CurrentTable);
+            ShowModalDialog(form, result =>
             {
-                using var form = new RecordForm(CurrentTable);
-                if (form.ShowDialog(this) == DialogResult.OK && form.Result != null)
+                if (result == DialogResult.OK && form.Result != null)
                 {
                     try
                     {
@@ -604,14 +627,9 @@ namespace DRED
                         RefreshCurrentTab();
                         UpdateUndoState();
                     }
-                    catch (Exception ex) { ShowDbError(ex); }
+                    catch (Exception ex) { ErrorHelper.ShowDbError(ex); }
                 }
-            }
-            finally
-            {
-                _dialogOpen = false;
-                _detailPanelManager.ReapplyColors();
-            }
+            });
         }
 
         private void btnEdit_Click(object sender, EventArgs e)
@@ -635,43 +653,43 @@ namespace DRED
                 return;
             }
 
-            var existing = RowToRecordData(row);
-            _dialogOpen = true;
+            var existing = RecordData.FromDataRow(row);
             try
             {
                 using var form = new RecordForm(CurrentTable, existing, id);
-                if (form.ShowDialog(this) == DialogResult.OK && form.Result != null)
+                ShowModalDialog(form, result =>
                 {
-                    var undoAction = new UndoableAction
+                    if (result == DialogResult.OK && form.Result != null)
                     {
-                        ActionType = UndoActionType.Edit,
-                        TableName = CurrentTable,
-                        RecordId = id,
-                        PreviousData = existing,
-                        Timestamp = DateTime.Now,
-                        UserName = Environment.UserName,
-                    };
-                    try
-                    {
-                        UndoManager.Push(undoAction);
-                        DatabaseHelper.UpdateRecord(CurrentTable, id, form.Result);
-                        Logger.Log($"User edited record [{id}] in [{CurrentTable}].");
-                        RefreshCurrentTab();
-                        UpdateUndoState();
+                        var undoAction = new UndoableAction
+                        {
+                            ActionType = UndoActionType.Edit,
+                            TableName = CurrentTable,
+                            RecordId = id,
+                            PreviousData = existing,
+                            Timestamp = DateTime.Now,
+                            UserName = Environment.UserName,
+                        };
+                        try
+                        {
+                            UndoManager.Push(undoAction);
+                            DatabaseHelper.UpdateRecord(CurrentTable, id, form.Result);
+                            Logger.Log($"User edited record [{id}] in [{CurrentTable}].");
+                            RefreshCurrentTab();
+                            UpdateUndoState();
+                        }
+                        catch (Exception ex)
+                        {
+                            if (ReferenceEquals(UndoManager.Peek(), undoAction))
+                                UndoManager.Pop();
+                            ErrorHelper.ShowDbError(ex);
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        if (ReferenceEquals(UndoManager.Peek(), undoAction))
-                            UndoManager.Pop();
-                        ShowDbError(ex);
-                    }
-                }
+                });
             }
             finally
             {
-                _dialogOpen = false;
                 RecordLockManager.UnlockRecord(CurrentTable, id);
-                _detailPanelManager.ReapplyColors();
             }
         }
 
@@ -717,7 +735,7 @@ namespace DRED
                             ActionType = UndoActionType.Delete,
                             TableName = CurrentTable,
                             RecordId = id,
-                            PreviousData = RowToRecordData(row),
+                            PreviousData = RecordData.FromDataRow(row),
                             Timestamp = DateTime.Now,
                             UserName = Environment.UserName,
                         };
@@ -738,7 +756,7 @@ namespace DRED
                         if (ReferenceEquals(UndoManager.Peek(), action))
                             UndoManager.Pop();
                     }
-                    ShowDbError(ex);
+                    ErrorHelper.ShowDbError(ex);
                 }
             }
         }
@@ -763,28 +781,17 @@ namespace DRED
                 return;
             }
 
-            var sb = new StringBuilder();
-            sb.AppendLine(string.Join('\t', ClipboardExportColumns));
-            foreach (var selectedItem in selectedItems)
-            {
-                if (selectedItem.RowIndex < 0 || selectedItem.RowIndex >= dt.Rows.Count)
-                    continue;
-
-                var row = dt.Rows[selectedItem.RowIndex];
-                var values = ClipboardExportColumns
-                    .Select(col => EscapeClipboardValue(FormatClipboardValue(row, col)));
-                sb.AppendLine(string.Join('\t', values));
-            }
-
-            Clipboard.SetText(sb.ToString());
+            var selectedRowIndexes = selectedItems.Select(item => item.RowIndex);
+            string clipboardText = ClipboardExportHelper.BuildClipboardText(dt, selectedRowIndexes, ClipboardExportColumns);
+            Clipboard.SetText(clipboardText);
         }
 
         private void btnSettings_Click(object sender, EventArgs e)
         {
-            try
+            using var form = new SettingsForm();
+            ShowModalDialog(form, result =>
             {
-                using var form = new SettingsForm();
-                if (form.ShowDialog(this) == DialogResult.OK)
+                if (result == DialogResult.OK)
                 {
                     UpdateRefreshTimer();
                     UpdateBackupTimer();
@@ -795,11 +802,7 @@ namespace DRED
                     }
                     RefreshCurrentTab();
                 }
-            }
-            finally
-            {
-                _detailPanelManager.ReapplyColors();
-            }
+            }, trackDialogOpen: false);
         }
 
         private void btnGenerate_Click(object sender, EventArgs e)
@@ -869,71 +872,34 @@ namespace DRED
                 return;
             }
 
-            _dialogOpen = true;
-            try
-            {
-                using var preview = new GeneratePreviewForm(serials, devCode);
-                preview.ShowDialog(this);
-            }
-            finally
-            {
-                _dialogOpen = false;
-                _detailPanelManager.ReapplyColors();
-            }
+            using var preview = new GeneratePreviewForm(serials, devCode);
+            ShowModalDialog(preview);
         }
 
         private void btnLookupCodeEditor_Click(object sender, EventArgs e)
         {
-            _dialogOpen = true;
-            try
-            {
-                using var form = new LookupCodeEditorForm();
-                form.ShowDialog(this);
-            }
-            finally
-            {
-                _dialogOpen = false;
-                _detailPanelManager.ReapplyColors();
-            }
+            using var form = new LookupCodeEditorForm();
+            ShowModalDialog(form);
         }
 
         private void btnPurchaseCodeEditor_Click(object sender, EventArgs e)
         {
-            _dialogOpen = true;
-            try
-            {
-                using var form = new PurchaseCodeEditorForm();
-                form.ShowDialog(this);
-            }
-            finally
-            {
-                _dialogOpen = false;
-                _detailPanelManager.ReapplyColors();
-            }
+            using var form = new PurchaseCodeEditorForm();
+            ShowModalDialog(form);
         }
 
         private void btnAuditLog_Click(object sender, EventArgs e)
         {
-            _dialogOpen = true;
-            try
-            {
-                using var form = new AuditLogForm();
-                form.ShowDialog(this);
-            }
-            finally
-            {
-                _dialogOpen = false;
-                _detailPanelManager.ReapplyColors();
-            }
+            using var form = new AuditLogForm();
+            ShowModalDialog(form);
         }
 
         private void btnAdvancedSearch_Click(object sender, EventArgs e)
         {
-            _dialogOpen = true;
-            try
+            using var form = new AdvancedSearchForm();
+            ShowModalDialog(form, result =>
             {
-                using var form = new AdvancedSearchForm();
-                if (form.ShowDialog(this) == DialogResult.OK)
+                if (result == DialogResult.OK)
                 {
                     _advancedCriteria = form.Criteria;
                     if (_advancedCriteria != null && _advancedCriteria.IsEmpty)
@@ -941,12 +907,7 @@ namespace DRED
                     UpdateFilterIndicator();
                     RefreshCurrentTab();
                 }
-            }
-            finally
-            {
-                _dialogOpen = false;
-                _detailPanelManager.ReapplyColors();
-            }
+            });
         }
 
         private void btnImport_Click(object sender, EventArgs e)
@@ -1037,7 +998,7 @@ namespace DRED
             catch (Exception ex)
             {
                 Cursor = Cursors.Default;
-                ShowDbError(ex);
+                ErrorHelper.ShowDbError(ex);
             }
         }
 
@@ -1065,7 +1026,7 @@ namespace DRED
             catch (Exception ex)
             {
                 Cursor = Cursors.Default;
-                ShowDbError(ex);
+                ErrorHelper.ShowDbError(ex);
             }
         }
 
@@ -1157,69 +1118,23 @@ namespace DRED
 
         // ── Utilities ────────────────────────────────────────────────────
 
-        private static string FormatClipboardValue(DataRow row, string columnName)
+        private DialogResult ShowModalDialog(Form form, bool trackDialogOpen = true)
         {
-            if (!row.Table.Columns.Contains(columnName) || row[columnName] is DBNull)
-                return string.Empty;
-
-            object value = row[columnName];
-            if (value is DateTime dateValue)
-                return dateValue.ToString("MM/dd/yyyy");
-            if (value is bool boolValue)
-                return boolValue ? "True" : "False";
-
-            return Convert.ToString(value) ?? string.Empty;
-        }
-
-        private static string EscapeClipboardValue(string value)
-            => value.Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
-
-        private static RecordData RowToRecordData(DataRow row)
-        {
-            return new RecordData
+            if (trackDialogOpen)
+                _dialogOpen = true;
+            try
             {
-                OpCo2    = row["OpCo2"] as string,
-                Status   = row["Status"] as string,
-                MFR      = row["MFR"] as string,
-                DevCode  = row["DevCode"] as string,
-                BegSer   = row["BegSer"] as string,
-                EndSer   = row["EndSer"] as string,
-                Qty      = row["Qty"] is DBNull ? null : Convert.ToInt32(row["Qty"]),
-                PODate   = row["PODate"] is DBNull ? null : Convert.ToDateTime(row["PODate"]),
-                Vintage  = row["Vintage"] as string,
-                PONumber = row["PONumber"] as string,
-                RecvDate = row["RecvDate"] is DBNull ? null : Convert.ToDateTime(row["RecvDate"]),
-                UnitCost = row["UnitCost"] is DBNull ? null : Convert.ToDecimal(row["UnitCost"]),
-                CID      = row["CID"] as string,
-                MENumber = row["MENumber"] as string,
-                PurCode  = row["PurCode"] as string,
-                Est      = row.Table.Columns.Contains("Est") && row["Est"] is not DBNull && Convert.ToBoolean(row["Est"]),
-                TextFile = row.Table.Columns.Contains("TextFile") && row["TextFile"] is not DBNull && Convert.ToBoolean(row["TextFile"]),
-                Comments = row["Comments"] as string,
-                OOSSerials = row.Table.Columns.Contains("OOSSerials") ? row["OOSSerials"] as string : null,
-                CreatedBy    = row.Table.Columns.Contains("CreatedBy") ? row["CreatedBy"] as string : null,
-                CreatedDate  = row.Table.Columns.Contains("CreatedDate") && !(row["CreatedDate"] is DBNull)
-                               ? Convert.ToDateTime(row["CreatedDate"]) : (DateTime?)null,
-                ModifiedBy   = row.Table.Columns.Contains("ModifiedBy") ? row["ModifiedBy"] as string : null,
-                ModifiedDate = row.Table.Columns.Contains("ModifiedDate") && !(row["ModifiedDate"] is DBNull)
-                               ? Convert.ToDateTime(row["ModifiedDate"]) : (DateTime?)null,
-            };
-        }
-
-        private const int OleDbErrorFileInUse    = -2147217887;
-        private const int OleDbErrorRecordLocked = -2147217843;
-
-        private static void ShowDbError(Exception ex)
-        {
-            Logger.LogError("Database/UI operation failed.", ex);
-            string msg = ex.Message;
-            if (ex is System.Data.OleDb.OleDbException oleEx)
-            {
-                msg = oleEx.ErrorCode == OleDbErrorFileInUse || oleEx.ErrorCode == OleDbErrorRecordLocked
-                    ? "The database is locked by another user. Please try again.\n\n" + oleEx.Message
-                    : oleEx.Message;
+                return form.ShowDialog(this);
             }
-            MessageBox.Show(msg, "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            finally
+            {
+                if (trackDialogOpen)
+                    _dialogOpen = false;
+                _detailPanelManager.ReapplyColors();
+            }
         }
+
+        private void ShowModalDialog(Form form, Action<DialogResult> onDialogClosed, bool trackDialogOpen = true)
+            => onDialogClosed(ShowModalDialog(form, trackDialogOpen));
     }
 }
