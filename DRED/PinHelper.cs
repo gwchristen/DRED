@@ -6,6 +6,8 @@ namespace DRED
 {
     public static class PinHelper
     {
+        public const int Sha256HexLength = 64;
+
         /// <summary>Returns the SHA256 hex hash of the given PIN string.</summary>
         public static string HashPin(string pin)
         {

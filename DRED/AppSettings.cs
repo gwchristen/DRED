@@ -43,7 +43,7 @@ namespace DRED
                         LookupCodesPath = data.LookupCodesPath ?? string.Empty;
                         PurchaseCodesPath = data.PurchaseCodesPath ?? string.Empty;
                         string rawPin = string.IsNullOrWhiteSpace(data.LockPin) ? "1234" : data.LockPin;
-                        if (rawPin.Length != 64 || !IsHexString(rawPin))
+                        if (rawPin.Length != PinHelper.Sha256HexLength || !IsHexString(rawPin))
                         {
                             LockPin = PinHelper.HashPin(rawPin);
                             Save();

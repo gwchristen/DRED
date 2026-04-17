@@ -8,6 +8,8 @@ namespace DRED
 {
     public partial class SettingsForm : Form
     {
+        private const string PinMaskPlaceholder = "****";
+
         public SettingsForm()
         {
             InitializeComponent();
@@ -16,7 +18,7 @@ namespace DRED
             nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
             nudBackupInterval.Value = Math.Clamp(AppSettings.BackupIntervalHours, 0, 168);
             nudMaxBackups.Value = Math.Clamp(AppSettings.MaxBackupCount, 1, 100);
-            txtLockPin.Text = "****";
+            txtLockPin.Text = PinMaskPlaceholder;
             LoadAuthorizedUsers();
         }
 
@@ -61,7 +63,7 @@ namespace DRED
             }
 
             string pin = txtLockPin.Text.Trim();
-            bool isChangingPin = !string.IsNullOrWhiteSpace(pin) && pin != "****";
+            bool isChangingPin = !string.IsNullOrWhiteSpace(pin) && pin != PinMaskPlaceholder;
             if (isChangingPin && pin.Length < 4)
             {
                 MessageBox.Show("Lock PIN must be at least 4 characters.", "Validation",
