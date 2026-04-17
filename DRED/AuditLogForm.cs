@@ -103,7 +103,7 @@ namespace DRED
                 int? recordId = int.TryParse(filter, out int parsedId) ? parsedId : null;
                 string? tableName = recordId.HasValue || string.IsNullOrWhiteSpace(filter) ? null : filter;
 
-                DataTable dt = DatabaseHelper.GetAuditLog(recordId, tableName, 500);
+                DataTable dt = AuditLogger.GetAuditLog(recordId, tableName, 500);
                 var rows = dt.AsEnumerable();
 
                 if (_dtFrom.Checked)

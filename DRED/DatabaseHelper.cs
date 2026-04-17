@@ -15,8 +15,6 @@ namespace DRED
     {
         public static readonly string[] TableNames = { "OH_Meters", "IM_Meters", "OH_Transformers", "IM_Transformers" };
 
-        private const int RecordLockTimeoutMinutes = 30;
-
         public static string GetConnectionString()
         {
             return $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={AppSettings.DatabasePath};Mode=Share Deny None;";
@@ -45,236 +43,16 @@ namespace DRED
             string path = AppSettings.DatabasePath;
             if (!System.IO.File.Exists(path))
             {
-                CreateDatabase(path);
+                SchemaManager.CreateDatabase(path);
             }
 
             using var conn = OpenConnection();
             foreach (string table in TableNames)
             {
-                EnsureTableExists(conn, table);
+                SchemaManager.EnsureTableExists(conn, table);
             }
-            EnsureRecordLocksTable(conn);
-            EnsureAuditLogTable(conn);
-        }
-
-        private static void CreateDatabase(string path)
-        {
-            try
-            {
-                Type? catalogType = Type.GetTypeFromProgID("ADOX.Catalog");
-                if (catalogType == null)
-                    throw new InvalidOperationException("ADOX.Catalog COM class not found.");
-
-                dynamic catalog = Activator.CreateInstance(catalogType)!;
-                catalog.Create($"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={path};");
-                System.Runtime.InteropServices.Marshal.ReleaseComObject(catalog);
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException(
-                    $"Could not create the Access database file at '{path}'.\n\n" +
-                    "Please ensure the Microsoft Access Database Engine 2016 Redistributable is installed.\n\n" +
-                    $"Details: {ex.Message}");
-            }
-        }
-
-        private static void EnsureTableExists(OleDbConnection conn, string tableName)
-        {
-            DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
-                new object?[] { null, null, tableName, "TABLE" })!;
-
-            if (schema.Rows.Count == 0)
-            {
-                string sql = $@"
-CREATE TABLE [{tableName}] (
-    [Id] AUTOINCREMENT PRIMARY KEY,
-    [OpCo2] TEXT(255),
-    [Status] TEXT(255),
-    [MFR] TEXT(255),
-    [DevCode] TEXT(255),
-    [BegSer] TEXT(255),
-    [EndSer] TEXT(255),
-    [Qty] INTEGER,
-    [PODate] DATETIME,
-    [Vintage] TEXT(255),
-    [PONumber] TEXT(255),
-    [RecvDate] DATETIME,
-    [UnitCost] CURRENCY,
-    [CID] TEXT(255),
-    [MENumber] TEXT(255),
-    [PurCode] TEXT(255),
-    [Est] YESNO,
-    [TextFile] YESNO,
-    [Comments] MEMO,
-    [OOSSerials] MEMO
-)";
-                using var cmd = new OleDbCommand(sql, conn);
-                cmd.ExecuteNonQuery();
-            }
-
-            // Drop legacy Key column if it exists
-            try
-            {
-                using var dropCmd = new OleDbCommand($"ALTER TABLE [{tableName}] DROP COLUMN [Key]", conn);
-                dropCmd.ExecuteNonQuery();
-            }
-            catch { /* Column may not exist — expected */ }
-
-            EnsureAuditColumns(conn, tableName);
-            MigrateEstToBoolean(conn, tableName);
-            EnsureTextFileColumn(conn, tableName);
-            EnsureOOSSerialsColumn(conn, tableName);
-        }
-
-        /// <summary>
-        /// Migrates the [Est] column from TEXT(255) to YESNO for existing databases.
-        /// If it's already YESNO, this method is a no-op.
-        /// </summary>
-        private static void MigrateEstToBoolean(OleDbConnection conn, string tableName)
-        {
-            // Check the actual data type of the Est column
-            var schemaTable = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Columns,
-                new object?[] { null, null, tableName, "Est" })!;
-
-            if (schemaTable.Rows.Count == 0) return; // Column doesn't exist — CREATE TABLE handles it
-
-            int dataType = Convert.ToInt32(schemaTable.Rows[0]["DATA_TYPE"]);
-            if (dataType == 11) return; // 11 = Boolean (YESNO) — already migrated
-
-            // It's TEXT — perform migration via a temp column
-            try
-            {
-                using var a1 = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [Est_New] YESNO", conn);
-                a1.ExecuteNonQuery();
-            }
-            catch { return; } // If we can't add the temp column, abort
-
-            // Treat any non-empty text value as True (the original text field stored "1" or similar
-            // to indicate established, and null/empty to indicate not established).
-            try
-            {
-                using var a2 = new OleDbCommand(
-                    $"UPDATE [{tableName}] SET [Est_New] = IIF([Est] IS NOT NULL AND [Est] <> '', True, False)", conn);
-                a2.ExecuteNonQuery();
-            }
-            catch { /* Best effort */ }
-
-            try
-            {
-                using var a3 = new OleDbCommand($"ALTER TABLE [{tableName}] DROP COLUMN [Est]", conn);
-                a3.ExecuteNonQuery();
-            }
-            catch { }
-
-            try
-            {
-                using var a4 = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [Est] YESNO", conn);
-                a4.ExecuteNonQuery();
-            }
-            catch { }
-
-            try
-            {
-                using var a5 = new OleDbCommand($"UPDATE [{tableName}] SET [Est] = [Est_New]", conn);
-                a5.ExecuteNonQuery();
-            }
-            catch { }
-
-            try
-            {
-                using var a6 = new OleDbCommand($"ALTER TABLE [{tableName}] DROP COLUMN [Est_New]", conn);
-                a6.ExecuteNonQuery();
-            }
-            catch { }
-        }
-
-        /// <summary>
-        /// Adds the [TextFile] YESNO column if it does not already exist.
-        /// </summary>
-        private static void EnsureTextFileColumn(OleDbConnection conn, string tableName)
-        {
-            try
-            {
-                using var cmd = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [TextFile] YESNO", conn);
-                cmd.ExecuteNonQuery();
-            }
-            catch { /* Column likely already exists */ }
-        }
-
-        /// <summary>
-        /// Adds the [OOSSerials] MEMO column if it does not already exist.
-        /// </summary>
-        private static void EnsureOOSSerialsColumn(OleDbConnection conn, string tableName)
-        {
-            try
-            {
-                using var cmd = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [OOSSerials] MEMO", conn);
-                cmd.ExecuteNonQuery();
-            }
-            catch { /* Column likely already exists */ }
-        }
-
-        private static void EnsureAuditColumns(OleDbConnection conn, string tableName)
-        {
-            var auditCols = new[]
-            {
-                ("CreatedBy",    "TEXT(255)"),
-                ("CreatedDate",  "DATETIME"),
-                ("ModifiedBy",   "TEXT(255)"),
-                ("ModifiedDate", "DATETIME"),
-            };
-            foreach (var (col, type) in auditCols)
-            {
-                try
-                {
-                    using var cmd = new OleDbCommand($"ALTER TABLE [{tableName}] ADD COLUMN [{col}] {type}", conn);
-                    cmd.ExecuteNonQuery();
-                }
-                catch { /* Column likely already exists */ }
-            }
-        }
-
-        private static void EnsureRecordLocksTable(OleDbConnection conn)
-        {
-            DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
-                new object?[] { null, null, "RecordLocks", "TABLE" })!;
-
-            if (schema.Rows.Count > 0) return;
-
-            string sql = @"
-CREATE TABLE [RecordLocks] (
-    [Id] AUTOINCREMENT PRIMARY KEY,
-    [TableName] TEXT(255),
-    [RecordId] INTEGER,
-    [LockedBy] TEXT(255),
-    [LockedAt] DATETIME
-)";
-            using var cmd = new OleDbCommand(sql, conn);
-            cmd.ExecuteNonQuery();
-        }
-
-        private static void EnsureAuditLogTable(OleDbConnection conn)
-        {
-            DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
-                new object?[] { null, null, "AuditLog", "TABLE" })!;
-
-            if (schema.Rows.Count > 0) return;
-
-            string sql = @"
-CREATE TABLE [AuditLog] (
-    [Id] AUTOINCREMENT PRIMARY KEY,
-    [TableName] TEXT(255),
-    [RecordId] INTEGER,
-    [Action] TEXT(50),
-    [FieldName] TEXT(255),
-    [OldValue] MEMO,
-    [NewValue] MEMO,
-    [UserName] TEXT(255),
-    [Timestamp] DATETIME
-)";
-            using var cmd = new OleDbCommand(sql, conn);
-            cmd.ExecuteNonQuery();
-            Logger.Log("Created [AuditLog] table.");
+            SchemaManager.EnsureRecordLocksTable(conn);
+            SchemaManager.EnsureAuditLogTable(conn);
         }
 
         public static DataTable GetTableData(string tableName, string filter = "",
@@ -454,7 +232,7 @@ VALUES
                 using var idCmd = new OleDbCommand("SELECT @@IDENTITY", conn);
                 int recordId = Convert.ToInt32(idCmd.ExecuteScalar());
                 string summary = BuildRecordSummary(data);
-                LogAuditEntry(conn, tableName, recordId, "INSERT", null, null, summary);
+                AuditLogger.LogAuditEntryWithConnection(conn, tableName, recordId, "INSERT", null, null, summary);
                 Logger.Log($"Inserted record into [{tableName}].");
             }
             catch (Exception ex)
@@ -491,7 +269,7 @@ WHERE [Id]=?";
                 {
                     foreach (var change in GetChangedFields(oldData, data))
                     {
-                        LogAuditEntry(conn, tableName, id, "UPDATE", change.FieldName, change.OldValue, change.NewValue);
+                        AuditLogger.LogAuditEntryWithConnection(conn, tableName, id, "UPDATE", change.FieldName, change.OldValue, change.NewValue);
                     }
                 }
                 Logger.Log($"Updated record [{id}] in [{tableName}].");
@@ -514,82 +292,13 @@ WHERE [Id]=?";
                 cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = id });
                 cmd.ExecuteNonQuery();
                 string summary = oldData != null ? BuildRecordSummary(oldData) : "(record data unavailable)";
-                LogAuditEntry(conn, tableName, id, "DELETE", null, summary, null);
+                AuditLogger.LogAuditEntryWithConnection(conn, tableName, id, "DELETE", null, summary, null);
                 Logger.Log($"Deleted record [{id}] from [{tableName}].");
             }
             catch (Exception ex)
             {
                 Logger.LogError($"Failed to delete record [{id}] from [{tableName}].", ex);
                 throw;
-            }
-        }
-
-        public static void LogAuditEntry(
-            string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
-        {
-            try
-            {
-                using var conn = OpenConnection();
-                LogAuditEntry(conn, tableName, recordId, action, fieldName, oldValue, newValue);
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError("Failed to write audit log entry.", ex);
-            }
-        }
-
-        public static DataTable GetAuditLog(int? recordId = null, string? tableName = null, int maxRows = 100)
-        {
-            using var conn = OpenConnection();
-            var whereParts = new List<string>();
-            using var cmd = new OleDbCommand();
-            cmd.Connection = conn;
-
-            if (recordId.HasValue)
-            {
-                whereParts.Add("[RecordId] = ?");
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId.Value });
-            }
-
-            if (!string.IsNullOrWhiteSpace(tableName))
-            {
-                whereParts.Add("[TableName] LIKE '%' & ? & '%'");
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName.Trim() });
-            }
-
-            maxRows = Math.Clamp(maxRows, 1, 1000);
-            cmd.CommandText = "SELECT TOP " + maxRows + " [Timestamp],[UserName],[TableName],[RecordId],[Action],[FieldName],[OldValue],[NewValue] FROM [AuditLog]";
-            if (whereParts.Count > 0)
-                cmd.CommandText += " WHERE " + string.Join(" AND ", whereParts);
-            cmd.CommandText += " ORDER BY [Timestamp] DESC, [Id] DESC";
-
-            using var adapter = new OleDbDataAdapter(cmd);
-            var dt = new DataTable();
-            adapter.Fill(dt);
-            return dt;
-        }
-
-        private static void LogAuditEntry(
-            OleDbConnection conn, string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
-        {
-            try
-            {
-                using var cmd = new OleDbCommand(@"
-INSERT INTO [AuditLog] ([TableName],[RecordId],[Action],[FieldName],[OldValue],[NewValue],[UserName],[Timestamp])
-VALUES (?,?,?,?,?,?,?,?)", conn);
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 50, Value = action });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = (object?)fieldName ?? DBNull.Value });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.LongVarWChar, Value = (object?)oldValue ?? DBNull.Value });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.LongVarWChar, Value = (object?)newValue ?? DBNull.Value });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"Failed to write audit log entry for [{tableName}] record [{recordId}].", ex);
             }
         }
 
@@ -792,83 +501,6 @@ VALUES (?,?,?,?,?,?,?,?)", conn);
                 throw new ArgumentException("Invalid column name.", nameof(columnName));
         }
 
-        public static bool TryLockRecord(string tableName, int recordId, out string lockedBy)
-        {
-            try
-            {
-                using var conn = OpenConnection();
-
-                // Clean stale locks (>30 min)
-                using (var cleanCmd = new OleDbCommand("DELETE FROM [RecordLocks] WHERE [LockedAt] < ?", conn))
-                {
-                    cleanCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now.AddMinutes(-RecordLockTimeoutMinutes) });
-                    cleanCmd.ExecuteNonQuery();
-                }
-
-                // Check for existing lock
-                string? existing;
-                using (var checkCmd = new OleDbCommand(
-                    "SELECT [LockedBy] FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
-                {
-                    checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                    checkCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                    existing = checkCmd.ExecuteScalar() as string;
-                }
-
-                if (existing != null && !string.Equals(existing, Environment.UserName, StringComparison.OrdinalIgnoreCase))
-                {
-                    lockedBy = existing;
-                    return false;
-                }
-
-                // Remove any existing lock by same user
-                using (var removeCmd = new OleDbCommand(
-                    "DELETE FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=?", conn))
-                {
-                    removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                    removeCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                    removeCmd.ExecuteNonQuery();
-                }
-
-                // Insert new lock
-                using (var insertCmd = new OleDbCommand(
-                    "INSERT INTO [RecordLocks] ([TableName],[RecordId],[LockedBy],[LockedAt]) VALUES (?,?,?,?)", conn))
-                {
-                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
-                    insertCmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Date, Value = DateTime.Now });
-                    insertCmd.ExecuteNonQuery();
-                }
-
-                lockedBy = Environment.UserName;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"Failed to lock record [{recordId}] in [{tableName}].", ex);
-                throw;
-            }
-        }
-
-        public static void UnlockRecord(string tableName, int recordId)
-        {
-            try
-            {
-                using var conn = OpenConnection();
-                using var cmd = new OleDbCommand(
-                    "DELETE FROM [RecordLocks] WHERE [TableName]=? AND [RecordId]=? AND [LockedBy]=?", conn);
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = tableName });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.Integer, Value = recordId });
-                cmd.Parameters.Add(new OleDbParameter { OleDbType = OleDbType.VarWChar, Size = 255, Value = Environment.UserName });
-                cmd.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError($"Failed to unlock record [{recordId}] in [{tableName}].", ex);
-            }
-        }
-
         /// <summary>
         /// Exports a single table to an Excel file using ClosedXML.
         /// </summary>
@@ -912,33 +544,4 @@ VALUES (?,?,?,?,?,?,?,?)", conn);
         }
     }
 
-    /// <summary>
-    /// Represents a single record matching the shared schema across all 4 tables.
-    /// </summary>
-    public class RecordData
-    {
-        public string? OpCo2 { get; set; }
-        public string? Status { get; set; }
-        public string? MFR { get; set; }
-        public string? DevCode { get; set; }
-        public string? BegSer { get; set; }
-        public string? EndSer { get; set; }
-        public int? Qty { get; set; }
-        public DateTime? PODate { get; set; }
-        public string? Vintage { get; set; }
-        public string? PONumber { get; set; }
-        public DateTime? RecvDate { get; set; }
-        public decimal? UnitCost { get; set; }
-        public string? CID { get; set; }
-        public string? MENumber { get; set; }
-        public string? PurCode { get; set; }
-        public bool Est { get; set; }
-        public bool TextFile { get; set; }
-        public string? Comments { get; set; }
-        public string? OOSSerials { get; set; }
-        public string? CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
-        public string? ModifiedBy { get; set; }
-        public DateTime? ModifiedDate { get; set; }
-    }
 }
