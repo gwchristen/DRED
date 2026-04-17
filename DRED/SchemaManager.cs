@@ -4,8 +4,15 @@ using System.Data.OleDb;
 
 namespace DRED
 {
+    /// <summary>
+    /// Manages schema creation and migration for the Access database.
+    /// </summary>
     internal static class SchemaManager
     {
+        /// <summary>
+        /// Creates a new Access database file at the provided path.
+        /// </summary>
+        /// <param name="path">The full path where the .accdb file should be created.</param>
         internal static void CreateDatabase(string path)
         {
             try
@@ -27,6 +34,11 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Ensures the specified data table exists and applies required schema updates.
+        /// </summary>
+        /// <param name="conn">The open database connection.</param>
+        /// <param name="tableName">The table name to create or migrate.</param>
         internal static void EnsureTableExists(OleDbConnection conn, string tableName)
         {
             DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
@@ -163,6 +175,11 @@ CREATE TABLE [{tableName}] (
             catch { /* Column likely already exists */ }
         }
 
+        /// <summary>
+        /// Ensures audit metadata columns exist on the specified table.
+        /// </summary>
+        /// <param name="conn">The open database connection.</param>
+        /// <param name="tableName">The table name to update.</param>
         internal static void EnsureAuditColumns(OleDbConnection conn, string tableName)
         {
             var auditCols = new[]
@@ -183,6 +200,10 @@ CREATE TABLE [{tableName}] (
             }
         }
 
+        /// <summary>
+        /// Ensures the RecordLocks table exists for multi-user edit coordination.
+        /// </summary>
+        /// <param name="conn">The open database connection.</param>
         internal static void EnsureRecordLocksTable(OleDbConnection conn)
         {
             DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,
@@ -202,6 +223,10 @@ CREATE TABLE [RecordLocks] (
             cmd.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Ensures the AuditLog table exists for recording change history.
+        /// </summary>
+        /// <param name="conn">The open database connection.</param>
         internal static void EnsureAuditLogTable(OleDbConnection conn)
         {
             DataTable schema = conn.GetOleDbSchemaTable(OleDbSchemaGuid.Tables,

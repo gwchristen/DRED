@@ -106,6 +106,9 @@ namespace DRED
             Save();
         }
 
+        /// <summary>
+        /// Clears cached mappings so data is reloaded from storage on next access.
+        /// </summary>
         public static void ResetCache()
         {
             _loaded = false;

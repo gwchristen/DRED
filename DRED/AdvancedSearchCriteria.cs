@@ -2,6 +2,9 @@ using System;
 
 namespace DRED
 {
+    /// <summary>
+    /// Represents optional field-level filters for advanced record searches.
+    /// </summary>
     public class AdvancedSearchCriteria
     {
         public string? OpCo2 { get; set; }
@@ -27,6 +30,9 @@ namespace DRED
         public int? QtyMin { get; set; }
         public int? QtyMax { get; set; }
 
+        /// <summary>
+        /// Gets whether no advanced criteria values are currently set.
+        /// </summary>
         public bool IsEmpty =>
             OpCo2 == null && Status == null && MFR == null && DevCode == null &&
             BegSer == null && EndSer == null && PONumber == null && Vintage == null &&

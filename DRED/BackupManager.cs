@@ -4,8 +4,15 @@ using System.Linq;
 
 namespace DRED
 {
+    /// <summary>
+    /// Provides database backup creation and retention cleanup utilities.
+    /// </summary>
     public static class BackupManager
     {
+        /// <summary>
+        /// Gets the backup folder path and ensures it exists.
+        /// </summary>
+        /// <returns>The backup directory path.</returns>
         public static string GetBackupFolder()
         {
             string dbPath = AppSettings.DatabasePath;
@@ -18,6 +25,11 @@ namespace DRED
             return backupDir;
         }
 
+        /// <summary>
+        /// Creates a timestamped backup copy of the configured database file.
+        /// </summary>
+        /// <param name="reason">A short reason label appended to the backup file name.</param>
+        /// <returns>The full path to the newly created backup file.</returns>
         public static string CreateBackup(string reason)
         {
             string dbPath = AppSettings.DatabasePath;
@@ -39,6 +51,10 @@ namespace DRED
             return backupPath;
         }
 
+        /// <summary>
+        /// Deletes older backup files while retaining the most recent backups.
+        /// </summary>
+        /// <param name="keepCount">The number of newest backups to keep.</param>
         public static void CleanupOldBackups(int keepCount = 10)
         {
             keepCount = Math.Max(1, keepCount);

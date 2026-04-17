@@ -19,6 +19,10 @@ namespace DRED
         private static bool _loaded = false;
         private static string _lastLoadedPath = string.Empty;
 
+        /// <summary>
+        /// Returns all table/device/purchase mappings.
+        /// </summary>
+        /// <returns>A list of mapping tuples sorted by table and device code.</returns>
         public static List<(string TableName, string DevCode, string PurchaseCode)> GetAll()
         {
             lock (SyncLock)
@@ -37,6 +41,11 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Returns all device-to-purchase mappings for a single table.
+        /// </summary>
+        /// <param name="tableName">The table name to query.</param>
+        /// <returns>A list of mappings for the specified table.</returns>
         public static List<(string DevCode, string PurchaseCode)> GetAllForTable(string tableName)
         {
             lock (SyncLock)
@@ -54,6 +63,12 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Returns purchase codes for a specific table and device code.
+        /// </summary>
+        /// <param name="tableName">The table name to query.</param>
+        /// <param name="devCode">The device code to query.</param>
+        /// <returns>A list of matching purchase codes, or an empty list when none exist.</returns>
         public static List<string> GetPurchaseCodes(string tableName, string devCode)
         {
             lock (SyncLock)
@@ -68,6 +83,12 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Adds a table/device/purchase mapping if it does not already exist.
+        /// </summary>
+        /// <param name="tableName">The table name.</param>
+        /// <param name="devCode">The device code.</param>
+        /// <param name="purchaseCode">The purchase code to add.</param>
         public static void AddMapping(string tableName, string devCode, string purchaseCode)
         {
             lock (SyncLock)
@@ -89,6 +110,12 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Removes a specific table/device/purchase mapping.
+        /// </summary>
+        /// <param name="tableName">The table name.</param>
+        /// <param name="devCode">The device code.</param>
+        /// <param name="purchaseCode">The purchase code to remove.</param>
         public static void RemoveMapping(string tableName, string devCode, string purchaseCode)
         {
             lock (SyncLock)
@@ -109,6 +136,11 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Replaces all mappings for a table with the supplied mapping list.
+        /// </summary>
+        /// <param name="tableName">The table name to replace mappings for.</param>
+        /// <param name="mappings">The full set of mappings to persist.</param>
         public static void SetAllForTable(string tableName, List<(string DevCode, string PurchaseCode)> mappings)
         {
             lock (SyncLock)
@@ -134,6 +166,9 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Clears cached mappings so data is reloaded from storage on next access.
+        /// </summary>
         public static void ResetCache()
         {
             lock (SyncLock)

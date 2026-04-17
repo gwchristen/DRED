@@ -5,8 +5,20 @@ using System.Data.OleDb;
 
 namespace DRED
 {
+    /// <summary>
+    /// Provides helpers for writing and querying audit log entries.
+    /// </summary>
     public static class AuditLogger
     {
+        /// <summary>
+        /// Writes a single audit log entry using a new database connection.
+        /// </summary>
+        /// <param name="tableName">The table associated with the change.</param>
+        /// <param name="recordId">The affected record Id.</param>
+        /// <param name="action">The action name (for example INSERT, UPDATE, DELETE).</param>
+        /// <param name="fieldName">The field name for field-level updates, if applicable.</param>
+        /// <param name="oldValue">The value before the change, if applicable.</param>
+        /// <param name="newValue">The value after the change, if applicable.</param>
         public static void LogAuditEntry(
             string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
         {
@@ -21,6 +33,13 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Retrieves audit log rows with optional filtering by record and table name.
+        /// </summary>
+        /// <param name="recordId">Optional record Id filter.</param>
+        /// <param name="tableName">Optional partial table-name filter.</param>
+        /// <param name="maxRows">Maximum rows to return (clamped to 1-1000).</param>
+        /// <returns>A table of audit entries ordered by newest first.</returns>
         public static DataTable GetAuditLog(int? recordId = null, string? tableName = null, int maxRows = 100)
         {
             using var conn = DatabaseHelper.OpenConnection();
@@ -53,9 +72,15 @@ namespace DRED
         }
 
         /// <summary>
-        /// Allows internal callers (e.g., DatabaseHelper CRUD methods) to write audit rows
-        /// on an existing connection while preserving the original public + private overload shape.
+        /// Writes an audit log row using an existing open connection.
         /// </summary>
+        /// <param name="conn">The open database connection to use.</param>
+        /// <param name="tableName">The table associated with the change.</param>
+        /// <param name="recordId">The affected record Id.</param>
+        /// <param name="action">The action name (for example INSERT, UPDATE, DELETE).</param>
+        /// <param name="fieldName">The field name for field-level updates, if applicable.</param>
+        /// <param name="oldValue">The value before the change, if applicable.</param>
+        /// <param name="newValue">The value after the change, if applicable.</param>
         internal static void LogAuditEntryWithConnection(
             OleDbConnection conn, string tableName, int recordId, string action, string? fieldName, string? oldValue, string? newValue)
         {

@@ -15,11 +15,19 @@ namespace DRED
     {
         public static readonly string[] TableNames = { "OH_Meters", "IM_Meters", "OH_Transformers", "IM_Transformers" };
 
+        /// <summary>
+        /// Builds the OleDb connection string for the configured Access database path.
+        /// </summary>
+        /// <returns>The connection string used for database operations.</returns>
         public static string GetConnectionString()
         {
             return $"Provider=Microsoft.ACE.OLEDB.12.0;Data Source={AppSettings.DatabasePath};Mode=Share Deny None;";
         }
 
+        /// <summary>
+        /// Opens and returns an active OleDb connection to the configured database.
+        /// </summary>
+        /// <returns>An open database connection.</returns>
         public static OleDbConnection OpenConnection()
         {
             try
@@ -55,6 +63,14 @@ namespace DRED
             SchemaManager.EnsureAuditLogTable(conn);
         }
 
+        /// <summary>
+        /// Retrieves rows from the specified table using optional simple and advanced filters.
+        /// </summary>
+        /// <param name="tableName">The source table name.</param>
+        /// <param name="filter">Optional free-text filter applied to one column or all searchable columns.</param>
+        /// <param name="filterColumn">Optional column for <paramref name="filter"/>; use "All Columns" to search across supported text columns.</param>
+        /// <param name="advancedCriteria">Optional structured criteria object used to add field-specific filters.</param>
+        /// <returns>A <see cref="DataTable"/> containing matching records ordered by descending Id.</returns>
         public static DataTable GetTableData(string tableName, string filter = "",
             string filterColumn = "", AdvancedSearchCriteria? advancedCriteria = null)
         {
@@ -143,6 +159,12 @@ namespace DRED
             return dt;
         }
 
+        /// <summary>
+        /// Returns distinct non-empty values from a specific column in a table for autocomplete.
+        /// </summary>
+        /// <param name="tableName">The table to query.</param>
+        /// <param name="columnName">The column to read distinct values from.</param>
+        /// <returns>A collection of distinct values sorted ascending.</returns>
         public static AutoCompleteStringCollection GetDistinctValues(string tableName, string columnName)
         {
             EnsureValidTableName(tableName);
@@ -169,6 +191,15 @@ ORDER BY [{columnName}]";
             return values;
         }
 
+        /// <summary>
+        /// Checks whether a record with the same device code and serial range already exists in the table.
+        /// </summary>
+        /// <param name="tableName">The table to search.</param>
+        /// <param name="devCode">The device code to match.</param>
+        /// <param name="begSer">The beginning serial to match.</param>
+        /// <param name="endSer">The ending serial to match; null/empty is treated as an open-ended value.</param>
+        /// <param name="excludeId">Optional record Id to exclude from the duplicate check.</param>
+        /// <returns><c>true</c> if a matching record exists; otherwise, <c>false</c>.</returns>
         public static bool RecordExists(string tableName, string devCode, string begSer, string endSer, int? excludeId = null)
         {
             EnsureValidTableName(tableName);
@@ -211,6 +242,11 @@ WHERE [DevCode] = ? AND [BegSer] = ? AND [EndSer] = ?";
             return Convert.ToInt32(result) > 0;
         }
 
+        /// <summary>
+        /// Inserts a record into the specified table and writes a corresponding audit entry.
+        /// </summary>
+        /// <param name="tableName">The destination table name.</param>
+        /// <param name="data">The record values to insert.</param>
         public static void InsertRecord(string tableName, RecordData data)
         {
             try
@@ -242,6 +278,12 @@ VALUES
             }
         }
 
+        /// <summary>
+        /// Updates an existing record and writes field-level audit entries for changed values.
+        /// </summary>
+        /// <param name="tableName">The table that contains the record.</param>
+        /// <param name="id">The record Id to update.</param>
+        /// <param name="data">The new record values.</param>
         public static void UpdateRecord(string tableName, int id, RecordData data)
         {
             try
@@ -281,6 +323,11 @@ WHERE [Id]=?";
             }
         }
 
+        /// <summary>
+        /// Deletes a record by Id and writes a delete audit entry.
+        /// </summary>
+        /// <param name="tableName">The table that contains the record.</param>
+        /// <param name="id">The record Id to delete.</param>
         public static void DeleteRecord(string tableName, int id)
         {
             try
