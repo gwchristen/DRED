@@ -1,6 +1,4 @@
 using System;
-using System.Security.Cryptography;
-using System.Text;
 using System.Windows.Forms;
 
 namespace DRED
@@ -30,11 +28,9 @@ namespace DRED
             txtPin.Focus();
         }
 
-        private static bool IsPinMatch(string enteredPin, string configuredPin)
+        private static bool IsPinMatch(string enteredPin, string storedHash)
         {
-            byte[] enteredBytes = Encoding.UTF8.GetBytes(enteredPin ?? string.Empty);
-            byte[] configuredBytes = Encoding.UTF8.GetBytes(configuredPin ?? string.Empty);
-            return CryptographicOperations.FixedTimeEquals(enteredBytes, configuredBytes);
+            return PinHelper.VerifyPin(enteredPin, storedHash);
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
