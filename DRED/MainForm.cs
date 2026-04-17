@@ -627,7 +627,7 @@ namespace DRED
 
             int id = Convert.ToInt32(row["Id"]);
 
-            if (!DatabaseHelper.TryLockRecord(CurrentTable, id, out string lockedBy))
+            if (!RecordLockManager.TryLockRecord(CurrentTable, id, out string lockedBy))
             {
                 MessageBox.Show(
                     $"This record is currently being edited by {lockedBy}. Please try again later.",
@@ -670,7 +670,7 @@ namespace DRED
             finally
             {
                 _dialogOpen = false;
-                DatabaseHelper.UnlockRecord(CurrentTable, id);
+                RecordLockManager.UnlockRecord(CurrentTable, id);
                 _detailPanelManager.ReapplyColors();
             }
         }
