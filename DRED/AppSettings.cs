@@ -114,7 +114,7 @@ namespace DRED
 
         private static bool IsHexString(string value)
         {
-            return value.All(Uri.IsHexDigit);
+            return value.Length == PinHelper.Sha256HexLength && value.All(Uri.IsHexDigit);
         }
     }
 }
