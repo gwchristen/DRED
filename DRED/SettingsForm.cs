@@ -16,7 +16,7 @@ namespace DRED
             nudAutoRefresh.Value = AppSettings.AutoRefreshInterval;
             nudBackupInterval.Value = Math.Clamp(AppSettings.BackupIntervalHours, 0, 168);
             nudMaxBackups.Value = Math.Clamp(AppSettings.MaxBackupCount, 1, 100);
-            txtLockPin.Text = AppSettings.LockPin;
+            txtLockPin.Text = "****";
             LoadAuthorizedUsers();
         }
 
@@ -61,13 +61,8 @@ namespace DRED
             }
 
             string pin = txtLockPin.Text.Trim();
-            if (string.IsNullOrWhiteSpace(pin))
-            {
-                MessageBox.Show("Lock PIN cannot be empty.", "Validation",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-            if (pin.Length < 4)
+            bool isChangingPin = !string.IsNullOrWhiteSpace(pin) && pin != "****";
+            if (isChangingPin && pin.Length < 4)
             {
                 MessageBox.Show("Lock PIN must be at least 4 characters.", "Validation",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -80,7 +75,10 @@ namespace DRED
             AppSettings.AutoRefreshInterval = (int)nudAutoRefresh.Value;
             AppSettings.BackupIntervalHours = (int)nudBackupInterval.Value;
             AppSettings.MaxBackupCount = (int)nudMaxBackups.Value;
-            AppSettings.LockPin = pin;
+            if (isChangingPin)
+            {
+                AppSettings.LockPin = PinHelper.HashPin(pin);
+            }
             AppSettings.AuthorizedUsers = GetAuthorizedUsersFromList();
             AppSettings.Save();
             if (!string.Equals(previousLookupCodesPath, AppSettings.LookupCodesPath, StringComparison.OrdinalIgnoreCase))
