@@ -3,6 +3,9 @@ using System.Windows.Forms;
 
 namespace DRED
 {
+    /// <summary>
+    /// Centralizes application theme colors and helper methods for applying dark-mode styling.
+    /// </summary>
     public static class ThemeManager
     {
         public static readonly Color BackgroundColor    = Color.FromArgb(0x1E, 0x1E, 0x1E);
@@ -154,6 +157,10 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Applies dark styling to a DataGridView.
+        /// </summary>
+        /// <param name="dgv">The grid to style.</param>
         public static void ApplyToDataGridView(DataGridView dgv)
         {
             dgv.EnableHeadersVisualStyles = false;

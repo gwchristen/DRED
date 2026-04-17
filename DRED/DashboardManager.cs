@@ -30,6 +30,10 @@ namespace DRED
             _updateStatusBar = updateStatusBar;
         }
 
+        /// <summary>
+        /// Initializes dashboard UI controls and layout inside the dashboard tab.
+        /// </summary>
+        /// <param name="dashboardTab">The dashboard tab page to populate.</param>
         public void Initialize(TabPage dashboardTab)
         {
             _dashboardHostPanel = dashboardTab.Controls.OfType<Panel>().FirstOrDefault();
@@ -124,6 +128,9 @@ namespace DRED
             _dashboardLabels = labels;
         }
 
+        /// <summary>
+        /// Refreshes dashboard metrics and applies the currently selected filters.
+        /// </summary>
         public void Refresh()
         {
             if (_dashboardLabels == null || _cboTableFilter == null || _cboStatusFilter == null || _cboOpCoFilter == null) return;

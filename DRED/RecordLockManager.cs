@@ -3,10 +3,22 @@ using System.Data.OleDb;
 
 namespace DRED
 {
+    /// <summary>
+    /// Provides record-level locking helpers to prevent concurrent edits across users.
+    /// </summary>
     public static class RecordLockManager
     {
         private const int RecordLockTimeoutMinutes = 30;
 
+        /// <summary>
+        /// Attempts to lock a record for the current user, removing stale locks older than the timeout window.
+        /// </summary>
+        /// <param name="tableName">The table that contains the record.</param>
+        /// <param name="recordId">The Id of the record to lock.</param>
+        /// <param name="lockedBy">
+        /// When the method returns, contains the user holding the lock when unsuccessful, or the current user when successful.
+        /// </param>
+        /// <returns><c>true</c> if the lock is acquired; otherwise, <c>false</c>.</returns>
         public static bool TryLockRecord(string tableName, int recordId, out string lockedBy)
         {
             try
@@ -66,6 +78,11 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Releases the current user's lock for the specified record.
+        /// </summary>
+        /// <param name="tableName">The table that contains the record.</param>
+        /// <param name="recordId">The Id of the record to unlock.</param>
         public static void UnlockRecord(string tableName, int recordId)
         {
             try

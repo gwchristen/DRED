@@ -24,6 +24,14 @@ namespace DRED
         private EventHandler? _deleteHandler;
         private EventHandler? _generateHandler;
 
+        /// <summary>
+        /// Initializes detail panel UI for each data tab.
+        /// </summary>
+        /// <param name="detailPanels">The detail panel hosts, one per data tab.</param>
+        /// <param name="accentColors">Accent colors to use per tab.</param>
+        /// <param name="editHandler">Click handler for Edit actions.</param>
+        /// <param name="deleteHandler">Click handler for Delete actions.</param>
+        /// <param name="generateHandler">Click handler for Generate actions.</param>
         public void Initialize(Panel[] detailPanels, Color[] accentColors,
             EventHandler editHandler, EventHandler deleteHandler, EventHandler generateHandler)
         {
@@ -38,6 +46,11 @@ namespace DRED
                 BuildDetailForTab(i, _detailPanels[i], _accentColors[i]);
         }
 
+        /// <summary>
+        /// Populates the selected tab's detail panel with values from a data row.
+        /// </summary>
+        /// <param name="dataTabIndex">The zero-based index of the active data tab.</param>
+        /// <param name="row">The selected row to display.</param>
         public void PopulateDetail(int dataTabIndex, DataRow row)
         {
             if (dataTabIndex < 0 || dataTabIndex >= _detailLabels.Length) return;
@@ -106,6 +119,10 @@ namespace DRED
             dl.ContentPanel.Visible = true;
         }
 
+        /// <summary>
+        /// Shows the empty-state message for a tab when no record is selected.
+        /// </summary>
+        /// <param name="dataTabIndex">The zero-based index of the target data tab.</param>
         public void ShowEmptyState(int dataTabIndex)
         {
             if (dataTabIndex < 0 || dataTabIndex >= _detailLabels.Length) return;
@@ -115,6 +132,9 @@ namespace DRED
             dl.EmptyStateLabel.Visible = true;
         }
 
+        /// <summary>
+        /// Reapplies theme-dependent colors to all initialized detail panels.
+        /// </summary>
         public void ReapplyColors()
         {
             for (int i = 0; i < _detailLabels.Length; i++)
@@ -149,6 +169,10 @@ namespace DRED
             }
         }
 
+        /// <summary>
+        /// Enables or disables edit and delete buttons across all detail panels.
+        /// </summary>
+        /// <param name="enabled"><c>true</c> to enable buttons; otherwise, <c>false</c>.</param>
         public void SetEditDeleteEnabled(bool enabled)
         {
             for (int i = 0; i < _detailLabels.Length; i++)

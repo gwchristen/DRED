@@ -32,6 +32,11 @@ namespace DRED
         public string? ModifiedBy { get; set; }
         public DateTime? ModifiedDate { get; set; }
 
+        /// <summary>
+        /// Creates a <see cref="RecordData"/> instance from a database <see cref="DataRow"/>.
+        /// </summary>
+        /// <param name="row">The source row containing record column values.</param>
+        /// <returns>A populated <see cref="RecordData"/> object.</returns>
         public static RecordData FromDataRow(DataRow row)
         {
             return new RecordData

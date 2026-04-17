@@ -4,6 +4,9 @@ using System.Text;
 
 namespace DRED
 {
+    /// <summary>
+    /// Provides hashing and verification helpers for the application lock PIN.
+    /// </summary>
     public static class PinHelper
     {
         public const int Sha256HexLength = 64;

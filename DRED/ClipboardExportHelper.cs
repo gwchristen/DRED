@@ -6,8 +6,18 @@ using System.Text;
 
 namespace DRED
 {
+    /// <summary>
+    /// Builds tab-delimited clipboard output from selected table rows.
+    /// </summary>
     public static class ClipboardExportHelper
     {
+        /// <summary>
+        /// Creates clipboard text containing a header row followed by selected row values.
+        /// </summary>
+        /// <param name="table">The source data table.</param>
+        /// <param name="rowIndexes">The row indexes to export.</param>
+        /// <param name="columns">The ordered columns to include in the output.</param>
+        /// <returns>Tab-delimited text suitable for clipboard paste.</returns>
         public static string BuildClipboardText(DataTable table, IEnumerable<int> rowIndexes, IReadOnlyList<string> columns)
         {
             var sb = new StringBuilder();

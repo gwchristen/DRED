@@ -15,6 +15,11 @@ namespace DRED
             _actions = actions;
         }
 
+        /// <summary>
+        /// Handles a key-down event and executes a matching shortcut action when available.
+        /// </summary>
+        /// <param name="e">The key event data.</param>
+        /// <returns><c>true</c> if a shortcut was handled; otherwise, <c>false</c>.</returns>
         public bool HandleKeyDown(KeyEventArgs e)
         {
             if (e.Control && e.Shift)
